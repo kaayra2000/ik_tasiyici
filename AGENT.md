@@ -279,16 +279,16 @@ dk-tutanak-olusturucu/
 - [x] D-K tablosu kurallarını `dk_table.py`'a aktar
 
 ### Faz 2: Excel İşlemleri
-- [ ] Kaynak Excel okuyucu (`excel_reader.py`)
-  - [ ] TCKN, Ad Soyad, Birim sütunlarını oku
-  - [ ] Boş/hatalı satırları filtrele
-- [ ] Şablon oluşturucu (`excel_writer.py`)
-  - [ ] Karar Tutanağı formatını oluştur
-  - [ ] Otomatik alanları doldur
-- [ ] Formül oluşturucu (`formula_builder.py`)
-  - [ ] Prim günü formülleri
-  - [ ] Toplam formülleri
-  - [ ] Ünvan/Derece/Kademe formülleri
+- [x] Kaynak Excel okuyucu (`excel_reader.py`)
+  - [x] TCKN, Ad Soyad, Birim sütunlarını oku
+  - [x] Boş/hatalı satırları filtrele
+- [x] Şablon oluşturucu (`excel_writer.py`)
+  - [x] Karar Tutanağı formatını oluştur
+  - [x] Otomatik alanları doldur
+- [x] Formül oluşturucu (`formula_builder.py`)
+  - [x] Prim günü formülleri
+  - [x] Toplam formülleri
+  - [x] Ünvan/Derece/Kademe formülleri
 
 ### Faz 3: GUI Geliştirme
 - [ ] PyQt6 ana pencere tasarımı
