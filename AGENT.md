@@ -8,7 +8,7 @@ Bu proje, 2026 yılında işe başlayan personel için **Derece-Kademe (D-K) Kar
 
 ## 📁 Girdi Dosyaları
 
-### 1. `girdi.xlsx`
+### 1. `coklu_girdi.xlsx`
 - **Amaç**: Personel temel bilgilerinin kaynağı
 - **Kullanılacak Sütunlar**:
   - `TCKN` → TC Kimlik No
@@ -48,7 +48,7 @@ Bu proje, 2026 yılında işe başlayan personel için **Derece-Kademe (D-K) Kar
 ┌─────────────────────────────────────────────────────────────────┐
 │  1. Kullanıcı PyQt GUI'yi başlatır                              │
 ├─────────────────────────────────────────────────────────────────┤
-│  2. "girdi.xlsx" dosyasını seçer     │
+│  2. "coklu_girdi.xlsx" dosyasını seçer     │
 ├─────────────────────────────────────────────────────────────────┤
 │  3. Uygulama her personel için:                                 │
 │     a) TCKN, Ad Soyad, Birim bilgilerini okur                   │
@@ -330,7 +330,7 @@ dk-tutanak-olusturucu/
 
 | Dosya | Açıklama |
 |-------|----------|
-| `girdi.xlsx` | Personel listesi kaynağı |
+| `coklu_girdi.xlsx` | Personel listesi kaynağı |
 | `cikti_ornegi.xlsx` | Çıktı şablonu |
 | `kidem_tablosu.pdf` | Ünvan/Derece/Kademe kuralları |
 

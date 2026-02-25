@@ -1,7 +1,7 @@
 """
 Kaynak Excel dosyasından personel verilerini okuyan modül.
 
-Kaynak dosya: ``girdi.xlsx``
+Kaynak dosya örneği: ``coklu_girdi.xlsx``
 
 Kullanılan sütunlar: TCKN, AD SOYAD, BİRİMİ
 """
