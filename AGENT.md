@@ -8,7 +8,7 @@ Bu proje, 2026 yılında işe başlayan personel için **Derece-Kademe (D-K) Kar
 
 ## 📁 Girdi Dosyaları
 
-### 1. `2026 yılı işe başlayan güncel V2.xlsx`
+### 1. `girdi.xlsx`
 - **Amaç**: Personel temel bilgilerinin kaynağı
 - **Kullanılacak Sütunlar**:
   - `TCKN` → TC Kimlik No
@@ -16,14 +16,14 @@ Bu proje, 2026 yılında işe başlayan personel için **Derece-Kademe (D-K) Kar
   - `BİRİMİ` → Enstitü/Birim bilgisi
 - **Yaklaşık Kayıt Sayısı**: ~300 (değişken)
 
-### 2. `EN YENİ DK format1 v2.xlsx`
+### 2. `cikti_ornegi.xlsx`
 - **Amaç**: Çıktı dosyası şablonu (Karar Tutanağı formatı)
 - **İşaretleme Sistemi**:
   - `o` → Otomatik doldurulacak (kaynak dosyadan)
   - `h` → Hesaplanacak (Excel formülü ile)
   - `e` → Elle girilecek (kullanıcı tarafından)
 
-### 3. `İlk atama D-K Tablosu.pdf`
+### 3. `kidem_tablosu.pdf`
 - **Amaç**: Ünvan, Derece, Kademe belirleme kuralları
 - **Parametreler**:
   - Öğrenim Durumu (Lisans, Tezsiz YL, Tezli YL, Doktora)
@@ -38,7 +38,7 @@ Bu proje, 2026 yılında işe başlayan personel için **Derece-Kademe (D-K) Kar
 - **Format**: Tek Excel dosyası, her personel için ayrı sayfa (sheet)
 - **Sayfa Adı Formatı**: `{Ad Soyad} - {TCKN}`
   - Örnek: `Fatma KARACA - 33755123380`
-- **Her Sayfa İçeriği**: `EN YENİ DK format1 v2.xlsx` formatında Karar Tutanağı
+- **Her Sayfa İçeriği**: `cikti_ornegi.xlsx` formatında Karar Tutanağı
 
 ---
 
@@ -48,7 +48,7 @@ Bu proje, 2026 yılında işe başlayan personel için **Derece-Kademe (D-K) Kar
 ┌─────────────────────────────────────────────────────────────────┐
 │  1. Kullanıcı PyQt GUI'yi başlatır                              │
 ├─────────────────────────────────────────────────────────────────┤
-│  2. "2026 yılı işe başlayan güncel V2.xlsx" dosyasını seçer     │
+│  2. "girdi.xlsx" dosyasını seçer     │
 ├─────────────────────────────────────────────────────────────────┤
 │  3. Uygulama her personel için:                                 │
 │     a) TCKN, Ad Soyad, Birim bilgilerini okur                   │
@@ -330,9 +330,9 @@ dk-tutanak-olusturucu/
 
 | Dosya | Açıklama |
 |-------|----------|
-| `2026 yılı işe başlayan güncel V2.xlsx` | Personel listesi kaynağı |
-| `EN YENİ DK format1 v2.xlsx` | Çıktı şablonu |
-| `İlk atama D-K Tablosu.pdf` | Ünvan/Derece/Kademe kuralları |
+| `girdi.xlsx` | Personel listesi kaynağı |
+| `cikti_ornegi.xlsx` | Çıktı şablonu |
+| `kidem_tablosu.pdf` | Ünvan/Derece/Kademe kuralları |
 
 ---
 

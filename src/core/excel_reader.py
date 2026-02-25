@@ -1,7 +1,7 @@
 """
 Kaynak Excel dosyasından personel verilerini okuyan modül.
 
-Kaynak dosya: ``2026 yılı işe başlayan güncel V2.xlsx``
+Kaynak dosya: ``girdi.xlsx``
 
 Kullanılan sütunlar: TCKN, AD SOYAD, BİRİMİ
 """

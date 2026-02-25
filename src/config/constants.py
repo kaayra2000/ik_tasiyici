@@ -31,7 +31,7 @@ OUTPUT_FILENAME: str = "DK_Tutanaklari_2026.xlsx"
 MAX_SHEET_NAME_LEN: int = 31
 
 #: Kullanılacak excel şablon dosyası
-TEMPLATE_PATH: str = "docs/taslak_dolu.xlsx"
+TEMPLATE_PATH: str = "docs/cikti_taslagi_dolu.xlsx"
 
 # ---------------------------------------------------------------------------
 # Mesleki tecrübe satır aralığı (karar tutanağı şablonunda)

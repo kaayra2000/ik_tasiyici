@@ -1,7 +1,7 @@
 """
 Çıktı Excel dosyasını oluşturan modül.
 
-Her personel için ``EN YENİ DK format1 v2.xlsx`` şablonunu kopyalarak bir sayfa oluşturur
+Her personel için ``cikti_ornegi.xlsx`` şablonunu kopyalarak bir sayfa oluşturur
 ve tüm sayfaları tek bir ``DK_Tutanaklari_2026.xlsx`` dosyasında birleştirir.
 """
 
