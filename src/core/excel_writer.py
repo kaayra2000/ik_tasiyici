@@ -187,5 +187,6 @@ def _yaz_hesap_satirlari(ws) -> None:
     # E3: Ünvan
     ws[_HUCRE_UNVAN] = unvan_formulu(_TECRUBE_YILI_HUCRE)
     
-    # F3: Derece/Kademe (Hizmet Grubu / Kademe) = Z2 & "/" & Z3
-    ws[_HUCRE_KADEME] = '=Z2 & "/" & Z3'
+    # F3: Derece/Kademe (Hizmet Grubu / Kademe)
+    # Eğer Kademe (Z3) boş dönerse sadece Hizmet Grubu (Z2) yazılması sağlanır (sondaki '/' işaretini önlemek için)
+    ws[_HUCRE_KADEME] = '=IF(Z3="", Z2, Z2 & "/" & Z3)'
