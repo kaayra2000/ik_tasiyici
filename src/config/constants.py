@@ -31,14 +31,15 @@ OUTPUT_FILENAME: str = "DK_Tutanaklari_2026.xlsx"
 MAX_SHEET_NAME_LEN: int = 31
 
 #: Kullanılacak excel şablon dosyası
-TEMPLATE_PATH: str = "docs/taslak.xlsx"
+TEMPLATE_PATH: str = "docs/taslak_dolu.xlsx"
 
 # ---------------------------------------------------------------------------
 # Mesleki tecrübe satır aralığı (karar tutanağı şablonunda)
 # ---------------------------------------------------------------------------
 
-#: Tecrübe satırlarının başladığı satır numarası (1-indexed)
-TECRUBE_BASLANGIC_SATIR: int = 10
+#: Tecrübe satırlarının başladığı satır numarası (1-indexed).
+#: Satır 10 başlık satırı olduğundan veriler 11'den başlar.
+TECRUBE_BASLANGIC_SATIR: int = 11
 
 #: Tecrübe satırlarının bittiği satır numarası (varsayılan)
 TECRUBE_BITIS_SATIR: int = 18

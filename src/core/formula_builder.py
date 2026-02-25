@@ -1,8 +1,9 @@
 """
 Excel formülleri üretici modülü.
 
-Tüm fonksiyonlar Türkçe Excel formül adlarını kullanır
-(kullanıcının varsayılan dil ayarına göre: ``EĞER``, ``TOPLA``, ``VE``).
+openpyxl / OOXML standardı İngilizce fonksiyon adları kullanır.
+LibreOffice ve Excel, dosyayı açarken formülleri otomatik olarak
+kullanıcının arayüz diline çevirir.
 
 Formül mantığı AGENT.md §Excel Formül Gereksinimleri bölümünden alınmıştır.
 """
@@ -33,16 +34,16 @@ def prim_gunu_formulu(satir: int) -> str:
     Başlangıç ve bitiş tarihi doluysa gün farkını hesaplar, aksi hâlde boş döner.
 
     :param satir: Hedef Excel satır numarası (1-indexed).
-    :returns: Türkçe Excel formülü string'i.
+    :returns: OOXML uyumlu İngilizce Excel formülü string'i.
 
     Örnek::
 
-        prim_gunu_formulu(10)
-        # =EĞER(VE(D10<>"";E10<>"");E10-D10;"")
+        prim_gunu_formulu(11)
+        # =IF(AND(E11<>"",F11<>""),F11-E11,"")
     """
     d = f"{COL_BASLANGIC_TARIHI}{satir}"
     e = f"{COL_BITIS_TARIHI}{satir}"
-    return f'=EĞER(VE({d}<>"";{e}<>"");{e}-{d};"")'
+    return f'=IF(AND({d}<>"",{e}<>""),{e}-{d},"")'
 
 
 def alanda_prim_formulu(satir: int) -> str:
@@ -52,16 +53,16 @@ def alanda_prim_formulu(satir: int) -> str:
     "Alanında" sütunu "E" ise o satırın toplam prim günü değerini alır.
 
     :param satir: Hedef Excel satır numarası (1-indexed).
-    :returns: Türkçe Excel formülü string'i.
+    :returns: OOXML uyumlu İngilizce Excel formülü string'i.
 
     Örnek::
 
-        alanda_prim_formulu(10)
-        # =EĞER(J10="E";K10;"")
+        alanda_prim_formulu(11)
+        # =IF(J11="E",K11,"")
     """
     j = f"{COL_ALANINDA}{satir}"
     k = f"{COL_TOPLAM_PRIM}{satir}"
-    return f'=EĞER({j}="E";{k};"")'
+    return f'=IF({j}="E",{k},"")'
 
 
 # ---------------------------------------------------------------------------
@@ -78,9 +79,9 @@ def toplam_prim_formulu(
 
     :param bitis_satir: Son tecrübe satırının numarası.
     :param baslangic_satir: İlk tecrübe satırının numarası.
-    :returns: ``=TOPLA(K10:K{n})`` biçiminde formül.
+    :returns: ``=SUM(K11:K{n})`` biçiminde formül.
     """
-    return f"=TOPLA({COL_TOPLAM_PRIM}{baslangic_satir}:{COL_TOPLAM_PRIM}{bitis_satir})"
+    return f"=SUM({COL_TOPLAM_PRIM}{baslangic_satir}:{COL_TOPLAM_PRIM}{bitis_satir})"
 
 
 def toplam_alanda_prim_formulu(
@@ -92,9 +93,9 @@ def toplam_alanda_prim_formulu(
 
     :param bitis_satir: Son tecrübe satırının numarası.
     :param baslangic_satir: İlk tecrübe satırının numarası.
-    :returns: ``=TOPLA(L10:L{n})`` biçiminde formül.
+    :returns: ``=SUM(L11:L{n})`` biçiminde formül.
     """
-    return f"=TOPLA({COL_ALANDA_PRIM}{baslangic_satir}:{COL_ALANDA_PRIM}{bitis_satir})"
+    return f"=SUM({COL_ALANDA_PRIM}{baslangic_satir}:{COL_ALANDA_PRIM}{bitis_satir})"
 
 
 # ---------------------------------------------------------------------------
@@ -109,13 +110,13 @@ def tecrube_yili_formulu(alanda_toplam_hucre: str) -> str:
     Alanda toplam prim gününü ``GUN_PER_YIL`` (360) e böler.
 
     :param alanda_toplam_hucre: Alanda toplam prim gününün bulunduğu hücre adresi
-        (ör. ``"L27"``).
+        (ör. ``"L19"``).
     :returns: Bölme formülü string'i.
 
     Örnek::
 
-        tecrube_yili_formulu("L27")
-        # =L27/360
+        tecrube_yili_formulu("L19")
+        # =L19/360
     """
     return f"={alanda_toplam_hucre}/{GUN_PER_YIL}"
 
@@ -138,15 +139,15 @@ def en_yuksek_ogrenim_formulu(
     """
     Alanında okunan en yüksek öğrenim seviyesini dönen formülü üretir.
 
-    her öğrenim seviyesi için hem öğrenim hücresi dolu, hem de "alanında" E olmalıdır.
+    Her öğrenim seviyesi için hem öğrenim hücresi dolu, hem de "alanında" E olmalıdır.
 
-    :returns: İç içe EĞER formülü string'i.
+    :returns: İç içe IF formülü string'i.
     """
     return (
-        f'=EĞER(VE({doktora_hucre}<>"";{doktora_alaninda_hucre}="E");"Doktora";'
-        f'EĞER(VE({tezli_yl_hucre}<>"";{tezli_yl_alaninda_hucre}="E");"Tezli YL";'
-        f'EĞER(VE({tezsiz_yl_hucre}<>"";{tezsiz_yl_alaninda_hucre}="E");"Tezsiz YL";'
-        f'EĞER(VE({lisans_hucre}<>"";{lisans_alaninda_hucre}="E");"Lisans";""))))'
+        f'=IF(AND({doktora_hucre}<>"",{doktora_alaninda_hucre}="E"),"Doktora",'
+        f'IF(AND({tezli_yl_hucre}<>"",{tezli_yl_alaninda_hucre}="E"),"Tezli YL",'
+        f'IF(AND({tezsiz_yl_hucre}<>"",{tezsiz_yl_alaninda_hucre}="E"),"Tezsiz YL",'
+        f'IF(AND({lisans_hucre}<>"",{lisans_alaninda_hucre}="E"),"Lisans",""))))'
     )
 
 
@@ -161,15 +162,15 @@ def unvan_formulu(tecrube_yili_hucre: str) -> str:
 
     Eşik değerleri AGENT.md §Ünvan/Derece/Kademe Hesaplama bölümünden alınmıştır.
 
-    :param tecrube_yili_hucre: Tecrübe yılı değerinin bulunduğu hücre (ör. ``"N27"``).
-    :returns: İç içe EĞER formülü string'i.
+    :param tecrube_yili_hucre: Tecrübe yılı değerinin bulunduğu hücre (ör. ``"Z1"``).
+    :returns: İç içe IF formülü string'i.
     """
     t = tecrube_yili_hucre
     return (
-        f'=EĞER({t}>=16;"Kıdemli Başuzman";'
-        f'EĞER({t}>=12;"Başuzman";'
-        f'EĞER({t}>=8;"Kıdemli Uzman";'
-        f'EĞER({t}>=3;"Uzman";"Uzman Yardımcısı"))))'
+        f'=IF({t}>=16,"Kıdemli Başuzman",'
+        f'IF({t}>=12,"Başuzman",'
+        f'IF({t}>=8,"Kıdemli Uzman",'
+        f'IF({t}>=3,"Uzman","Uzman Yardımcısı"))))'
     )
 
 
@@ -178,14 +179,14 @@ def hizmet_grubu_formulu(tecrube_yili_hucre: str) -> str:
     Tecrübe yılına göre hizmet grubunu belirleyen formülü üretir.
 
     :param tecrube_yili_hucre: Tecrübe yılı değerinin bulunduğu hücre.
-    :returns: İç içe EĞER formülü string'i.
+    :returns: İç içe IF formülü string'i.
     """
     t = tecrube_yili_hucre
     return (
-        f'=EĞER({t}>=16;"A/AG-2";'
-        f'EĞER({t}>=12;"A/AG-3";'
-        f'EĞER({t}>=8;"A/AG-4";'
-        f'EĞER({t}>=3;"A/AG-5";"A/AG-6"))))'
+        f'=IF({t}>=16,"A/AG-2",'
+        f'IF({t}>=12,"A/AG-3",'
+        f'IF({t}>=8,"A/AG-4",'
+        f'IF({t}>=3,"A/AG-5","A/AG-6"))))'
     )
 
 
@@ -199,75 +200,75 @@ def kademe_formulu(
     D-K Tablosundaki matrise göre oluşturulmuştur (AGENT.md §Kademe Belirleme Matrisi).
     Formül önce hizmet grubunu (tecrübe aralığı), ardından öğrenim durumunu kontrol eder.
 
-    :param tecrube_yili_hucre: Tecrübe yılı hücresi (ör. ``"N27"``).
-    :param ogrenim_hucre: Öğrenim durumu hücresi (ör. ``"B5"``).
-    :returns: İç içe EĞER formülü string'i.
+    :param tecrube_yili_hucre: Tecrübe yılı hücresi (ör. ``"Z1"``).
+    :param ogrenim_hucre: Öğrenim durumu hücresi (ör. ``"C8"``).
+    :returns: İç içe IF formülü string'i.
     """
     t = tecrube_yili_hucre
     o = ogrenim_hucre
 
     # A/AG-2 (16+)
     ag2 = (
-        f'EĞER({o}="Lisans";"4";'
-        f'EĞER({o}="Tezsiz Yüksek Lisans";"3-4";'
-        f'EĞER({o}="Tezli Yüksek Lisans";"3";"3")))'
+        f'IF({o}="Lisans","4",'
+        f'IF({o}="Tezsiz Yüksek Lisans","3-4",'
+        f'IF({o}="Tezli Yüksek Lisans","3","3")))'
     )
 
     # A/AG-3 (12-16)
     ag3_low = (
-        f'EĞER({o}="Lisans";"5";'
-        f'EĞER({o}="Tezsiz Yüksek Lisans";"5";'
-        f'EĞER({o}="Tezli Yüksek Lisans";"4";"2")))'
+        f'IF({o}="Lisans","5",'
+        f'IF({o}="Tezsiz Yüksek Lisans","5",'
+        f'IF({o}="Tezli Yüksek Lisans","4","2")))'
     )
     ag3_high = (
-        f'EĞER({o}="Lisans";"3";'
-        f'EĞER({o}="Tezsiz Yüksek Lisans";"3";'
-        f'EĞER({o}="Tezli Yüksek Lisans";"2";"2")))'
+        f'IF({o}="Lisans","3",'
+        f'IF({o}="Tezsiz Yüksek Lisans","3",'
+        f'IF({o}="Tezli Yüksek Lisans","2","2")))'
     )
-    ag3 = f'EĞER({t}<14;{ag3_low};{ag3_high})'
+    ag3 = f'IF({t}<14,{ag3_low},{ag3_high})'
 
     # A/AG-4 (8-12)
     ag4_low = (
-        f'EĞER({o}="Lisans";"5";'
-        f'EĞER({o}="Tezsiz Yüksek Lisans";"5";'
-        f'EĞER({o}="Tezli Yüksek Lisans";"4";"3")))'
+        f'IF({o}="Lisans","5",'
+        f'IF({o}="Tezsiz Yüksek Lisans","5",'
+        f'IF({o}="Tezli Yüksek Lisans","4","3")))'
     )
     ag4_high = (
-        f'EĞER({o}="Lisans";"3";'
-        f'EĞER({o}="Tezsiz Yüksek Lisans";"3";'
-        f'EĞER({o}="Tezli Yüksek Lisans";"3";"3")))'
+        f'IF({o}="Lisans","3",'
+        f'IF({o}="Tezsiz Yüksek Lisans","3",'
+        f'IF({o}="Tezli Yüksek Lisans","3","3")))'
     )
-    ag4 = f'EĞER({t}<9;{ag4_low};{ag4_high})'
+    ag4 = f'IF({t}<9,{ag4_low},{ag4_high})'
 
     # A/AG-5 (3-8)
     ag5_low = (
-        f'EĞER({o}="Lisans";"5";'
-        f'EĞER({o}="Tezsiz Yüksek Lisans";"5";'
-        f'EĞER({o}="Tezli Yüksek Lisans";"4";"2")))'
+        f'IF({o}="Lisans","5",'
+        f'IF({o}="Tezsiz Yüksek Lisans","5",'
+        f'IF({o}="Tezli Yüksek Lisans","4","2")))'
     )
     ag5_high = (
-        f'EĞER({o}="Lisans";"3";'
-        f'EĞER({o}="Tezsiz Yüksek Lisans";"3";'
-        f'EĞER({o}="Tezli Yüksek Lisans";"2";"2")))'
+        f'IF({o}="Lisans","3",'
+        f'IF({o}="Tezsiz Yüksek Lisans","3",'
+        f'IF({o}="Tezli Yüksek Lisans","2","2")))'
     )
-    ag5 = f'EĞER({t}<5;{ag5_low};{ag5_high})'
+    ag5 = f'IF({t}<5,{ag5_low},{ag5_high})'
 
     # A/AG-6 (0-3)
     ag6_low = (
-        f'EĞER({o}="Lisans";"5-6";'
-        f'EĞER({o}="Tezsiz Yüksek Lisans";"5-6";'
-        f'EĞER({o}="Tezli Yüksek Lisans";"3";"")))'
+        f'IF({o}="Lisans","5-6",'
+        f'IF({o}="Tezsiz Yüksek Lisans","5-6",'
+        f'IF({o}="Tezli Yüksek Lisans","3","")))'
     )
     ag6_high = (
-        f'EĞER({o}="Lisans";"3-4";'
-        f'EĞER({o}="Tezsiz Yüksek Lisans";"3-4";'
-        f'EĞER({o}="Tezli Yüksek Lisans";"2";"")))'
+        f'IF({o}="Lisans","3-4",'
+        f'IF({o}="Tezsiz Yüksek Lisans","3-4",'
+        f'IF({o}="Tezli Yüksek Lisans","2","")))'
     )
-    ag6 = f'EĞER({t}<2;{ag6_low};{ag6_high})'
+    ag6 = f'IF({t}<2,{ag6_low},{ag6_high})'
 
     return (
-        f'=EĞER({t}>=16;{ag2};'
-        f'EĞER({t}>=12;{ag3};'
-        f'EĞER({t}>=8;{ag4};'
-        f'EĞER({t}>=3;{ag5};{ag6}))))'
+        f'=IF({t}>=16,{ag2},'
+        f'IF({t}>=12,{ag3},'
+        f'IF({t}>=8,{ag4},'
+        f'IF({t}>=3,{ag5},{ag6}))))'
     )

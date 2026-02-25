@@ -16,7 +16,7 @@ from src.core.excel_reader import Personel
 from src.core.excel_writer import (
     _sayfa_adi_olustur,
     olustur_dk_bytes,
-    _SATIR_UNVAN,
+    _HUCRE_UNVAN,
 )
 from src.config.constants import TECRUBE_BASLANGIC_SATIR
 
@@ -112,18 +112,18 @@ class TestOlusturDkBytes:
         assert ws["B3"].value == "Fatma KARACA"
 
     def test_tckn_hucrede(self, tek_personel):
-        """TCKN değeri B4 hücresine yazılmalı."""
+        """TCKN değeri C3 hücresine yazılmalı."""
         data = olustur_dk_bytes(tek_personel)
         wb = _workbook_from_bytes(data)
         ws = wb.worksheets[0]
-        assert ws["B4"].value == "10000000146"
+        assert ws["C3"].value == "10000000146"
 
     def test_birim_hucrede(self, tek_personel):
-        """Birim değeri B5 hücresine yazılmalı."""
+        """Birim değeri D3 hücresine yazılmalı."""
         data = olustur_dk_bytes(tek_personel)
         wb = _workbook_from_bytes(data)
         ws = wb.worksheets[0]
-        assert ws["B5"].value == "Marmara Enstitüsü"
+        assert ws["D3"].value == "Marmara Enstitüsü"
 
     def test_tecrube_formulleri_var(self, tek_personel):
         """Tecrübe satırlarında K sütununda formül olmalı."""
@@ -165,6 +165,6 @@ class TestOlusturDkBytes:
         data = olustur_dk_bytes(tek_personel)
         wb = _workbook_from_bytes(data)
         ws = wb.worksheets[0]
-        unvan_hucre = ws.cell(row=_SATIR_UNVAN, column=2).value
+        unvan_hucre = ws[_HUCRE_UNVAN].value
         assert unvan_hucre is not None
         assert str(unvan_hucre).startswith("=")

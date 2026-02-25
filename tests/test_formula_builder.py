@@ -1,8 +1,11 @@
 """
 formula_builder modülü için testler.
 
-Her formül fonksiyonunun beklenen Türkçe Excel formülünü
+Her formül fonksiyonunun beklenen OOXML uyumlu İngilizce Excel formülünü
 üretip üretmediği kontrol edilir.
+
+Not: openpyxl OOXML standardı gereği İngilizce fonksiyon adları kullanır.
+LibreOffice/Excel bunları kullanıcı diline otomatik çevirir.
 """
 
 from __future__ import annotations
@@ -27,17 +30,17 @@ class TestPrimGunuFormulu:
 
     def test_satir_10(self):
         sonuc = prim_gunu_formulu(10)
-        assert sonuc == '=EĞER(VE(D10<>"";E10<>"");E10-D10;"")'
+        assert sonuc == '=IF(AND(E10<>"",F10<>""),F10-E10,"")'
 
     def test_satir_25(self):
         sonuc = prim_gunu_formulu(25)
-        assert sonuc == '=EĞER(VE(D25<>"";E25<>"");E25-D25;"")'
+        assert sonuc == '=IF(AND(E25<>"",F25<>""),F25-E25,"")'
 
     def test_egitim_iceriyor(self):
-        """Formül EĞER ve VE anahtar kelimelerini içermeli."""
+        """Formül IF ve AND anahtar kelimelerini içermeli (OOXML standardı)."""
         sonuc = prim_gunu_formulu(15)
-        assert "EĞER" in sonuc
-        assert "VE" in sonuc
+        assert "IF" in sonuc
+        assert "AND" in sonuc
 
 
 class TestAlandaPrimFormulu:
@@ -45,11 +48,11 @@ class TestAlandaPrimFormulu:
 
     def test_satir_10(self):
         sonuc = alanda_prim_formulu(10)
-        assert sonuc == '=EĞER(J10="E";K10;"")'
+        assert sonuc == '=IF(J10="E",K10,"")'
 
     def test_satir_20(self):
         sonuc = alanda_prim_formulu(20)
-        assert sonuc == '=EĞER(J20="E";K20;"")'
+        assert sonuc == '=IF(J20="E",K20,"")'
 
     def test_e_harfi_iceriyor(self):
         """Formül 'E' koşulunu içermeli."""
@@ -62,14 +65,16 @@ class TestToplamPrimFormulu:
 
     def test_varsayilan_aralik(self):
         sonuc = toplam_prim_formulu()
-        assert sonuc == "=TOPLA(K10:K25)"
+        # TECRUBE_BASLANGIC_SATIR=11, TECRUBE_BITIS_SATIR=18
+        assert sonuc == "=SUM(K11:K18)"
 
     def test_ozel_aralik(self):
         sonuc = toplam_prim_formulu(bitis_satir=30, baslangic_satir=10)
-        assert sonuc == "=TOPLA(K10:K30)"
+        assert sonuc == "=SUM(K10:K30)"
 
     def test_topla_iceriyor(self):
-        assert "TOPLA" in toplam_prim_formulu()
+        """OOXML standardında SUM kullanılır."""
+        assert "SUM" in toplam_prim_formulu()
 
 
 class TestToplamAlandaPrimFormulu:
@@ -77,11 +82,12 @@ class TestToplamAlandaPrimFormulu:
 
     def test_varsayilan_aralik(self):
         sonuc = toplam_alanda_prim_formulu()
-        assert sonuc == "=TOPLA(L10:L25)"
+        # TECRUBE_BASLANGIC_SATIR=11, TECRUBE_BITIS_SATIR=18
+        assert sonuc == "=SUM(L11:L18)"
 
     def test_ozel_aralik(self):
         sonuc = toplam_alanda_prim_formulu(bitis_satir=20)
-        assert sonuc == "=TOPLA(L10:L20)"
+        assert sonuc == "=SUM(L11:L20)"
 
 
 class TestTecrübeYiliFormulu:
