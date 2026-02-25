@@ -30,6 +30,9 @@ OUTPUT_FILENAME: str = "DK_Tutanaklari_2026.xlsx"
 #: Excel sayfa adı için maksimum uzunluk sınırı
 MAX_SHEET_NAME_LEN: int = 31
 
+#: Kullanılacak excel şablon dosyası
+TEMPLATE_PATH: str = "docs/taslak.xlsx"
+
 # ---------------------------------------------------------------------------
 # Mesleki tecrübe satır aralığı (karar tutanağı şablonunda)
 # ---------------------------------------------------------------------------
@@ -38,17 +41,17 @@ MAX_SHEET_NAME_LEN: int = 31
 TECRUBE_BASLANGIC_SATIR: int = 10
 
 #: Tecrübe satırlarının bittiği satır numarası (varsayılan)
-TECRUBE_BITIS_SATIR: int = 25
+TECRUBE_BITIS_SATIR: int = 18
 
 # ---------------------------------------------------------------------------
 # Sütun harfleri (karar tutanağı şablonunda)
 # ---------------------------------------------------------------------------
 
 #: Başlangıç tarihi sütunu
-COL_BASLANGIC_TARIHI: str = "D"
+COL_BASLANGIC_TARIHI: str = "E"
 
 #: Bitiş tarihi sütunu
-COL_BITIS_TARIHI: str = "E"
+COL_BITIS_TARIHI: str = "F"
 
 #: Alanında (E/H) sütunu
 COL_ALANINDA: str = "J"
