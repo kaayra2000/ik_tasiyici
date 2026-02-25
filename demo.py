@@ -14,7 +14,7 @@ from src.core.excel_writer import olustur_dk_dosyasi
 
 def main():
     # Kaynak dosya yolu (kendi yolunuza göre güncelleyebilirsiniz)
-    input_file = "docs/girdi.xlsx"
+    input_file = "docs/coklu_girdi.xlsx"
     
     print(f"[{input_file}] dosyası okunuyor...")
     try:
