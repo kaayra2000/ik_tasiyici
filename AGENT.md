@@ -240,7 +240,7 @@ PyQt6>=6.5.0         # GUI framework
 dk-tutanak-olusturucu/
 ├── AGENT.md
 ├── README.md
-├── requirements.txt
+├── pyproject.toml
 ├── src/
 │   ├── __init__.py
 │   ├── main.py              # Ana giriş noktası
@@ -274,7 +274,7 @@ dk-tutanak-olusturucu/
 
 ### Faz 1: Temel Altyapı
 - [ ] Proje yapısını oluştur
-- [ ] `requirements.txt` hazırla
+- [ ] `pyproject.toml` hazırla
 - [ ] TCKN validasyon fonksiyonunu yaz ve test et
 - [ ] D-K tablosu kurallarını `dk_table.py`'a aktar
 
