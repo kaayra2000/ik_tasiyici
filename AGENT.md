@@ -264,7 +264,7 @@ dk-tutanak-olusturucu/
 │   ├── test_validators.py
 │   ├── test_formula_builder.py
 │   └── test_dk_calculation.py
-└── data/
+└── docs/
     └── (örnek dosyalar)
 ```
 
@@ -273,10 +273,10 @@ dk-tutanak-olusturucu/
 ## 📋 Geliştirme Görevleri
 
 ### Faz 1: Temel Altyapı
-- [ ] Proje yapısını oluştur
-- [ ] `pyproject.toml` hazırla
-- [ ] TCKN validasyon fonksiyonunu yaz ve test et
-- [ ] D-K tablosu kurallarını `dk_table.py`'a aktar
+- [x] Proje yapısını oluştur
+- [x] `pyproject.toml` hazırla
+- [x] TCKN validasyon fonksiyonunu yaz ve test et
+- [x] D-K tablosu kurallarını `dk_table.py`'a aktar
 
 ### Faz 2: Excel İşlemleri
 - [ ] Kaynak Excel okuyucu (`excel_reader.py`)
