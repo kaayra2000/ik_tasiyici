@@ -7,11 +7,11 @@ Tüm sorumluluklar ilgili bileşenlere devredilmiştir (SRP).
 
 from __future__ import annotations
 
+from PyQt6.QtGui import QAction, QActionGroup
 from PyQt6.QtWidgets import (
-    QComboBox,
-    QHBoxLayout,
-    QLabel,
     QMainWindow,
+    QMenu,
+    QMenuBar,
     QMessageBox,
     QPushButton,
     QVBoxLayout,
@@ -50,8 +50,57 @@ class MainWindow(QMainWindow):
         self._settings = settings or SettingsManager()
         self._service = service or TutanakService()
 
+        self._init_menu_bar()
         self._init_ui()
         self._load_settings()
+
+    # ------------------------------------------------------------------
+    # Menü çubuğu
+    # ------------------------------------------------------------------
+
+    def _init_menu_bar(self) -> None:
+        """Üst menü çubuğunu oluşturur.
+
+        Her alt menü kendi oluşturma metoduna delege edilir (SRP).
+        Yeni bir menü eklemek için sadece yeni bir metod yazılıp
+        buraya eklenmesi yeterlidir (OCP).
+        """
+        menu_bar: QMenuBar = self.menuBar()
+        ayarlar_menu: QMenu = menu_bar.addMenu("Ayarlar")
+
+        self._init_version_menu(ayarlar_menu)
+
+    def _init_version_menu(self, parent_menu: QMenu) -> None:
+        """Çıktı sürümü alt menüsünü oluşturur.
+
+        :param parent_menu: Alt menünün ekleneceği üst menü.
+        """
+        version_menu = QMenu("Çıktı Sürümü", self)
+        parent_menu.addMenu(version_menu)
+
+        self._version_action_group = QActionGroup(self)
+        self._version_action_group.setExclusive(True)
+        self._version_actions: dict[str, QAction] = {}
+
+        for key, label in SUPPORTED_VERSIONS.items():
+            action = QAction(label, self, checkable=True)
+            action.setData(key)
+            self._version_action_group.addAction(action)
+            version_menu.addAction(action)
+            self._version_actions[key] = action
+
+        default_action = self._version_actions.get(DEFAULT_VERSION)
+        if default_action:
+            default_action.setChecked(True)
+
+        self._version_action_group.triggered.connect(self._on_version_changed)
+
+    def _get_selected_version(self) -> str:
+        """Menüden seçili çıktı versiyonunu döndürür."""
+        checked = self._version_action_group.checkedAction()
+        if checked:
+            return checked.data()
+        return DEFAULT_VERSION
 
     # ------------------------------------------------------------------
     # UI oluşturma
@@ -97,20 +146,6 @@ class MainWindow(QMainWindow):
         self._output_selector.file_selected.connect(self._on_output_selected)
         main_layout.addWidget(self._output_selector)
 
-        # -- Çıktı Versiyonu Seçimi --
-        version_layout = QHBoxLayout()
-        version_label = QLabel("Çıktı Versiyonu:")
-        self._version_combo = QComboBox()
-        self._version_combo.setObjectName("versionCombo")
-        for key, label in SUPPORTED_VERSIONS.items():
-            self._version_combo.addItem(label, key)
-        self._version_combo.currentIndexChanged.connect(
-            self._on_version_changed
-        )
-        version_layout.addWidget(version_label)
-        version_layout.addWidget(self._version_combo, 1)
-        main_layout.addLayout(version_layout)
-
         # -- Log Alanı --
         self._log_widget = LogWidget()
         main_layout.addWidget(self._log_widget)
@@ -153,9 +188,9 @@ class MainWindow(QMainWindow):
         saved_version = self._settings.get(
             SettingsManager.KEY_OUTPUT_VERSION, DEFAULT_VERSION
         )
-        idx = self._version_combo.findData(saved_version)
-        if idx >= 0:
-            self._version_combo.setCurrentIndex(idx)
+        action = self._version_actions.get(saved_version)
+        if action:
+            action.setChecked(True)
 
     # ------------------------------------------------------------------
     # Sinyal slotları
@@ -173,8 +208,8 @@ class MainWindow(QMainWindow):
         self._settings.set(SettingsManager.KEY_OUTPUT_PATH, path)
         self.log(f"Çıktı kayıt yeri belirlendi: {path}")
 
-    def _on_version_changed(self, index: int) -> None:
-        version = self._version_combo.currentData()
+    def _on_version_changed(self, action: QAction) -> None:
+        version = action.data()
         if version:
             self._settings.set(SettingsManager.KEY_OUTPUT_VERSION, version)
             self.log(f"Çıktı versiyonu değiştirildi: {SUPPORTED_VERSIONS.get(version, version)}")
@@ -241,7 +276,7 @@ class MainWindow(QMainWindow):
                 )
                 return
 
-            selected_version = self._version_combo.currentData() or DEFAULT_VERSION
+            selected_version = self._get_selected_version()
             self.log(f"DK tutanakları oluşturuluyor (versiyon: {selected_version})...")
             result_path = self._service.tutanak_olustur(
                 personeller=personeller,
