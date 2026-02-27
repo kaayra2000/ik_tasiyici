@@ -11,6 +11,7 @@ import datetime
 from io import BytesIO
 from pathlib import Path
 from typing import List
+from copy import copy
 
 import openpyxl
 from openpyxl import Workbook
@@ -125,6 +126,25 @@ def _workbook_olustur(personeller: List[Personel]) -> Workbook:
         sayfa_adi = _sayfa_adi_olustur(personel)
         ws = wb.copy_worksheet(template_ws)
         ws.title = sayfa_adi
+
+        # Şablondaki eksik kalan önemli biçimleri/kuralları manuel aktar
+        ws.conditional_formatting = copy(template_ws.conditional_formatting)
+        if hasattr(template_ws, 'data_validations'):
+            ws.data_validations = copy(template_ws.data_validations)
+        
+        ws.print_area = template_ws.print_area
+        ws.print_options = copy(template_ws.print_options)
+        ws.page_setup = copy(template_ws.page_setup)
+        ws.freeze_panes = template_ws.freeze_panes
+        
+        # Garanti olması için sütun/satır genişliklerini/yüksekliklerini aktar
+        for row_idx, row_dim in template_ws.row_dimensions.items():
+            ws.row_dimensions[row_idx] = copy(row_dim)
+            ws.row_dimensions[row_idx].worksheet = ws
+        for col_idx, col_dim in template_ws.column_dimensions.items():
+            ws.column_dimensions[col_idx] = copy(col_dim)
+            ws.column_dimensions[col_idx].worksheet = ws
+
         _sayfayi_doldur(ws, personel)
 
     # Orijinal şablon sayfasını kaldır
