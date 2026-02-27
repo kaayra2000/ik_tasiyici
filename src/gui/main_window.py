@@ -73,6 +73,7 @@ class MainWindow(QMainWindow):
         output_layout = QHBoxLayout()
         self.output_label = QLabel("Kayıt Yeri:")
         self.output_line_edit = QLineEdit()
+        self.output_line_edit.setReadOnly(True)
         self.output_button = QPushButton("Kayıt Yeri Seç")
         self.output_button.clicked.connect(self._select_output_file)
         
@@ -84,7 +85,7 @@ class MainWindow(QMainWindow):
         # -- Log Alanı --
         self.log_text_edit = QTextEdit()
         self.log_text_edit.setReadOnly(True)
-        main_layout.addWidget(QLabel("İşlem Logları:"))
+        main_layout.addWidget(QLabel("İşlem Sonuçları:"))
         main_layout.addWidget(self.log_text_edit)
 
         # -- Başlat Butonu --
