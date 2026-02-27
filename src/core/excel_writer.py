@@ -57,14 +57,12 @@ _SATIR_ALANDA_PRIM = TECRUBE_BITIS_SATIR + 1        # 19
 _TECRUBE_YILI_HUCRE = "Z1"
 _EN_YUKSEK_OGRENIM_HUCRE = "Z4"  # kademe formülü bu hücreye bakacak
 
-# Şablondaki öğrenim satırları (satır 6=Lisans, 7=YL, 8=Doktora)
-# C sütunu: okul adı (doluysa o öğrenim mevcut), K sütunu: Alanında (E/H)
-_LISANS_OKUL_HUCRE = "C6"
-_LISANS_ALANINDA_HUCRE = "K6"
-_YL_OKUL_HUCRE = "C7"
-_YL_ALANINDA_HUCRE = "K7"
-_DOKTORA_OKUL_HUCRE = "C8"
-_DOKTORA_ALANINDA_HUCRE = "K8"
+# Şablondaki öğrenim satırları parametreleri (B=Ad, C=Okul, K=Alanında)
+_OGRENIM_BAS_SATIR = 6
+_OGRENIM_BIT_SATIR = 8
+_OGRENIM_AD_SUTUN = "B"
+_OGRENIM_OKUL_SUTUN = "C"
+_OGRENIM_ALANINDA_SUTUN = "K"
 
 
 # ---------------------------------------------------------------------------
@@ -194,15 +192,13 @@ def _yaz_hesap_satirlari(ws) -> None:
     # Z1 = Tecrübe Yılı (alanda toplam prim / 360)
     ws["Z1"] = tecrube_yili_formulu(toplam_alanda_hucre)
 
-    # Z4 = En yüksek alanında öğrenim ("Lisans", "Yüksek Lisans", "Doktora" veya "")
-    # Şablonda: satır 6=Lisans, 7=YL, 8=Doktora; C sütunu=okul adı, K sütunu=Alanında (E/H)
+    # Z4 = En yüksek alanında öğrenim (B sütunundaki hücreden ismi okur)
     ws[_EN_YUKSEK_OGRENIM_HUCRE] = en_yuksek_ogrenim_formulu(
-        doktora_hucre=_DOKTORA_OKUL_HUCRE,
-        doktora_alaninda_hucre=_DOKTORA_ALANINDA_HUCRE,
-        yl_hucre=_YL_OKUL_HUCRE,
-        yl_alaninda_hucre=_YL_ALANINDA_HUCRE,
-        lisans_hucre=_LISANS_OKUL_HUCRE,
-        lisans_alaninda_hucre=_LISANS_ALANINDA_HUCRE,
+        baslangic_satir=_OGRENIM_BAS_SATIR,
+        bitis_satir=_OGRENIM_BIT_SATIR,
+        ad_sutun=_OGRENIM_AD_SUTUN,
+        okul_sutun=_OGRENIM_OKUL_SUTUN,
+        alaninda_sutun=_OGRENIM_ALANINDA_SUTUN,
     )
 
     # Z2 = Hizmet Grubu (A/AG-2 ... A/AG-6)

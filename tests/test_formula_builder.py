@@ -108,29 +108,20 @@ class TestTecrübeYiliFormulu:
 class TestEnYuksekOgrenimFormulu:
     """en_yuksek_ogrenim_formulu fonksiyonu için testler."""
 
-    def test_doktora_birinci_kontrol(self):
-        """Doktora kontrolü formülde en başta gelmeli."""
-        sonuc = en_yuksek_ogrenim_formulu(
-            "C8", "K8", "C7", "K7", "C6", "K6"
-        )
-        # Doktora ilk EĞER'de olmalı
-        assert '"Doktora"' in sonuc
-        assert sonuc.index('"Doktora"') < sonuc.index('"Tezli Yüksek Lisans"')
+    def test_doktora_ilk_kontrol(self):
+        """Doktora (satır 8) aralıktaki en büyük olduğu için (öncelikli) formülde en başta olmalı."""
+        sonuc = en_yuksek_ogrenim_formulu(6, 8, "B", "C", "K")
+        assert sonuc.startswith('=IF(AND(C8<>"",K8="E"),B8,')
 
     def test_lisans_son_kontrol(self):
-        """Lisans en sondaki EĞER'de olmalı."""
-        sonuc = en_yuksek_ogrenim_formulu(
-            "C8", "K8", "C7", "K7", "C6", "K6"
-        )
-        assert '"Lisans"' in sonuc
-        assert sonuc.index('"Lisans"') > sonuc.index('"Tezli Yüksek Lisans"')
+        """Lisans (satır 6) en düşük olduğu için en içteki EĞER'de olmalı."""
+        sonuc = en_yuksek_ogrenim_formulu(6, 8, "B", "C", "K")
+        assert 'IF(AND(C6<>"",K6="E"),B6,"")' in sonuc
 
     def test_hucre_referanslari_icerir(self):
-        """Fonksiyon argümanlarındaki hücre adlarını içermeli."""
-        sonuc = en_yuksek_ogrenim_formulu(
-            "C8", "K8", "C7", "K7", "C6", "K6"
-        )
-        for hucre in ["C8", "K8", "C7", "K7", "C6", "K6"]:
+        """Fonksiyon argümanlarındaki tüm hücre adlarını içermeli."""
+        sonuc = en_yuksek_ogrenim_formulu(6, 8, "B", "C", "K")
+        for hucre in ["C8", "K8", "B8", "C7", "K7", "B7", "C6", "K6", "B6"]:
             assert hucre in sonuc
 
 

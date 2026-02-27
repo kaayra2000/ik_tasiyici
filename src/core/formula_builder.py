@@ -127,33 +127,35 @@ def tecrube_yili_formulu(alanda_toplam_hucre: str) -> str:
 
 
 def en_yuksek_ogrenim_formulu(
-    doktora_hucre: str,
-    doktora_alaninda_hucre: str,
-    yl_hucre: str,
-    yl_alaninda_hucre: str,
-    lisans_hucre: str,
-    lisans_alaninda_hucre: str,
+    baslangic_satir: int = 6,
+    bitis_satir: int = 8,
+    ad_sutun: str = "B",
+    okul_sutun: str = "C",
+    alaninda_sutun: str = "K",
 ) -> str:
     """
-    Alanında okunan en yüksek öğrenim seviyesini dönen formülü üretir.
+    Belirtilen aralıkta alanında okunan en yüksek öğrenim seviyesini (adını) döndüren Excel formülünü üretir.
 
-    Şablonda tek bir "Yüksek Lisans" satırı bulunduğundan (tezli/tezsiz ayrımı yok)
-    YL satırı "Tezli Yüksek Lisans" olarak döndürülür.
-    Her öğrenim seviyesi için hem öğrenim hücresi dolu, hem de "alanında" E olmalıdır.
+    Daha yüksek satır numarasının (örneğin 8 - Doktora), daha düşük satır numarasına (örneğin 6 - Lisans)
+    göre daha üst bir öğrenim seviyesini ifade ettiği varsayılır. Bu nedenle en yüksek satırdan aşağıya (öncelikli)
+    doğru kontrol eden bir formül oluşturulur.
+    Her öğrenim seviyesi için okul hücresi dolu olmalı ve "alanında" hücresi "E" olmalıdır.
 
-    :param doktora_hucre: Doktora okul hücresi (ör. ``"C8"``).
-    :param doktora_alaninda_hucre: Doktora alanında hücresi (ör. ``"K8"``).
-    :param yl_hucre: Yüksek Lisans okul hücresi (ör. ``"C7"``).
-    :param yl_alaninda_hucre: YL alanında hücresi (ör. ``"K7"``).
-    :param lisans_hucre: Lisans okul hücresi (ör. ``"C6"``).
-    :param lisans_alaninda_hucre: Lisans alanında hücresi (ör. ``"K6"``).
+    :param baslangic_satir: Öğrenim bilgilerinin başladığı satır (ör. ``6``).
+    :param bitis_satir: Öğrenim bilgilerinin bittiği satır (ör. ``8``).
+    :param ad_sutun: Öğrenim adının (ör. Lisans, Doktora) bulunduğu sütun harfi (ör. ``"B"``).
+    :param okul_sutun: Okul adının bulunduğu sütun harfi (ör. ``"C"``).
+    :param alaninda_sutun: Alanında olup olmadığını ("E"/"H") belirten sütun harfi (ör. ``"K"``).
     :returns: İç içe IF formülü string'i.
     """
-    return (
-        f'=IF(AND({doktora_hucre}<>"",{doktora_alaninda_hucre}="E"),"Doktora",'
-        f'IF(AND({yl_hucre}<>"",{yl_alaninda_hucre}="E"),"Tezli Yüksek Lisans",'
-        f'IF(AND({lisans_hucre}<>"",{lisans_alaninda_hucre}="E"),"Lisans","")))'
-    )
+    formul = '""'
+    for satir in range(baslangic_satir, bitis_satir + 1):
+        okul = f"{okul_sutun}{satir}"
+        alaninda = f"{alaninda_sutun}{satir}"
+        ad = f"{ad_sutun}{satir}"
+        formul = f'IF(AND({okul}<>"",{alaninda}="E"),{ad},{formul})'
+
+    return f"={formul}"
 
 
 # ---------------------------------------------------------------------------
