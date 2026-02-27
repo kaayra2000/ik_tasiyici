@@ -1,0 +1,127 @@
+"""
+Yeniden kullanılabilir dosya seçim bileşeni.
+
+Label + ReadOnly QLineEdit + QPushButton kalıbını tek bir widget'ta
+kapsülleyerek DRY ve SRP ihlallerini giderir.
+"""
+
+from __future__ import annotations
+
+from enum import Enum, auto
+
+from PyQt6.QtCore import pyqtSignal
+from PyQt6.QtWidgets import (
+    QFileDialog,
+    QHBoxLayout,
+    QLabel,
+    QLineEdit,
+    QPushButton,
+    QWidget,
+)
+
+
+class DialogType(Enum):
+    """Dosya diyaloğu türü."""
+
+    OPEN = auto()
+    SAVE = auto()
+
+
+class FileSelectionWidget(QWidget):
+    """Label + ReadOnly LineEdit + Button dosya seçim bileşeni.
+
+    :param label_text: Sol taraftaki etiket metni.
+    :param button_text: Buton üzerindeki metin.
+    :param dialog_title: Dosya diyaloğu başlığı.
+    :param dialog_type: ``DialogType.OPEN`` veya ``DialogType.SAVE``.
+    :param file_filter: Dosya filtresi (ör. ``"Excel Files (*.xlsx)"``).
+    :param parent: Üst widget.
+
+    Signals:
+        file_selected(str): Dosya seçildiğinde yayınlanır.
+    """
+
+    file_selected = pyqtSignal(str)
+
+    def __init__(
+        self,
+        label_text: str,
+        button_text: str,
+        dialog_title: str,
+        dialog_type: DialogType = DialogType.OPEN,
+        file_filter: str = "Excel Files (*.xlsx *.xls)",
+        parent: QWidget | None = None,
+    ) -> None:
+        super().__init__(parent)
+        self._dialog_title = dialog_title
+        self._dialog_type = dialog_type
+        self._file_filter = file_filter
+
+        self._init_ui(label_text, button_text)
+
+    # ------------------------------------------------------------------
+    # UI oluşturma
+    # ------------------------------------------------------------------
+
+    def _init_ui(self, label_text: str, button_text: str) -> None:
+        layout = QHBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+
+        self._label = QLabel(label_text)
+        self._line_edit = QLineEdit()
+        self._line_edit.setReadOnly(True)
+        self._button = QPushButton(button_text)
+        self._button.clicked.connect(self._open_dialog)
+
+        layout.addWidget(self._label)
+        layout.addWidget(self._line_edit)
+        layout.addWidget(self._button)
+
+    # ------------------------------------------------------------------
+    # Public API
+    # ------------------------------------------------------------------
+
+    def get_path(self) -> str:
+        """Seçilen dosya yolunu döner."""
+        return self._line_edit.text().strip()
+
+    def set_path(self, path: str) -> None:
+        """Dosya yolunu programatik olarak ayarlar.
+
+        :param path: Gösterilecek dosya yolu.
+        """
+        self._line_edit.setText(path)
+
+    # ------------------------------------------------------------------
+    # Slot
+    # ------------------------------------------------------------------
+
+    def _open_dialog(self) -> None:
+        """Dialog türüne göre uygun QFileDialog açar."""
+        start_dir = self.get_path()
+
+        if self._dialog_type == DialogType.OPEN:
+            file_path, _ = QFileDialog.getOpenFileName(
+                self,
+                self._dialog_title,
+                start_dir,
+                self._file_filter,
+            )
+        else:
+            file_path, _ = QFileDialog.getSaveFileName(
+                self,
+                self._dialog_title,
+                start_dir,
+                self._file_filter,
+            )
+
+        if file_path:
+            # Save dialog için .xlsx uzantısı garantisi
+            if (
+                self._dialog_type == DialogType.SAVE
+                and not file_path.endswith(".xlsx")
+            ):
+                file_path += ".xlsx"
+
+            self._line_edit.setText(file_path)
+            self.file_selected.emit(file_path)
