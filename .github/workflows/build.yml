@@ -5,6 +5,10 @@ on:
     tags:
       - 'v*.*.0'
 
+# GitHub Releases oluşturabilmek için yazma izni veriyoruz
+permissions:
+  contents: write
+
 jobs:
   build:
     name: Build Executable on ${{ matrix.os }}
@@ -27,7 +31,7 @@ jobs:
       if: runner.os == 'Linux'
       run: |
         sudo apt-get update
-        sudo apt-get install -y libxcb-cursor0  # Genellikle PyQt6 için Ubuntu'da gerekli olabilir
+        sudo apt-get install -y libxcb-cursor0
 
     - name: Install Dependencies
       run: |
@@ -47,3 +51,20 @@ jobs:
           dist/DK_Tutanak_Olusturucu.exe
         if-no-files-found: warn
         retention-days: 7
+
+  release:
+    name: Create GitHub Release
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download all build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: build_artifacts
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: build_artifacts/**/*
+          generate_release_notes: true
