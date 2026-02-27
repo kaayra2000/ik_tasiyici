@@ -212,63 +212,34 @@ def kademe_formulu(
     t = tecrube_yili_hucre
     o = ogrenim_hucre
 
+    def branch(lisans: str, tezsiz: str, tezli: str, doktora: str) -> str:
+        return (
+            f'IF({o}="Lisans","{lisans}",'
+            f'IF({o}="Tezsiz Yüksek Lisans","{tezsiz}",'
+            f'IF({o}="Tezli Yüksek Lisans","{tezli}","{doktora}")))'
+        )
+
     # A/AG-2 (16+)
-    ag2 = (
-        f'IF({o}="Lisans","4",'
-        f'IF({o}="Tezsiz Yüksek Lisans","3-4",'
-        f'IF({o}="Tezli Yüksek Lisans","3","3")))'
-    )
+    ag2 = branch("3", "3", "2", "2")
 
     # A/AG-3 (12-16)
-    ag3_low = (
-        f'IF({o}="Lisans","5",'
-        f'IF({o}="Tezsiz Yüksek Lisans","5",'
-        f'IF({o}="Tezli Yüksek Lisans","4","2")))'
-    )
-    ag3_high = (
-        f'IF({o}="Lisans","3",'
-        f'IF({o}="Tezsiz Yüksek Lisans","3",'
-        f'IF({o}="Tezli Yüksek Lisans","2","2")))'
-    )
-    ag3 = f'IF({t}<15,{ag3_low},{ag3_high})'  # 12-14 yıl → low, 15-16 yıl → high
+    ag3_low = branch("5", "5", "4", "2")
+    ag3_high = branch("3", "3", "2", "2")
+    ag3 = f'IF({t}<15,{ag3_low},{ag3_high})'
 
     # A/AG-4 (8-12)
-    ag4_low = (
-        f'IF({o}="Lisans","5",'
-        f'IF({o}="Tezsiz Yüksek Lisans","5",'
-        f'IF({o}="Tezli Yüksek Lisans","4","3")))'
-    )
-    ag4_high = (
-        f'IF({o}="Lisans","3",'
-        f'IF({o}="Tezsiz Yüksek Lisans","3",'
-        f'IF({o}="Tezli Yüksek Lisans","3","3")))'
-    )
-    ag4 = f'IF({t}<10,{ag4_low},{ag4_high})'  # 8-9 yıl → low, 10-12 yıl → high
+    ag4_low = branch("5", "5", "4", "2")
+    ag4_high = branch("3", "3", "2", "2")
+    ag4 = f'IF({t}<10,{ag4_low},{ag4_high})'
 
     # A/AG-5 (3-8)
-    ag5_low = (
-        f'IF({o}="Lisans","5",'
-        f'IF({o}="Tezsiz Yüksek Lisans","5",'
-        f'IF({o}="Tezli Yüksek Lisans","4","2")))'
-    )
-    ag5_high = (
-        f'IF({o}="Lisans","3",'
-        f'IF({o}="Tezsiz Yüksek Lisans","3",'
-        f'IF({o}="Tezli Yüksek Lisans","2","2")))'
-    )
-    ag5 = f'IF({t}<6,{ag5_low},{ag5_high})'  # 3-5 yıl → low, 6-8 yıl → high
+    ag5_low = branch("5", "5", "4", "2")
+    ag5_high = branch("3", "3", "2", "2")
+    ag5 = f'IF({t}<6,{ag5_low},{ag5_high})'
 
-    # A/AG-6 (0-3) — Doktora → Tezli YL ile aynı ("3" / "2")
-    ag6_low = (
-        f'IF({o}="Lisans","5-6",'
-        f'IF({o}="Tezsiz Yüksek Lisans","5-6",'
-        f'IF({o}="Tezli Yüksek Lisans","3","3")))'
-    )
-    ag6_high = (
-        f'IF({o}="Lisans","3-4",'
-        f'IF({o}="Tezsiz Yüksek Lisans","3-4",'
-        f'IF({o}="Tezli Yüksek Lisans","2","2")))'
-    )
+    # A/AG-6 (0-3)
+    ag6_low = branch("5", "4", "3", "2")
+    ag6_high = branch("3", "3", "2", "2")
     ag6 = f'IF({t}<2,{ag6_low},{ag6_high})'
 
     return (
