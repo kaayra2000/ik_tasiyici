@@ -63,15 +63,10 @@ class MainWindow(QMainWindow):
         self.template_button = QPushButton("Taslak Seç")
         self.template_button.clicked.connect(self._select_template_file)
 
-        # Varsayılan Taslak Checkbox
-        self.default_template_checkbox = QCheckBox("Varsayılan taslağı kullan")
-        self.default_template_checkbox.stateChanged.connect(self._toggle_template_selection)
-
         template_layout.addWidget(self.template_label)
         template_layout.addWidget(self.template_line_edit)
         template_layout.addWidget(self.template_button)
 
-        main_layout.addWidget(self.default_template_checkbox)
         main_layout.addLayout(template_layout)
 
         # -- Çıktı Kayıt Yeri Seçimi --
@@ -100,48 +95,31 @@ class MainWindow(QMainWindow):
         main_layout.addWidget(self.start_button)
 
     def _load_settings(self):
-        """Uygulama açılırken son kaydedilen taslak yolunu ve ayarı yükler."""
+        """Uygulama açılırken son kaydedilen yolları yükler."""
         last_template_path = self.settings.value("last_template_path", "")
         last_output_path = self.settings.value("last_output_path", "")
-        use_default_val = self.settings.value("use_default_template", True)
         
-        # PyQt/PySide'da QSettings bazen bool kaydederken string'e ("true"/"false") çevirebilir.
-        if isinstance(use_default_val, str):
-            use_default = use_default_val.lower() == "true"
-        else:
-            use_default = bool(use_default_val)
+        from src.config.constants import OUTPUT_FILENAME, TEMPLATE_PATH
+        import os
         
+        # Çıktı Taslağı
         if last_template_path and Path(last_template_path).is_file():
             self.template_line_edit.setText(last_template_path)
+            self.log("Son kullanılan özel çıktı taslağı yüklendi.")
+        else:
+            # Kayıtlı taslak yoksa veya silinmişse, kod içindeki varsayılan taslağı göster
+            project_root = Path(__file__).resolve().parent.parent.parent
+            default_template = str(project_root / TEMPLATE_PATH)
+            self.template_line_edit.setText(default_template)
+            self.log("Varsayılan çıktı taslağı ayarı ile başlatıldı.")
             
-        from src.config.constants import OUTPUT_FILENAME
-        import os
+        # Kayıt Yeri
         if last_output_path:
             self.output_line_edit.setText(last_output_path)
         else:
             # Kayıtlı yer yoksa bulunulan dizini (pwd) baz al
             default_output = str(Path(os.getcwd()) / OUTPUT_FILENAME)
             self.output_line_edit.setText(default_output)
-            
-        self.default_template_checkbox.setChecked(use_default)
-        self._toggle_template_selection(Qt.CheckState.Checked.value if use_default else Qt.CheckState.Unchecked.value)
-        
-        if not use_default and last_template_path and Path(last_template_path).is_file():
-            self.log("Son kullanılan özel çıktı taslağı yüklendi.")
-        elif use_default:
-            self.log("Varsayılan çıktı taslağı ayarı ile başlatıldı.")
-
-    def _toggle_template_selection(self, state):
-        """Varsayılan taslak işaretlendiğinde özel taslak seçimini deaktif eder."""
-        is_checked = self.default_template_checkbox.isChecked()
-        self.template_button.setDisabled(is_checked)
-        
-        self.settings.setValue("use_default_template", is_checked)
-        
-        if is_checked:
-            self.template_line_edit.setStyleSheet("color: gray;")
-        else:
-            self.template_line_edit.setStyleSheet("")
 
     def _select_input_file(self):
         file_path, _ = QFileDialog.getOpenFileName(
@@ -209,15 +187,14 @@ class MainWindow(QMainWindow):
             QMessageBox.warning(self, "Uyarı", "Lütfen bir girdi dosyası seçin.")
             return
 
-        is_default_template = self.default_template_checkbox.isChecked()
         template_file = self.template_line_edit.text().strip()
 
-        if not is_default_template and not template_file:
-            QMessageBox.warning(self, "Uyarı", "Lütfen özel bir çıktı taslağı seçin veya 'Varsayılan taslağı kullan' seçeneğini işaretleyin.")
+        if not template_file:
+            QMessageBox.warning(self, "Uyarı", "Lütfen bir çıktı taslağı seçin.")
             return
             
-        if not is_default_template and not Path(template_file).is_file():
-            QMessageBox.warning(self, "Hata", "Seçilen özel taslak dosyası bulunamıyor. Lütfen geçerli bir dosya seçin.")
+        if not Path(template_file).is_file():
+            QMessageBox.warning(self, "Hata", "Seçilen taslak dosyası bulunamıyor. Lütfen geçerli bir dosya seçin.")
             return
 
         self.log("-" * 40)
@@ -236,7 +213,7 @@ class MainWindow(QMainWindow):
             self.log("DK tutanakları oluşturuluyor...")
             
             # Parametreleri hazırla
-            template_param = None if is_default_template else template_file
+            template_param = template_file
             
             # Çıktı yolu kontrolü
             output_full_path = self.output_line_edit.text().strip()

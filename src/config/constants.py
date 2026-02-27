@@ -25,7 +25,7 @@ COL_BIRIM: str = "BİRİMİ"
 # ---------------------------------------------------------------------------
 
 #: Çıktı Excel dosyasının varsayılan adı
-OUTPUT_FILENAME: str = "DK_Tutanaklari_2026.xlsx"
+OUTPUT_FILENAME: str = "DK_cikti.xlsx"
 
 #: Excel sayfa adı için maksimum uzunluk sınırı
 MAX_SHEET_NAME_LEN: int = 31
