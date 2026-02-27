@@ -10,9 +10,10 @@ QLabel {
     font-weight: 500;
 }
 
+/* Temel Buton Tasarımı */
 QPushButton {
-    background-color: #00a8ff;
-    color: white;
+    background-color: #dcdde1;
+    color: #2f3640;
     border: none;
     border-radius: 4px;
     padding: 8px 16px;
@@ -21,16 +22,47 @@ QPushButton {
 }
 
 QPushButton:hover {
-    background-color: #0097e6;
+    background-color: #c8d6e5;
 }
 
 QPushButton:pressed {
-    background-color: #0086cc;
+    background-color: #718093;
+    color: white;
 }
 
 QPushButton:disabled {
-    background-color: #dcdde1;
-    color: #7f8fa6;
+    background-color: #f5f6fa;
+    color: #b2bec3;
+}
+
+/* Ana İşlem Butonu (#startButton) */
+QPushButton#startButton {
+    background-color: #00a8ff;
+    color: white;
+    font-size: 14px;
+    padding: 10px 20px;
+}
+
+QPushButton#startButton:hover {
+    background-color: #0097e6;
+}
+
+QPushButton#startButton:pressed {
+    background-color: #0086cc;
+}
+
+/* Dosya Seçim vb. Yardımcı Butonlar (#actionButton) */
+QPushButton#actionButton {
+    background-color: #4cd137;
+    color: white;
+}
+
+QPushButton#actionButton:hover {
+    background-color: #44bd32;
+}
+
+QPushButton#actionButton:pressed {
+    background-color: #40739e;
 }
 
 QLineEdit {

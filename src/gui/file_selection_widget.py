@@ -71,6 +71,7 @@ class FileSelectionWidget(QWidget):
         self._line_edit = QLineEdit()
         self._line_edit.setReadOnly(True)
         self._button = QPushButton(button_text)
+        self._button.setObjectName("actionButton")
         self._button.clicked.connect(self._open_dialog)
 
         layout.addWidget(self._label)

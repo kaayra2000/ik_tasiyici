@@ -98,6 +98,7 @@ class MainWindow(QMainWindow):
 
         # -- Başlat Butonu --
         self._start_button = QPushButton("Tutanakları Oluştur")
+        self._start_button.setObjectName("startButton")
         self._start_button.setMinimumHeight(40)
         self._start_button.setStyleSheet(
             "font-weight: bold; font-size: 14px;"
