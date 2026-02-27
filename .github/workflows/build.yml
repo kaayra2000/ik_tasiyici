@@ -1,0 +1,49 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.0'
+
+jobs:
+  build:
+    name: Build Executable on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+        cache: 'pip'
+
+    - name: Install System Dependencies (Ubuntu)
+      if: runner.os == 'Linux'
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y libxcb-cursor0  # Genellikle PyQt6 için Ubuntu'da gerekli olabilir
+
+    - name: Install Dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -e .[dev]
+
+    - name: Build Executable
+      run: |
+        dk-tutanak-build
+
+    - name: Upload Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: DK_Tutanak_Olusturucu-${{ runner.os }}
+        path: |
+          dist/DK_Tutanak_Olusturucu
+          dist/DK_Tutanak_Olusturucu.exe
+        if-no-files-found: warn
+        retention-days: 7
