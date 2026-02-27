@@ -74,6 +74,18 @@ class MainWindow(QMainWindow):
         main_layout.addWidget(self.default_template_checkbox)
         main_layout.addLayout(template_layout)
 
+        # -- Çıktı Kayıt Yeri Seçimi --
+        output_layout = QHBoxLayout()
+        self.output_label = QLabel("Kayıt Yeri:")
+        self.output_line_edit = QLineEdit()
+        self.output_button = QPushButton("Kayıt Yeri Seç")
+        self.output_button.clicked.connect(self._select_output_file)
+        
+        output_layout.addWidget(self.output_label)
+        output_layout.addWidget(self.output_line_edit)
+        output_layout.addWidget(self.output_button)
+        main_layout.addLayout(output_layout)
+
         # -- Log Alanı --
         self.log_text_edit = QTextEdit()
         self.log_text_edit.setReadOnly(True)
@@ -90,6 +102,7 @@ class MainWindow(QMainWindow):
     def _load_settings(self):
         """Uygulama açılırken son kaydedilen taslak yolunu ve ayarı yükler."""
         last_template_path = self.settings.value("last_template_path", "")
+        last_output_path = self.settings.value("last_output_path", "")
         use_default_val = self.settings.value("use_default_template", True)
         
         # PyQt/PySide'da QSettings bazen bool kaydederken string'e ("true"/"false") çevirebilir.
@@ -100,6 +113,15 @@ class MainWindow(QMainWindow):
         
         if last_template_path and Path(last_template_path).is_file():
             self.template_line_edit.setText(last_template_path)
+            
+        from src.config.constants import OUTPUT_FILENAME
+        import os
+        if last_output_path:
+            self.output_line_edit.setText(last_output_path)
+        else:
+            # Kayıtlı yer yoksa bulunulan dizini (pwd) baz al
+            default_output = str(Path(os.getcwd()) / OUTPUT_FILENAME)
+            self.output_line_edit.setText(default_output)
             
         self.default_template_checkbox.setChecked(use_default)
         self._toggle_template_selection(Qt.CheckState.Checked.value if use_default else Qt.CheckState.Unchecked.value)
@@ -145,6 +167,35 @@ class MainWindow(QMainWindow):
             self.settings.setValue("last_template_path", file_path)
             self.log(f"Özel çıktı taslağı seçildi ve kaydedildi: {file_path}")
 
+    def _select_output_file(self):
+        import os
+        from src.config.constants import OUTPUT_FILENAME
+        
+        # Eğer önceden seçilmiş bir yol varsa oradan başla
+        current_path = self.output_line_edit.text()
+        if not current_path:
+            last_path = self.settings.value("last_output_path", "")
+            if last_path:
+                current_path = last_path
+            else:
+                current_path = str(Path(os.getcwd()) / OUTPUT_FILENAME)
+                
+        file_path, _ = QFileDialog.getSaveFileName(
+            self,
+            "Çıktı Dosyasını Kaydet",
+            current_path,
+            "Excel Files (*.xlsx)"
+        )
+        if file_path:
+            # .xlsx uzantısı yoksa ekle
+            if not file_path.endswith(".xlsx"):
+                file_path += ".xlsx"
+                
+            self.output_line_edit.setText(file_path)
+            # Seçilen tam yolu ayarlara kaydet
+            self.settings.setValue("last_output_path", file_path)
+            self.log(f"Çıktı kayıt yeri belirlendi: {file_path}")
+
     def log(self, message: str):
         """Log alanına mesaj yazar."""
         self.log_text_edit.append(message)
@@ -187,12 +238,24 @@ class MainWindow(QMainWindow):
             # Parametreleri hazırla
             template_param = None if is_default_template else template_file
             
-            # Ana dizini çıktı dizini olarak alalım (girdi dosyasının olduğu yere de kaydedilebilir)
-            output_dir = Path(input_file).parent
+            # Çıktı yolu kontrolü
+            output_full_path = self.output_line_edit.text().strip()
+            
+            if output_full_path:
+                output_path_obj = Path(output_full_path)
+                output_dir = output_path_obj.parent
+                output_filename = output_path_obj.name
+            else:
+                # Seçilmemişse varsayılan olarak girdi dosyasının yanı
+                output_dir = Path(input_file).parent
+                from src.config.constants import OUTPUT_FILENAME
+                output_filename = OUTPUT_FILENAME
+                self.log("Kayıt yeri belirtilmedi, kaynak dosyanın yanına kaydedilecek.")
             
             output_path = olustur_dk_dosyasi(
                 personeller=personeller,
                 cikti_dizini=output_dir,
+                dosya_adi=output_filename,
                 template_path=template_param
             )
             
