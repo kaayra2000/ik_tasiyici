@@ -48,6 +48,7 @@ class TestTutanakService:
             cikti_dizini=Path("/cikti"),
             dosya_adi="DK_Tutanaklari.xlsx",
             template_path="/taslak/sablon.xlsx",
+            version="v1",
         )
         assert result == expected_path
 

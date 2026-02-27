@@ -8,12 +8,17 @@ Tüm sorumluluklar ilgili bileşenlere devredilmiştir (SRP).
 from __future__ import annotations
 
 from PyQt6.QtWidgets import (
+    QComboBox,
+    QHBoxLayout,
+    QLabel,
     QMainWindow,
     QMessageBox,
     QPushButton,
     QVBoxLayout,
     QWidget,
 )
+
+from src.config.constants import DEFAULT_VERSION, SUPPORTED_VERSIONS
 
 from src.gui.file_selection_widget import DialogType, FileSelectionWidget
 from src.gui.log_widget import LogWidget
@@ -92,6 +97,20 @@ class MainWindow(QMainWindow):
         self._output_selector.file_selected.connect(self._on_output_selected)
         main_layout.addWidget(self._output_selector)
 
+        # -- Çıktı Versiyonu Seçimi --
+        version_layout = QHBoxLayout()
+        version_label = QLabel("Çıktı Versiyonu:")
+        self._version_combo = QComboBox()
+        self._version_combo.setObjectName("versionCombo")
+        for key, label in SUPPORTED_VERSIONS.items():
+            self._version_combo.addItem(label, key)
+        self._version_combo.currentIndexChanged.connect(
+            self._on_version_changed
+        )
+        version_layout.addWidget(version_label)
+        version_layout.addWidget(self._version_combo, 1)
+        main_layout.addLayout(version_layout)
+
         # -- Log Alanı --
         self._log_widget = LogWidget()
         main_layout.addWidget(self._log_widget)
@@ -131,6 +150,13 @@ class MainWindow(QMainWindow):
             self._output_selector.set_path(output_path)
             self.log("Son kullanılan kayıt yeri yüklendi.")
 
+        saved_version = self._settings.get(
+            SettingsManager.KEY_OUTPUT_VERSION, DEFAULT_VERSION
+        )
+        idx = self._version_combo.findData(saved_version)
+        if idx >= 0:
+            self._version_combo.setCurrentIndex(idx)
+
     # ------------------------------------------------------------------
     # Sinyal slotları
     # ------------------------------------------------------------------
@@ -146,6 +172,12 @@ class MainWindow(QMainWindow):
     def _on_output_selected(self, path: str) -> None:
         self._settings.set(SettingsManager.KEY_OUTPUT_PATH, path)
         self.log(f"Çıktı kayıt yeri belirlendi: {path}")
+
+    def _on_version_changed(self, index: int) -> None:
+        version = self._version_combo.currentData()
+        if version:
+            self._settings.set(SettingsManager.KEY_OUTPUT_VERSION, version)
+            self.log(f"Çıktı versiyonu değiştirildi: {SUPPORTED_VERSIONS.get(version, version)}")
 
     # ------------------------------------------------------------------
     # Log delegasyonu
@@ -209,11 +241,13 @@ class MainWindow(QMainWindow):
                 )
                 return
 
-            self.log("DK tutanakları oluşturuluyor...")
+            selected_version = self._version_combo.currentData() or DEFAULT_VERSION
+            self.log(f"DK tutanakları oluşturuluyor (versiyon: {selected_version})...")
             result_path = self._service.tutanak_olustur(
                 personeller=personeller,
                 template_path=template_file,
                 output_path=output_path,
+                version=selected_version,
             )
 
             self.log(f"İşlem tamamlandı!\nÇıktı dosyası: {result_path}")

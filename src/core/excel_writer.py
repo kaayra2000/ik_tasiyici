@@ -3,11 +3,14 @@
 
 Her personel için ``cikti_ornegi.xlsx`` şablonunu kopyalarak bir sayfa oluşturur
 ve tüm sayfaları tek bir ``DK_Tutanaklari_2026.xlsx`` dosyasında birleştirir.
+
+Sayfa doldurma mantığı **Strategy Pattern** ile soyutlanmıştır.
+Farklı şablon versiyonları ``ExcelWriteStrategy`` arayüzünü implemente eden
+sınıflar olarak tanımlanır ve ``ExcelWriterFactory`` aracılığıyla yaratılır.
 """
 
 from __future__ import annotations
 
-import datetime
 from io import BytesIO
 from pathlib import Path
 from typing import List
@@ -15,55 +18,16 @@ from copy import copy
 
 import openpyxl
 from openpyxl import Workbook
-from openpyxl.styles import Alignment, Font
 
 from src.config.constants import (
+    DEFAULT_VERSION,
     MAX_SHEET_NAME_LEN,
     OUTPUT_FILENAME,
-    TECRUBE_BASLANGIC_SATIR,
-    TECRUBE_BITIS_SATIR,
     TEMPLATE_PATH,
 )
 from src.core.excel_reader import Personel
-from src.core.formula_builder import (
-    alanda_prim_formulu,
-    en_yuksek_ogrenim_formulu,
-    hizmet_grubu_formulu,
-    kademe_formulu,
-    prim_gunu_formulu,
-    tecrube_yili_formulu,
-    toplam_alanda_prim_formulu,
-    toplam_prim_formulu,
-    unvan_formulu,
-)
-
-
-# ---------------------------------------------------------------------------
-# Sabitler – şablondaki hücre adresleri
-# ---------------------------------------------------------------------------
-
-# Otomatik doldurulacak (o) hücreler
-_HUCRE_AD_SOYAD = "B3"
-_HUCRE_TCKN = "C3"
-_HUCRE_BIRIM = "D3"
-_HUCRE_UNVAN = "E3"
-_HUCRE_KADEME = "F3"
-
-# Toplam / hesap satırları
-_SATIR_TOPLAM_PRIM = TECRUBE_BITIS_SATIR + 1        # 19
-_SATIR_ALANDA_PRIM = TECRUBE_BITIS_SATIR + 1        # 19
-
-# Z sütununu gizli hesaplama için kullanacağız:
-# Z1 = Tecrübe Yılı, Z2 = Hizmet Grubu, Z3 = Kademe, Z4 = En Yüksek Öğrenim (alanında)
-_TECRUBE_YILI_HUCRE = "Z1"
-_EN_YUKSEK_OGRENIM_HUCRE = "Z4"  # kademe formülü bu hücreye bakacak
-
-# Şablondaki öğrenim satırları parametreleri (B=Ad, C=Okul, K=Alanında)
-_OGRENIM_BAS_SATIR = 6
-_OGRENIM_BIT_SATIR = 8
-_OGRENIM_AD_SUTUN = "B"
-_OGRENIM_OKUL_SUTUN = "C"
-_OGRENIM_ALANINDA_SUTUN = "K"
+from src.core.excel_write_strategy import ExcelWriteStrategy
+from src.core.excel_writer_factory import ExcelWriterFactory
 
 
 # ---------------------------------------------------------------------------
@@ -76,6 +40,7 @@ def olustur_dk_dosyasi(
     cikti_dizini: str | Path = ".",
     dosya_adi: str = OUTPUT_FILENAME,
     template_path: str | Path | None = None,
+    version: str = DEFAULT_VERSION,
 ) -> Path:
     """
     Personel listesinden DK Tutanağı Excel dosyasını oluşturur.
@@ -84,9 +49,11 @@ def olustur_dk_dosyasi(
     :param cikti_dizini: Çıktı dosyasının kaydedileceği dizin.
     :param dosya_adi: Çıktı dosya adı.
     :param template_path: Özel çıktı şablonu yolu (opsiyonel).
+    :param version: Çıktı versiyonu (ör. ``"v1"``).
     :returns: Oluşturulan dosyanın tam yolu.
     """
-    wb = _workbook_olustur(personeller, template_path)
+    strategy = ExcelWriterFactory.create(version)
+    wb = _workbook_olustur(personeller, strategy, template_path)
     cikti_dizini = Path(cikti_dizini)
     cikti_dizini.mkdir(parents=True, exist_ok=True)
     cikti_yolu = cikti_dizini / dosya_adi
@@ -94,7 +61,11 @@ def olustur_dk_dosyasi(
     return cikti_yolu
 
 
-def olustur_dk_bytes(personeller: List[Personel], template_path: str | Path | None = None) -> bytes:
+def olustur_dk_bytes(
+    personeller: List[Personel],
+    template_path: str | Path | None = None,
+    version: str = DEFAULT_VERSION,
+) -> bytes:
     """
     Personel listesinden DK Tutanağı Excel dosyasını bellekte oluşturur.
 
@@ -102,9 +73,11 @@ def olustur_dk_bytes(personeller: List[Personel], template_path: str | Path | No
 
     :param personeller: İşlenecek personel listesi.
     :param template_path: Özel çıktı şablonu yolu (opsiyonel).
+    :param version: Çıktı versiyonu (ör. ``"v1"``).
     :returns: xlsx içeriği bayt dizisi olarak.
     """
-    wb = _workbook_olustur(personeller, template_path)
+    strategy = ExcelWriterFactory.create(version)
+    wb = _workbook_olustur(personeller, strategy, template_path)
     buffer = BytesIO()
     wb.save(buffer)
     return buffer.getvalue()
@@ -115,7 +88,11 @@ def olustur_dk_bytes(personeller: List[Personel], template_path: str | Path | No
 # ---------------------------------------------------------------------------
 
 
-def _workbook_olustur(personeller: List[Personel], template_path: str | Path | None = None) -> Workbook:
+def _workbook_olustur(
+    personeller: List[Personel],
+    strategy: ExcelWriteStrategy,
+    template_path: str | Path | None = None,
+) -> Workbook:
     """Her personel için şablon sayfasından kopyalanmış Workbook oluşturur."""
     # template path
     if template_path is None:
@@ -123,7 +100,7 @@ def _workbook_olustur(personeller: List[Personel], template_path: str | Path | N
         t_path = project_root / TEMPLATE_PATH
     else:
         t_path = Path(template_path)
-    
+
     wb = openpyxl.load_workbook(t_path)
     template_ws = wb.active
     template_ws_title = template_ws.title
@@ -137,12 +114,12 @@ def _workbook_olustur(personeller: List[Personel], template_path: str | Path | N
         ws.conditional_formatting = copy(template_ws.conditional_formatting)
         if hasattr(template_ws, 'data_validations'):
             ws.data_validations = copy(template_ws.data_validations)
-        
+
         ws.print_area = template_ws.print_area
         ws.print_options = copy(template_ws.print_options)
         ws.page_setup = copy(template_ws.page_setup)
         ws.freeze_panes = template_ws.freeze_panes
-        
+
         # Garanti olması için sütun/satır genişliklerini/yüksekliklerini aktar
         for row_idx, row_dim in template_ws.row_dimensions.items():
             ws.row_dimensions[row_idx] = copy(row_dim)
@@ -151,14 +128,15 @@ def _workbook_olustur(personeller: List[Personel], template_path: str | Path | N
             ws.column_dimensions[col_idx] = copy(col_dim)
             ws.column_dimensions[col_idx].worksheet = ws
 
-        _sayfayi_doldur(ws, personel)
+        # Strateji aracılığıyla sayfayı doldur
+        strategy.sayfa_doldur(ws, personel)
 
     # Orijinal şablon sayfasını kaldır
     if template_ws_title in wb.sheetnames:
         del wb[template_ws_title]
 
     # openpyxl en az 1 sayfa olmadan kaydedemez;
-    # boş liste durumunda boş bir kılavuz sayfası ekleriz (görünür olması zorunlu).
+    # boş liste durumunda boş bir kılavuz sayfası ekleriz.
     if not wb.sheetnames:
         wb.create_sheet("_bos")
 
@@ -181,77 +159,3 @@ def _sayfa_adi_olustur(personel: Personel) -> str:
     for karakter in r"\/?*[]":
         tam_ad = tam_ad.replace(karakter, "")
     return tam_ad[:MAX_SHEET_NAME_LEN]
-
-
-def _sayfayi_doldur(ws, personel: Personel) -> None:
-    """
-    Kopyalanmış şablon çalışma sayfasına formülleri ve personel verisini doldurur.
-    """
-    _doldur_otomatik(ws, personel)
-    _ekle_veri_dogrulama(ws)
-    _yaz_tecrube_satirlari(ws)
-    _yaz_hesap_satirlari(ws)
-
-
-def _doldur_otomatik(ws, personel: Personel) -> None:
-    """Otomatik (o) alanları personel verisinden doldurur."""
-    ws[_HUCRE_AD_SOYAD] = personel.ad_soyad
-    ws[_HUCRE_TCKN] = personel.tckn
-    ws[_HUCRE_BIRIM] = personel.birim
-
-
-def _yaz_tecrube_satirlari(ws) -> None:
-    """Her mesleki tecrübe satırı için Excel formüllerini yazar."""
-    for satir in range(TECRUBE_BASLANGIC_SATIR, TECRUBE_BITIS_SATIR + 1):
-        ws.cell(row=satir, column=11).value = prim_gunu_formulu(satir)
-        ws.cell(row=satir, column=12).value = alanda_prim_formulu(satir)
-
-
-def _yaz_hesap_satirlari(ws) -> None:
-    """Toplam, tecrübe yılı, ünvan, hizmet grubu ve kademe satırlarını yazar."""
-    toplam_alanda_hucre = f"L{_SATIR_ALANDA_PRIM}"
-
-    # Toplam Prim Günü (K19) ve Alanda Toplam Prim Günü (L19)
-    ws.cell(row=_SATIR_TOPLAM_PRIM, column=11).value = toplam_prim_formulu()
-    ws.cell(row=_SATIR_ALANDA_PRIM, column=12).value = toplam_alanda_prim_formulu()
-
-    # Z sütununa gizli formülleri yazalım:
-    # Z1 = Tecrübe Yılı (alanda toplam prim / 360)
-    ws["Z1"] = tecrube_yili_formulu(toplam_alanda_hucre)
-
-    # Z4 = En yüksek alanında öğrenim (B sütunundaki hücreden ismi okur)
-    ws[_EN_YUKSEK_OGRENIM_HUCRE] = en_yuksek_ogrenim_formulu(
-        baslangic_satir=_OGRENIM_BAS_SATIR,
-        bitis_satir=_OGRENIM_BIT_SATIR,
-        ad_sutun=_OGRENIM_AD_SUTUN,
-        okul_sutun=_OGRENIM_OKUL_SUTUN,
-        alaninda_sutun=_OGRENIM_ALANINDA_SUTUN,
-    )
-
-    # Z2 = Hizmet Grubu (A/AG-2 ... A/AG-6)
-    ws["Z2"] = hizmet_grubu_formulu(_TECRUBE_YILI_HUCRE)
-
-    # Z3 = Kademe (tecrübe yılı + en yüksek öğrenim kombinasyonu)
-    ws["Z3"] = kademe_formulu(_TECRUBE_YILI_HUCRE, _EN_YUKSEK_OGRENIM_HUCRE)
-
-    # E3: Ünvan
-    ws[_HUCRE_UNVAN] = unvan_formulu(_TECRUBE_YILI_HUCRE)
-
-    # F3: Derece/Kademe (Hizmet Grubu / Kademe)
-    # Eğer Kademe (Z3) boş dönerse sadece Hizmet Grubu (Z2) yazılır
-    ws[_HUCRE_KADEME] = '=IF(Z3="", Z2, Z2 & "/" & Z3)'
-
-
-def _ekle_veri_dogrulama(ws) -> None:
-    """B6, B7 ve B8 hücreleri için öğrenim seviyeleri açılır listesini ekler."""
-    from openpyxl.worksheet.datavalidation import DataValidation
-    from src.config.constants import OGRENIM_SEVIYELERI
-
-    dv = DataValidation(
-        type="list",
-        formula1=f'"{",".join(OGRENIM_SEVIYELERI)}"',
-        allow_blank=True
-    )
-    ws.add_data_validation(dv)
-    for row in range(6, 9):  # 6, 7, 8
-        dv.add(f"B{row}")

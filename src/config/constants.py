@@ -85,3 +85,15 @@ OGRENIM_SEVIYELERI: list[str] = [
 
 #: 1 yılı oluşturan prim günü sayısı
 GUN_PER_YIL: int = 360
+
+# ---------------------------------------------------------------------------
+# Çıktı versiyonları
+# ---------------------------------------------------------------------------
+
+#: Desteklenen çıktı versiyonları (key=versiyon kodu, value=GUI etiketi)
+SUPPORTED_VERSIONS: dict[str, str] = {
+    "v1": "V1 - Standart DK Taslağı",
+}
+
+#: Varsayılan çıktı versiyonu
+DEFAULT_VERSION: str = "v1"

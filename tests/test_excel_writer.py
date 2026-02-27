@@ -16,9 +16,11 @@ from src.core.excel_reader import Personel
 from src.core.excel_writer import (
     _sayfa_adi_olustur,
     olustur_dk_bytes,
-    _HUCRE_UNVAN,
 )
+from src.core.excel_write_strategy_v1 import ExcelWriteStrategyV1
 from src.config.constants import TECRUBE_BASLANGIC_SATIR
+
+_HUCRE_UNVAN = ExcelWriteStrategyV1.HUCRE_UNVAN
 
 
 # ---------------------------------------------------------------------------
