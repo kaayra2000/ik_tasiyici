@@ -39,6 +39,8 @@ jobs:
         pip install -e .[dev]
 
     - name: Build Executable
+      env:
+        PYTHONUTF8: "1"
       run: |
         dk-tutanak-build
 
