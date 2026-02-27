@@ -182,6 +182,7 @@ def _sayfayi_doldur(ws, personel: Personel) -> None:
     Kopyalanmış şablon çalışma sayfasına formülleri ve personel verisini doldurur.
     """
     _doldur_otomatik(ws, personel)
+    _ekle_veri_dogrulama(ws)
     _yaz_tecrube_satirlari(ws)
     _yaz_hesap_satirlari(ws)
 
@@ -233,3 +234,18 @@ def _yaz_hesap_satirlari(ws) -> None:
     # F3: Derece/Kademe (Hizmet Grubu / Kademe)
     # Eğer Kademe (Z3) boş dönerse sadece Hizmet Grubu (Z2) yazılır
     ws[_HUCRE_KADEME] = '=IF(Z3="", Z2, Z2 & "/" & Z3)'
+
+
+def _ekle_veri_dogrulama(ws) -> None:
+    """B6, B7 ve B8 hücreleri için öğrenim seviyeleri açılır listesini ekler."""
+    from openpyxl.worksheet.datavalidation import DataValidation
+    from src.config.constants import OGRENIM_SEVIYELERI
+
+    dv = DataValidation(
+        type="list",
+        formula1=f'"{",".join(OGRENIM_SEVIYELERI)}"',
+        allow_blank=True
+    )
+    ws.add_data_validation(dv)
+    for row in range(6, 9):  # 6, 7, 8
+        dv.add(f"B{row}")
