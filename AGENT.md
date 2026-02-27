@@ -147,8 +147,8 @@ D-K Tablosuna göre formül mantığı (en alttan yukarı doğru):
 
 | Tecrübe Süresi | Lisans | Tezsiz Yüksek Lisans | Tezli Yüksek Lisans | Doktora |
 |---|---|---|---|---|
-| 2 Yıl ve Daha Az | 5-6 | 5-6 | 3 | - |
-| 2-3 Yıl Arası | 3-4 | 3-4 | 2 | - |
+| **0-2 Yıl** (t < 2) | 5-6 | 5-6 | 3 | - |
+| **2-3 Yıl** (2 ≤ t < 3) | 3-4 | 3-4 | 2 | - |
 
 ---
 
@@ -156,8 +156,8 @@ D-K Tablosuna göre formül mantığı (en alttan yukarı doğru):
 
 | Tecrübe Süresi | Lisans | Tezsiz Yüksek Lisans | Tezli Yüksek Lisans | Doktora |
 |---|---|---|---|---|
-| 3-5 Yıl | 5 | 5 | 4 | 2 |
-| 6-8 Yıl | 3 | 3 | 2 | 2 |
+| **3-5 Yıl** (3 ≤ t < 6) | 5 | 5 | 4 | 2 |
+| **6-8 Yıl** (6 ≤ t < 8) | 3 | 3 | 2 | 2 |
 
 ---
 
@@ -165,8 +165,8 @@ D-K Tablosuna göre formül mantığı (en alttan yukarı doğru):
 
 | Tecrübe Süresi | Lisans | Tezsiz Yüksek Lisans | Tezli Yüksek Lisans | Doktora |
 |---|---|---|---|---|
-| 8-9 Yıl | 5 | 5 | 4 | 3 |
-| 10-12 Yıl | 3 | 3 | 3 | 3 |
+| **8-9 Yıl** (8 ≤ t < 10) | 5 | 5 | 4 | 3 |
+| **10-12 Yıl** (10 ≤ t < 12) | 3 | 3 | 3 | 3 |
 
 ---
 
@@ -174,8 +174,8 @@ D-K Tablosuna göre formül mantığı (en alttan yukarı doğru):
 
 | Tecrübe Süresi | Lisans | Tezsiz Yüksek Lisans | Tezli Yüksek Lisans | Doktora |
 |---|---|---|---|---|
-| 12-14 Yıl | 5 | 5 | 4 | 2 |
-| 15-16 Yıl | 3 | 3 | 2 | 2 |
+| **12-14 Yıl** (12 ≤ t < 15) | 5 | 5 | 4 | 2 |
+| **15-16 Yıl** (15 ≤ t < 16) | 3 | 3 | 2 | 2 |
 
 ---
 
@@ -183,7 +183,7 @@ D-K Tablosuna göre formül mantığı (en alttan yukarı doğru):
 
 | Tecrübe Süresi | Lisans | Tezsiz Yüksek Lisans | Tezli Yüksek Lisans | Doktora |
 |---|---|---|---|---|
-| 16 Yıl ve üstü | 4 | 3-4 | 3 | 3 |
+| **16 Yıl ve üstü** (t ≥ 16) | 4 | 3-4 | 3 | 3 |
 
 
 ---

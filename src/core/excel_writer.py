@@ -26,6 +26,7 @@ from src.config.constants import (
 from src.core.excel_reader import Personel
 from src.core.formula_builder import (
     alanda_prim_formulu,
+    en_yuksek_ogrenim_formulu,
     hizmet_grubu_formulu,
     kademe_formulu,
     prim_gunu_formulu,
@@ -51,9 +52,19 @@ _HUCRE_KADEME = "F3"
 _SATIR_TOPLAM_PRIM = TECRUBE_BITIS_SATIR + 1        # 19
 _SATIR_ALANDA_PRIM = TECRUBE_BITIS_SATIR + 1        # 19
 
-# Z1, Z2, Z3 hücrelerini gizli hesaplama için kullanacağız.
+# Z sütununu gizli hesaplama için kullanacağız:
+# Z1 = Tecrübe Yılı, Z2 = Hizmet Grubu, Z3 = Kademe, Z4 = En Yüksek Öğrenim (alanında)
 _TECRUBE_YILI_HUCRE = "Z1"
-_KADEME_REFERANS_HUCRE = "C8"
+_EN_YUKSEK_OGRENIM_HUCRE = "Z4"  # kademe formülü bu hücreye bakacak
+
+# Şablondaki öğrenim satırları (satır 6=Lisans, 7=YL, 8=Doktora)
+# C sütunu: okul adı (doluysa o öğrenim mevcut), K sütunu: Alanında (E/H)
+_LISANS_OKUL_HUCRE = "C6"
+_LISANS_ALANINDA_HUCRE = "K6"
+_YL_OKUL_HUCRE = "C7"
+_YL_ALANINDA_HUCRE = "K7"
+_DOKTORA_OKUL_HUCRE = "C8"
+_DOKTORA_ALANINDA_HUCRE = "K8"
 
 
 # ---------------------------------------------------------------------------
@@ -179,14 +190,32 @@ def _yaz_hesap_satirlari(ws) -> None:
     ws.cell(row=_SATIR_TOPLAM_PRIM, column=11).value = toplam_prim_formulu()
     ws.cell(row=_SATIR_ALANDA_PRIM, column=12).value = toplam_alanda_prim_formulu()
 
-    # Z sütununa gizli formülleri yazalım (Z1=Tecrübe Yılı, Z2=Hizmet Grubu, Z3=Kademe)
+    # Z sütununa gizli formülleri yazalım:
+    # Z1 = Tecrübe Yılı (alanda toplam prim / 360)
     ws["Z1"] = tecrube_yili_formulu(toplam_alanda_hucre)
+
+    # Z4 = En yüksek alanında öğrenim ("Lisans", "Yüksek Lisans", "Doktora" veya "")
+    # Şablonda: satır 6=Lisans, 7=YL, 8=Doktora; C sütunu=okul adı, K sütunu=Alanında (E/H)
+    ws[_EN_YUKSEK_OGRENIM_HUCRE] = en_yuksek_ogrenim_formulu(
+        doktora_hucre=_DOKTORA_OKUL_HUCRE,
+        doktora_alaninda_hucre=_DOKTORA_ALANINDA_HUCRE,
+        tezli_yl_hucre=_YL_OKUL_HUCRE,
+        tezli_yl_alaninda_hucre=_YL_ALANINDA_HUCRE,
+        tezsiz_yl_hucre=_YL_OKUL_HUCRE,      # Şablonda tezli/tezsiz ayrımı yok
+        tezsiz_yl_alaninda_hucre=_YL_ALANINDA_HUCRE,
+        lisans_hucre=_LISANS_OKUL_HUCRE,
+        lisans_alaninda_hucre=_LISANS_ALANINDA_HUCRE,
+    )
+
+    # Z2 = Hizmet Grubu (A/AG-2 ... A/AG-6)
     ws["Z2"] = hizmet_grubu_formulu(_TECRUBE_YILI_HUCRE)
-    ws["Z3"] = kademe_formulu(_TECRUBE_YILI_HUCRE, _KADEME_REFERANS_HUCRE)
+
+    # Z3 = Kademe (tecrübe yılı + en yüksek öğrenim kombinasyonu)
+    ws["Z3"] = kademe_formulu(_TECRUBE_YILI_HUCRE, _EN_YUKSEK_OGRENIM_HUCRE)
 
     # E3: Ünvan
     ws[_HUCRE_UNVAN] = unvan_formulu(_TECRUBE_YILI_HUCRE)
-    
+
     # F3: Derece/Kademe (Hizmet Grubu / Kademe)
-    # Eğer Kademe (Z3) boş dönerse sadece Hizmet Grubu (Z2) yazılması sağlanır (sondaki '/' işaretini önlemek için)
+    # Eğer Kademe (Z3) boş dönerse sadece Hizmet Grubu (Z2) yazılır
     ws[_HUCRE_KADEME] = '=IF(Z3="", Z2, Z2 & "/" & Z3)'

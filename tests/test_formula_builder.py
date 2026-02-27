@@ -115,7 +115,7 @@ class TestEnYuksekOgrenimFormulu:
         )
         # Doktora ilk EĞER'de olmalı
         assert '"Doktora"' in sonuc
-        assert sonuc.index('"Doktora"') < sonuc.index('"Tezli YL"')
+        assert sonuc.index('"Doktora"') < sonuc.index('"Tezli Yüksek Lisans"')
 
     def test_lisans_son_kontrol(self):
         """Lisans en sondaki EĞER'de olmalı."""
@@ -123,7 +123,7 @@ class TestEnYuksekOgrenimFormulu:
             "C11", "D11", "C10", "D10", "C9", "D9", "C8", "D8"
         )
         assert '"Lisans"' in sonuc
-        assert sonuc.index('"Lisans"') > sonuc.index('"Tezsiz YL"')
+        assert sonuc.index('"Lisans"') > sonuc.index('"Tezsiz Yüksek Lisans"')
 
     def test_hucre_referanslari_icerir(self):
         """Fonksiyon argümanlarındaki hücre adlarını içermeli."""

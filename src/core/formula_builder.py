@@ -145,8 +145,8 @@ def en_yuksek_ogrenim_formulu(
     """
     return (
         f'=IF(AND({doktora_hucre}<>"",{doktora_alaninda_hucre}="E"),"Doktora",'
-        f'IF(AND({tezli_yl_hucre}<>"",{tezli_yl_alaninda_hucre}="E"),"Tezli YL",'
-        f'IF(AND({tezsiz_yl_hucre}<>"",{tezsiz_yl_alaninda_hucre}="E"),"Tezsiz YL",'
+        f'IF(AND({tezli_yl_hucre}<>"",{tezli_yl_alaninda_hucre}="E"),"Tezli Yüksek Lisans",'
+        f'IF(AND({tezsiz_yl_hucre}<>"",{tezsiz_yl_alaninda_hucre}="E"),"Tezsiz Yüksek Lisans",'
         f'IF(AND({lisans_hucre}<>"",{lisans_alaninda_hucre}="E"),"Lisans",""))))'
     )
 
@@ -225,7 +225,7 @@ def kademe_formulu(
         f'IF({o}="Tezsiz Yüksek Lisans","3",'
         f'IF({o}="Tezli Yüksek Lisans","2","2")))'
     )
-    ag3 = f'IF({t}<14,{ag3_low},{ag3_high})'
+    ag3 = f'IF({t}<15,{ag3_low},{ag3_high})'  # 12-14 yıl → low, 15-16 yıl → high
 
     # A/AG-4 (8-12)
     ag4_low = (
@@ -238,7 +238,7 @@ def kademe_formulu(
         f'IF({o}="Tezsiz Yüksek Lisans","3",'
         f'IF({o}="Tezli Yüksek Lisans","3","3")))'
     )
-    ag4 = f'IF({t}<9,{ag4_low},{ag4_high})'
+    ag4 = f'IF({t}<10,{ag4_low},{ag4_high})'  # 8-9 yıl → low, 10-12 yıl → high
 
     # A/AG-5 (3-8)
     ag5_low = (
@@ -251,7 +251,7 @@ def kademe_formulu(
         f'IF({o}="Tezsiz Yüksek Lisans","3",'
         f'IF({o}="Tezli Yüksek Lisans","2","2")))'
     )
-    ag5 = f'IF({t}<5,{ag5_low},{ag5_high})'
+    ag5 = f'IF({t}<6,{ag5_low},{ag5_high})'  # 3-5 yıl → low, 6-8 yıl → high
 
     # A/AG-6 (0-3)
     ag6_low = (
