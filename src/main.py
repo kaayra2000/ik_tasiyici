@@ -10,7 +10,11 @@ def main():
     app.setStyle("Fusion")
     
     # QSS Yükleme
-    qss_path = Path(__file__).parent / "gui" / "style.qss"
+    if hasattr(sys, "_MEIPASS"):
+        qss_path = Path(sys._MEIPASS) / "src" / "gui" / "style.qss"
+    else:
+        qss_path = Path(__file__).parent / "gui" / "style.qss"
+        
     if qss_path.exists():
         with open(qss_path, "r", encoding="utf-8") as f:
             app.setStyleSheet(f.read())
