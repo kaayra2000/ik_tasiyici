@@ -94,35 +94,66 @@ class FileSelectionWidget(QWidget):
         self._line_edit.setText(path)
 
     # ------------------------------------------------------------------
-    # Slot
+    # Slot (orkestratör — SRP: yalnızca koordinasyon)
     # ------------------------------------------------------------------
 
     def _open_dialog(self) -> None:
-        """Dialog türüne göre uygun QFileDialog açar."""
-        start_dir = self.get_path()
+        """Diyaloğu oluşturur, yapılandırır, konumlandırır ve sonucu işler."""
+        dialog = self._build_dialog()
+        self._configure_dialog(dialog)
+        self._center_dialog(dialog)
+        self._handle_result(dialog)
 
-        if self._dialog_type == DialogType.OPEN:
-            file_path, _ = QFileDialog.getOpenFileName(
-                self,
-                self._dialog_title,
-                start_dir,
-                self._file_filter,
-            )
-        else:
-            file_path, _ = QFileDialog.getSaveFileName(
-                self,
-                self._dialog_title,
-                start_dir,
-                self._file_filter,
-            )
+    # ------------------------------------------------------------------
+    # Diyalog yardımcıları (her metot tek bir sorumluluğa sahip — SRP)
+    # ------------------------------------------------------------------
 
-        if file_path:
-            # Save dialog için .xlsx uzantısı garantisi
-            if (
-                self._dialog_type == DialogType.SAVE
-                and not file_path.endswith(".xlsx")
-            ):
-                file_path += ".xlsx"
+    def _build_dialog(self) -> QFileDialog:
+        """Temel QFileDialog nesnesini oluşturur.
 
-            self._line_edit.setText(file_path)
-            self.file_selected.emit(file_path)
+        Native diyalog kapatılır; böylece pozisyonlandırma mümkün olur.
+        """
+        dialog = QFileDialog(
+            self,
+            self._dialog_title,
+            self.get_path(),
+            self._file_filter,
+        )
+        dialog.setOption(QFileDialog.Option.DontUseNativeDialog)
+        return dialog
+
+    def _configure_dialog(self, dialog: QFileDialog) -> None:
+        """Diyaloğu türüne göre yapılandırır (OCP: yeni tür için yalnızca burası genişler).
+
+        :param dialog: Yapılandırılacak diyalog nesnesi.
+        """
+        _MODE_MAP = {
+            DialogType.OPEN: QFileDialog.AcceptMode.AcceptOpen,
+            DialogType.SAVE: QFileDialog.AcceptMode.AcceptSave,
+        }
+        dialog.setAcceptMode(_MODE_MAP[self._dialog_type])
+        if self._dialog_type == DialogType.SAVE:
+            dialog.setDefaultSuffix("xlsx")
+
+    def _center_dialog(self, dialog: QFileDialog) -> None:
+        """Diyaloğu mevcut ekranın tam merkezine konumlandırır.
+
+        :param dialog: Konumlandırılacak diyalog nesnesi.
+        """
+        if not self.screen():
+            return
+        qr = dialog.frameGeometry()
+        qr.moveCenter(self.screen().availableGeometry().center())
+        dialog.move(qr.topLeft())
+
+    def _handle_result(self, dialog: QFileDialog) -> None:
+        """Kullanıcının diyalogu kabul etmesi durumunda yolu günceller.
+
+        :param dialog: Sonucu işlenecek diyalog nesnesi.
+        """
+        if dialog.exec() != QFileDialog.DialogCode.Accepted:
+            return
+        selected = dialog.selectedFiles()
+        if selected:
+            self._line_edit.setText(selected[0])
+            self.file_selected.emit(selected[0])
