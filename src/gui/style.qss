@@ -1,0 +1,82 @@
+/* src/gui/style.qss */
+
+QMainWindow {
+    background-color: #f5f6fa;
+}
+
+QLabel {
+    font-size: 14px;
+    color: #2f3640;
+    font-weight: 500;
+}
+
+QPushButton {
+    background-color: #00a8ff;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 8px 16px;
+    font-weight: bold;
+    font-size: 13px;
+}
+
+QPushButton:hover {
+    background-color: #0097e6;
+}
+
+QPushButton:pressed {
+    background-color: #0086cc;
+}
+
+QPushButton:disabled {
+    background-color: #dcdde1;
+    color: #7f8fa6;
+}
+
+QLineEdit {
+    border: 1px solid #dcdde1;
+    border-radius: 4px;
+    padding: 6px;
+    background-color: white;
+    font-size: 13px;
+    color: #2f3640;
+}
+
+QLineEdit:read-only {
+    background-color: #f1f2f6;
+    color: #7f8fa6;
+}
+
+QTextEdit {
+    border: 1px solid #dcdde1;
+    border-radius: 4px;
+    background-color: white;
+    padding: 6px;
+    font-family: Consolas, "Courier New", monospace;
+    font-size: 12px;
+    color: #353b48;
+}
+
+QCheckBox {
+    font-size: 14px;
+    color: #2f3640;
+    padding: 5px;
+}
+
+QCheckBox::indicator {
+    width: 16px;
+    height: 16px;
+    border: 1px solid #7f8fa6;
+    border-radius: 3px;
+    background-color: white;
+}
+
+QCheckBox::indicator:unchecked:hover {
+    border-color: #00a8ff;
+}
+
+QCheckBox::indicator:checked {
+    background-color: #00a8ff;
+    border: 1px solid #00a8ff;
+    image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='20 6 9 17 4 12'%3E%3C/polyline%3E%3C/svg%3E");
+}

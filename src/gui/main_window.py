@@ -88,25 +88,33 @@ class MainWindow(QMainWindow):
         main_layout.addWidget(self.start_button)
 
     def _load_settings(self):
-        """Uygulama açılırken son kaydedilen taslak yolunu yükler."""
+        """Uygulama açılırken son kaydedilen taslak yolunu ve ayarı yükler."""
         last_template_path = self.settings.value("last_template_path", "")
+        use_default_val = self.settings.value("use_default_template", True)
         
-        # Yol var ve dosya mevcutsa kullanıcının en son seçtiği özel taslağı getir
+        # PyQt/PySide'da QSettings bazen bool kaydederken string'e ("true"/"false") çevirebilir.
+        if isinstance(use_default_val, str):
+            use_default = use_default_val.lower() == "true"
+        else:
+            use_default = bool(use_default_val)
+        
         if last_template_path and Path(last_template_path).is_file():
             self.template_line_edit.setText(last_template_path)
-            self.default_template_checkbox.setChecked(False)
-            self._toggle_template_selection(Qt.CheckState.Unchecked.value)
-            self.log("Son kullanılan çıktı taslağı yüklendi.")
-        else:
-            # Dosya yoksa veya hiç seçilmemişse varsayılanı işaretle
-            self.default_template_checkbox.setChecked(True)
-            self.template_line_edit.clear()
-            self._toggle_template_selection(Qt.CheckState.Checked.value)
+            
+        self.default_template_checkbox.setChecked(use_default)
+        self._toggle_template_selection(Qt.CheckState.Checked.value if use_default else Qt.CheckState.Unchecked.value)
+        
+        if not use_default and last_template_path and Path(last_template_path).is_file():
+            self.log("Son kullanılan özel çıktı taslağı yüklendi.")
+        elif use_default:
+            self.log("Varsayılan çıktı taslağı ayarı ile başlatıldı.")
 
     def _toggle_template_selection(self, state):
         """Varsayılan taslak işaretlendiğinde özel taslak seçimini deaktif eder."""
         is_checked = self.default_template_checkbox.isChecked()
         self.template_button.setDisabled(is_checked)
+        
+        self.settings.setValue("use_default_template", is_checked)
         
         if is_checked:
             self.template_line_edit.setStyleSheet("color: gray;")
