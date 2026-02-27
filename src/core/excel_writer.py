@@ -75,6 +75,7 @@ def olustur_dk_dosyasi(
     personeller: List[Personel],
     cikti_dizini: str | Path = ".",
     dosya_adi: str = OUTPUT_FILENAME,
+    template_path: str | Path | None = None,
 ) -> Path:
     """
     Personel listesinden DK Tutanağı Excel dosyasını oluşturur.
@@ -82,9 +83,10 @@ def olustur_dk_dosyasi(
     :param personeller: İşlenecek personel listesi.
     :param cikti_dizini: Çıktı dosyasının kaydedileceği dizin.
     :param dosya_adi: Çıktı dosya adı.
+    :param template_path: Özel çıktı şablonu yolu (opsiyonel).
     :returns: Oluşturulan dosyanın tam yolu.
     """
-    wb = _workbook_olustur(personeller)
+    wb = _workbook_olustur(personeller, template_path)
     cikti_dizini = Path(cikti_dizini)
     cikti_dizini.mkdir(parents=True, exist_ok=True)
     cikti_yolu = cikti_dizini / dosya_adi
@@ -92,16 +94,17 @@ def olustur_dk_dosyasi(
     return cikti_yolu
 
 
-def olustur_dk_bytes(personeller: List[Personel]) -> bytes:
+def olustur_dk_bytes(personeller: List[Personel], template_path: str | Path | None = None) -> bytes:
     """
     Personel listesinden DK Tutanağı Excel dosyasını bellekte oluşturur.
 
     Test ve ön izleme amacıyla kullanışlıdır.
 
     :param personeller: İşlenecek personel listesi.
+    :param template_path: Özel çıktı şablonu yolu (opsiyonel).
     :returns: xlsx içeriği bayt dizisi olarak.
     """
-    wb = _workbook_olustur(personeller)
+    wb = _workbook_olustur(personeller, template_path)
     buffer = BytesIO()
     wb.save(buffer)
     return buffer.getvalue()
@@ -112,13 +115,16 @@ def olustur_dk_bytes(personeller: List[Personel]) -> bytes:
 # ---------------------------------------------------------------------------
 
 
-def _workbook_olustur(personeller: List[Personel]) -> Workbook:
+def _workbook_olustur(personeller: List[Personel], template_path: str | Path | None = None) -> Workbook:
     """Her personel için şablon sayfasından kopyalanmış Workbook oluşturur."""
     # template path
-    project_root = Path(__file__).resolve().parent.parent.parent
-    template_path = project_root / TEMPLATE_PATH
+    if template_path is None:
+        project_root = Path(__file__).resolve().parent.parent.parent
+        t_path = project_root / TEMPLATE_PATH
+    else:
+        t_path = Path(template_path)
     
-    wb = openpyxl.load_workbook(template_path)
+    wb = openpyxl.load_workbook(t_path)
     template_ws = wb.active
     template_ws_title = template_ws.title
 
