@@ -16,6 +16,7 @@ def main():
         'src/main.py',
         '--name=DK_Tutanak_Olusturucu',
         '--windowed',               # Konsol penceresini gizle
+        '--onefile',                # Tek bir çalıştırılabilir dosya oluştur
         '--noconfirm',              # Sormadan üzerine yaz
         '--clean',                  # Geçici dosyaları temizle
         '--add-data=src/gui/style.qss:src/gui', # QSS dosyasını ekle
