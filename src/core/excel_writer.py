@@ -199,10 +199,8 @@ def _yaz_hesap_satirlari(ws) -> None:
     ws[_EN_YUKSEK_OGRENIM_HUCRE] = en_yuksek_ogrenim_formulu(
         doktora_hucre=_DOKTORA_OKUL_HUCRE,
         doktora_alaninda_hucre=_DOKTORA_ALANINDA_HUCRE,
-        tezli_yl_hucre=_YL_OKUL_HUCRE,
-        tezli_yl_alaninda_hucre=_YL_ALANINDA_HUCRE,
-        tezsiz_yl_hucre=_YL_OKUL_HUCRE,      # Şablonda tezli/tezsiz ayrımı yok
-        tezsiz_yl_alaninda_hucre=_YL_ALANINDA_HUCRE,
+        yl_hucre=_YL_OKUL_HUCRE,
+        yl_alaninda_hucre=_YL_ALANINDA_HUCRE,
         lisans_hucre=_LISANS_OKUL_HUCRE,
         lisans_alaninda_hucre=_LISANS_ALANINDA_HUCRE,
     )

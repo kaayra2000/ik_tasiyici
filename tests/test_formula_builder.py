@@ -111,7 +111,7 @@ class TestEnYuksekOgrenimFormulu:
     def test_doktora_birinci_kontrol(self):
         """Doktora kontrolü formülde en başta gelmeli."""
         sonuc = en_yuksek_ogrenim_formulu(
-            "C11", "D11", "C10", "D10", "C9", "D9", "C8", "D8"
+            "C8", "K8", "C7", "K7", "C6", "K6"
         )
         # Doktora ilk EĞER'de olmalı
         assert '"Doktora"' in sonuc
@@ -120,17 +120,17 @@ class TestEnYuksekOgrenimFormulu:
     def test_lisans_son_kontrol(self):
         """Lisans en sondaki EĞER'de olmalı."""
         sonuc = en_yuksek_ogrenim_formulu(
-            "C11", "D11", "C10", "D10", "C9", "D9", "C8", "D8"
+            "C8", "K8", "C7", "K7", "C6", "K6"
         )
         assert '"Lisans"' in sonuc
-        assert sonuc.index('"Lisans"') > sonuc.index('"Tezsiz Yüksek Lisans"')
+        assert sonuc.index('"Lisans"') > sonuc.index('"Tezli Yüksek Lisans"')
 
     def test_hucre_referanslari_icerir(self):
         """Fonksiyon argümanlarındaki hücre adlarını içermeli."""
         sonuc = en_yuksek_ogrenim_formulu(
-            "C11", "D11", "C10", "D10", "C9", "D9", "C8", "D8"
+            "C8", "K8", "C7", "K7", "C6", "K6"
         )
-        for hucre in ["C11", "D11", "C10", "D10", "C9", "D9", "C8", "D8"]:
+        for hucre in ["C8", "K8", "C7", "K7", "C6", "K6"]:
             assert hucre in sonuc
 
 
@@ -197,16 +197,16 @@ class TestKademeFormulu:
         sonuc = kademe_formulu("N28", "C8")
         assert "Lisans" in sonuc
 
-    def test_doktora_son_dal_bos_string(self):
+    def test_doktora_ag6_tezli_yl_ile_ayni(self):
         """
-        Doktora, D-K tablosunda A/AG-6 için tanımlı değildir;
-        formül son else dalında boş string ("") döner.
-        Formül çıktısı 'Tezli Yüksek Lisans' sonrasında boş string değer içermelidir.
+        Doktora, A/AG-6 grubunda artık Tezli Yüksek Lisans ile aynı kademe değerlerini
+        döndürür: t<2 için '3', 2≤t<3 için '2'.
         """
         sonuc = kademe_formulu("N28", "C8")
-        # Formül Tezli Yüksek Lisans karşılaştırmasından sonra "" değerini içermeli
         assert "Tezli Yüksek Lisans" in sonuc
-        assert '""' in sonuc
+        # Son dal artık boş değil — "3" ve "2" içermeli
+        assert '"3"' in sonuc
+        assert '"2"' in sonuc
 
     def test_formul_egitim_string(self):
         """Formül eğitim türü kontrolü yapmalı."""

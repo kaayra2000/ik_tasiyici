@@ -129,25 +129,30 @@ def tecrube_yili_formulu(alanda_toplam_hucre: str) -> str:
 def en_yuksek_ogrenim_formulu(
     doktora_hucre: str,
     doktora_alaninda_hucre: str,
-    tezli_yl_hucre: str,
-    tezli_yl_alaninda_hucre: str,
-    tezsiz_yl_hucre: str,
-    tezsiz_yl_alaninda_hucre: str,
+    yl_hucre: str,
+    yl_alaninda_hucre: str,
     lisans_hucre: str,
     lisans_alaninda_hucre: str,
 ) -> str:
     """
     Alanında okunan en yüksek öğrenim seviyesini dönen formülü üretir.
 
+    Şablonda tek bir "Yüksek Lisans" satırı bulunduğundan (tezli/tezsiz ayrımı yok)
+    YL satırı "Tezli Yüksek Lisans" olarak döndürülür.
     Her öğrenim seviyesi için hem öğrenim hücresi dolu, hem de "alanında" E olmalıdır.
 
+    :param doktora_hucre: Doktora okul hücresi (ör. ``"C8"``).
+    :param doktora_alaninda_hucre: Doktora alanında hücresi (ör. ``"K8"``).
+    :param yl_hucre: Yüksek Lisans okul hücresi (ör. ``"C7"``).
+    :param yl_alaninda_hucre: YL alanında hücresi (ör. ``"K7"``).
+    :param lisans_hucre: Lisans okul hücresi (ör. ``"C6"``).
+    :param lisans_alaninda_hucre: Lisans alanında hücresi (ör. ``"K6"``).
     :returns: İç içe IF formülü string'i.
     """
     return (
         f'=IF(AND({doktora_hucre}<>"",{doktora_alaninda_hucre}="E"),"Doktora",'
-        f'IF(AND({tezli_yl_hucre}<>"",{tezli_yl_alaninda_hucre}="E"),"Tezli Yüksek Lisans",'
-        f'IF(AND({tezsiz_yl_hucre}<>"",{tezsiz_yl_alaninda_hucre}="E"),"Tezsiz Yüksek Lisans",'
-        f'IF(AND({lisans_hucre}<>"",{lisans_alaninda_hucre}="E"),"Lisans",""))))'
+        f'IF(AND({yl_hucre}<>"",{yl_alaninda_hucre}="E"),"Tezli Yüksek Lisans",'
+        f'IF(AND({lisans_hucre}<>"",{lisans_alaninda_hucre}="E"),"Lisans","")))'
     )
 
 
@@ -253,16 +258,16 @@ def kademe_formulu(
     )
     ag5 = f'IF({t}<6,{ag5_low},{ag5_high})'  # 3-5 yıl → low, 6-8 yıl → high
 
-    # A/AG-6 (0-3)
+    # A/AG-6 (0-3) — Doktora → Tezli YL ile aynı ("3" / "2")
     ag6_low = (
         f'IF({o}="Lisans","5-6",'
         f'IF({o}="Tezsiz Yüksek Lisans","5-6",'
-        f'IF({o}="Tezli Yüksek Lisans","3","")))'
+        f'IF({o}="Tezli Yüksek Lisans","3","3")))'
     )
     ag6_high = (
         f'IF({o}="Lisans","3-4",'
         f'IF({o}="Tezsiz Yüksek Lisans","3-4",'
-        f'IF({o}="Tezli Yüksek Lisans","2","")))'
+        f'IF({o}="Tezli Yüksek Lisans","2","2")))'
     )
     ag6 = f'IF({t}<2,{ag6_low},{ag6_high})'
 
