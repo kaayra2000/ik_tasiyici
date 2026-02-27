@@ -96,47 +96,58 @@ class MainWindow(QMainWindow):
 
     def _load_settings(self):
         """Uygulama açılırken son kaydedilen yolları yükler."""
+        last_input_path = self.settings.value("last_input_path", "")
         last_template_path = self.settings.value("last_template_path", "")
         last_output_path = self.settings.value("last_output_path", "")
         
-        from src.config.constants import OUTPUT_FILENAME, TEMPLATE_PATH
-        import os
+        # Girdi Dosyası
+        if last_input_path and Path(last_input_path).is_file():
+            self.input_line_edit.setText(last_input_path)
+            self.log("Son kullanılan girdi dosyası yüklendi.")
         
         # Çıktı Taslağı
         if last_template_path and Path(last_template_path).is_file():
             self.template_line_edit.setText(last_template_path)
             self.log("Son kullanılan özel çıktı taslağı yüklendi.")
-        else:
-            # Kayıtlı taslak yoksa veya silinmişse, kod içindeki varsayılan taslağı göster
-            project_root = Path(__file__).resolve().parent.parent.parent
-            default_template = str(project_root / TEMPLATE_PATH)
-            self.template_line_edit.setText(default_template)
-            self.log("Varsayılan çıktı taslağı ayarı ile başlatıldı.")
             
         # Kayıt Yeri
         if last_output_path:
             self.output_line_edit.setText(last_output_path)
-        else:
-            # Kayıtlı yer yoksa bulunulan dizini (pwd) baz al
-            default_output = str(Path(os.getcwd()) / OUTPUT_FILENAME)
-            self.output_line_edit.setText(default_output)
+            self.log("Son kullanılan kayıt yeri yüklendi.")
 
     def _select_input_file(self):
+        current_path = self.input_line_edit.text()
+        if not current_path:
+            last_path = self.settings.value("last_input_path", "")
+            if last_path:
+                current_path = str(Path(last_path).parent)
+            else:
+                current_path = ""
+
         file_path, _ = QFileDialog.getOpenFileName(
             self,
             "Kaynak (Girdi) Excel Dosyasını Seç",
-            "",
+            current_path,
             "Excel Files (*.xlsx *.xls)"
         )
         if file_path:
             self.input_line_edit.setText(file_path)
+            self.settings.setValue("last_input_path", file_path)
             self.log(f"Girdi dosyası seçildi: {file_path}")
 
     def _select_template_file(self):
+        current_path = self.template_line_edit.text()
+        if not current_path:
+            last_path = self.settings.value("last_template_path", "")
+            if last_path:
+                current_path = str(Path(last_path).parent)
+            else:
+                current_path = ""
+                
         file_path, _ = QFileDialog.getOpenFileName(
             self,
             "Çıktı Taslağı Excel Dosyasını Seç",
-            "",
+            current_path,
             "Excel Files (*.xlsx *.xls)"
         )
         if file_path:
@@ -146,9 +157,6 @@ class MainWindow(QMainWindow):
             self.log(f"Özel çıktı taslağı seçildi ve kaydedildi: {file_path}")
 
     def _select_output_file(self):
-        import os
-        from src.config.constants import OUTPUT_FILENAME
-        
         # Eğer önceden seçilmiş bir yol varsa oradan başla
         current_path = self.output_line_edit.text()
         if not current_path:
@@ -156,7 +164,7 @@ class MainWindow(QMainWindow):
             if last_path:
                 current_path = last_path
             else:
-                current_path = str(Path(os.getcwd()) / OUTPUT_FILENAME)
+                current_path = ""
                 
         file_path, _ = QFileDialog.getSaveFileName(
             self,
@@ -218,16 +226,13 @@ class MainWindow(QMainWindow):
             # Çıktı yolu kontrolü
             output_full_path = self.output_line_edit.text().strip()
             
-            if output_full_path:
-                output_path_obj = Path(output_full_path)
-                output_dir = output_path_obj.parent
-                output_filename = output_path_obj.name
-            else:
-                # Seçilmemişse varsayılan olarak girdi dosyasının yanı
-                output_dir = Path(input_file).parent
-                from src.config.constants import OUTPUT_FILENAME
-                output_filename = OUTPUT_FILENAME
-                self.log("Kayıt yeri belirtilmedi, kaynak dosyanın yanına kaydedilecek.")
+            if not output_full_path:
+                QMessageBox.warning(self, "Uyarı", "Lütfen bir çıktı kayıt yeri seçin.")
+                return
+
+            output_path_obj = Path(output_full_path)
+            output_dir = output_path_obj.parent
+            output_filename = output_path_obj.name
             
             output_path = olustur_dk_dosyasi(
                 personeller=personeller,
