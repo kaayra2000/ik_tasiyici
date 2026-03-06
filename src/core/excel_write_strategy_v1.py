@@ -8,6 +8,8 @@ Mevcut ``excel_writer.py`` içindeki iç fonksiyonlardan birebir taşınmıştı
 
 from __future__ import annotations
 
+from copy import copy
+
 from src.config.constants import (
     TECRUBE_BASLANGIC_SATIR,
     TECRUBE_BITIS_SATIR,
@@ -39,6 +41,10 @@ _HUCRE_UNVAN = "E3"
 _HUCRE_KADEME = "F3"
 _HUCRE_HIZMET_GRUBU_BASLIK = "M2"
 _HUCRE_HIZMET_GRUBU_TURU = "M3"
+_HUCRE_HIZMET_GRUBU_BASLIK_STIL_KAYNAGI = "H2"
+_HUCRE_HIZMET_GRUBU_TURU_STIL_KAYNAGI = "H3"
+_HIZMET_GRUBU_SUTUNU = "M"
+_HIZMET_GRUBU_MIN_SUTUN_GENISLIGI = 22
 
 # Toplam / hesap satırları
 _SATIR_TOPLAM_PRIM = TECRUBE_BITIS_SATIR + 1        # 19
@@ -89,6 +95,17 @@ class ExcelWriteStrategyV1(ExcelWriteStrategy):
         ws[_HUCRE_BIRIM] = personel.birim
         ws[_HUCRE_HIZMET_GRUBU_BASLIK] = "HİZMET GRUBU TÜRÜ"
         ws[_HUCRE_HIZMET_GRUBU_TURU] = "AG"
+        ExcelWriteStrategyV1._kopyala_hucre_bicimi(
+            ws,
+            _HUCRE_HIZMET_GRUBU_BASLIK_STIL_KAYNAGI,
+            _HUCRE_HIZMET_GRUBU_BASLIK,
+        )
+        ExcelWriteStrategyV1._kopyala_hucre_bicimi(
+            ws,
+            _HUCRE_HIZMET_GRUBU_TURU_STIL_KAYNAGI,
+            _HUCRE_HIZMET_GRUBU_TURU,
+        )
+        ExcelWriteStrategyV1._ayarla_hizmet_grubu_sutun_genisligi(ws)
 
     @staticmethod
     def _yaz_tecrube_satirlari(ws) -> None:
@@ -136,6 +153,18 @@ class ExcelWriteStrategyV1(ExcelWriteStrategy):
 
         # F3: Derece/Kademe
         ws[_HUCRE_KADEME] = '=IF(Z3="", Z2, Z2 & "/" & Z3)'
+
+    @staticmethod
+    def _kopyala_hucre_bicimi(ws, kaynak_hucre: str, hedef_hucre: str) -> None:
+        """Hedef hücreye kaynak hücrenin biçimini uygular."""
+        ws[hedef_hucre]._style = copy(ws[kaynak_hucre]._style)
+
+    @staticmethod
+    def _ayarla_hizmet_grubu_sutun_genisligi(ws) -> None:
+        """Başlık metninin görünmesi için hizmet grubu sütununu genişletir."""
+        sutun = ws.column_dimensions[_HIZMET_GRUBU_SUTUNU]
+        mevcut = sutun.width or 0
+        sutun.width = max(mevcut, _HIZMET_GRUBU_MIN_SUTUN_GENISLIGI)
 
     @staticmethod
     def _ekle_veri_dogrulama(ws) -> None:

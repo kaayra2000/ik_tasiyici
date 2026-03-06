@@ -141,6 +141,13 @@ class TestOlusturDkBytes:
         ws = wb.worksheets[0]
         assert ws["M2"].value == "HİZMET GRUBU TÜRÜ"
 
+    def test_hizmet_grubu_sutunu_genisler(self, tek_personel):
+        """M sütunu başlık metnini sığdıracak kadar geniş olmalı."""
+        data = olustur_dk_bytes(tek_personel)
+        wb = _workbook_from_bytes(data)
+        ws = wb.worksheets[0]
+        assert ws.column_dimensions["M"].width >= 22
+
     def test_tecrube_formulleri_var(self, tek_personel):
         """Tecrübe satırlarında K sütununda formül olmalı."""
         data = olustur_dk_bytes(tek_personel)

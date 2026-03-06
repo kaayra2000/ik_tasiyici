@@ -10,6 +10,7 @@ from io import BytesIO
 
 import openpyxl
 import pytest
+from openpyxl.styles import PatternFill
 
 from src.core.excel_reader import Personel
 from src.core.excel_write_strategy import ExcelWriteStrategy
@@ -98,6 +99,24 @@ class TestExcelWriteStrategyV1:
         """Hizmet grubu türü seçim hücresi varsayılan olarak AG olmalı."""
         strategy.sayfa_doldur(template_ws, personel)
         assert template_ws["M3"].value == "AG"
+
+    def test_sayfa_doldur_hizmet_grubu_hucreleri_komsu_bicimini_alir(self, strategy, personel, template_ws):
+        """M2 ve M3 görünür kaynak hücrelerin biçimini almalı."""
+        template_ws["H2"].fill = PatternFill(fill_type="solid", fgColor="FFCC00")
+        template_ws["H3"].fill = PatternFill(fill_type="solid", fgColor="99CCFF")
+
+        strategy.sayfa_doldur(template_ws, personel)
+
+        assert template_ws["M2"]._style == template_ws["H2"]._style
+        assert template_ws["M3"]._style == template_ws["H3"]._style
+
+    def test_sayfa_doldur_hizmet_grubu_sutunu_genisler(self, strategy, personel, template_ws):
+        """M sütunu başlık metnini gösterecek kadar genişlemeli."""
+        template_ws.column_dimensions["M"].width = 13
+
+        strategy.sayfa_doldur(template_ws, personel)
+
+        assert template_ws.column_dimensions["M"].width >= 22
 
     def test_sayfa_doldur_unvan_formul(self, strategy, personel, template_ws):
         """Ünvan hücresi formül içermeli."""
