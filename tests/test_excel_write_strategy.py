@@ -89,12 +89,23 @@ class TestExcelWriteStrategyV1:
         strategy.sayfa_doldur(template_ws, personel)
         assert template_ws["D3"].value == "Marmara Enstitüsü"
 
+    def test_sayfa_doldur_hizmet_grubu_basligi(self, strategy, personel, template_ws):
+        """Hizmet grubu seçim alanının başlığı güncellenmeli."""
+        strategy.sayfa_doldur(template_ws, personel)
+        assert template_ws["M2"].value == "HİZMET GRUBU TÜRÜ"
+
+    def test_sayfa_doldur_hizmet_grubu_turu_varsayilan_ag(self, strategy, personel, template_ws):
+        """Hizmet grubu türü seçim hücresi varsayılan olarak AG olmalı."""
+        strategy.sayfa_doldur(template_ws, personel)
+        assert template_ws["M3"].value == "AG"
+
     def test_sayfa_doldur_unvan_formul(self, strategy, personel, template_ws):
         """Ünvan hücresi formül içermeli."""
         strategy.sayfa_doldur(template_ws, personel)
         unvan = template_ws["E3"].value
         assert unvan is not None
         assert str(unvan).startswith("=")
+        assert 'M3="A"' in str(unvan)
 
     def test_sayfa_doldur_kademe_formul(self, strategy, personel, template_ws):
         """Kademe hücresi formül içermeli."""
@@ -110,6 +121,11 @@ class TestExcelWriteStrategyV1:
         k_val = template_ws.cell(row=TECRUBE_BASLANGIC_SATIR, column=11).value
         assert k_val is not None
         assert str(k_val).startswith("=")
+
+    def test_sayfa_doldur_hizmet_grubu_formulu_M3e_bagli(self, strategy, personel, template_ws):
+        """Hizmet grubu formülü seçim hücresi olarak M3'ü kullanmalı."""
+        strategy.sayfa_doldur(template_ws, personel)
+        assert 'M3&"-' in str(template_ws["Z2"].value)
 
     def test_is_abstract_strategy_subclass(self):
         """V1 stratejisi ExcelWriteStrategy alt sınıfı olmalı."""

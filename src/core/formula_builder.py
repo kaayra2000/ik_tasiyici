@@ -163,37 +163,56 @@ def en_yuksek_ogrenim_formulu(
 # ---------------------------------------------------------------------------
 
 
-def unvan_formulu(tecrube_yili_hucre: str) -> str:
+def unvan_formulu(
+    tecrube_yili_hucre: str,
+    hizmet_grubu_turu_hucre: str,
+) -> str:
     """
-    Tecrübe yılına göre ünvanı belirleyen formülü üretir.
+    Tecrübe yılına ve hizmet grubu türüne göre ünvanı belirleyen formülü üretir.
 
     Eşik değerleri AGENT.md §Ünvan/Derece/Kademe Hesaplama bölümünden alınmıştır.
 
     :param tecrube_yili_hucre: Tecrübe yılı değerinin bulunduğu hücre (ör. ``"Z1"``).
+    :param hizmet_grubu_turu_hucre: Hizmet grubu türü seçiminin bulunduğu hücre
+        (ör. ``"M3"``). ``"A"`` ise ünvanlara ``" Araştırmacı"`` eklenir.
     :returns: İç içe IF formülü string'i.
     """
     t = tecrube_yili_hucre
+    g = hizmet_grubu_turu_hucre
+
+    def varyant(unvan: str) -> str:
+        return f'IF({g}="A","{unvan} Araştırmacı","{unvan}")'
+
     return (
-        f'=IF({t}>=16,"Kıdemli Başuzman",'
-        f'IF({t}>=12,"Başuzman",'
-        f'IF({t}>=8,"Kıdemli Uzman",'
-        f'IF({t}>=3,"Uzman","Uzman Yardımcısı"))))'
+        f'=IF({t}>=16,{varyant("Kıdemli Başuzman")},'
+        f'IF({t}>=12,{varyant("Başuzman")},'
+        f'IF({t}>=8,{varyant("Kıdemli Uzman")},'
+        f'IF({t}>=3,{varyant("Uzman")},{varyant("Uzman Yardımcısı")}))))'
     )
 
 
-def hizmet_grubu_formulu(tecrube_yili_hucre: str) -> str:
+def hizmet_grubu_formulu(
+    tecrube_yili_hucre: str,
+    hizmet_grubu_turu_hucre: str,
+) -> str:
     """
-    Tecrübe yılına göre hizmet grubunu belirleyen formülü üretir.
+    Tecrübe yılına ve seçilen türe göre hizmet grubunu belirleyen formülü üretir.
 
     :param tecrube_yili_hucre: Tecrübe yılı değerinin bulunduğu hücre.
+    :param hizmet_grubu_turu_hucre: Hizmet grubu türü seçiminin bulunduğu hücre.
+        Beklenen değerler ``"A"`` veya ``"AG"``.
     :returns: İç içe IF formülü string'i.
     """
     t = tecrube_yili_hucre
+    g = hizmet_grubu_turu_hucre
     return (
-        f'=IF({t}>=16,"A/AG-2",'
-        f'IF({t}>=12,"A/AG-3",'
-        f'IF({t}>=8,"A/AG-4",'
-        f'IF({t}>=3,"A/AG-5","A/AG-6"))))'
+        f'=IF(OR({g}="A",{g}="AG"),'
+        f'IF({t}>=16,{g}&"-2",'
+        f'IF({t}>=12,{g}&"-3",'
+        f'IF({t}>=8,{g}&"-4",'
+        f'IF({t}>=3,{g}&"-5",{g}&"-6")))),'
+        f'""'
+        f')'
     )
 
 

@@ -127,6 +127,20 @@ class TestOlusturDkBytes:
         ws = wb.worksheets[0]
         assert ws["D3"].value == "Marmara Enstitüsü"
 
+    def test_hizmet_grubu_turu_varsayilan_ag(self, tek_personel):
+        """Hizmet grubu türü seçim hücresine varsayılan AG yazılmalı."""
+        data = olustur_dk_bytes(tek_personel)
+        wb = _workbook_from_bytes(data)
+        ws = wb.worksheets[0]
+        assert ws["M3"].value == "AG"
+
+    def test_hizmet_grubu_basligi_guncellenir(self, tek_personel):
+        """Seçim alanının başlığı hizmet grubu türünü göstermeli."""
+        data = olustur_dk_bytes(tek_personel)
+        wb = _workbook_from_bytes(data)
+        ws = wb.worksheets[0]
+        assert ws["M2"].value == "HİZMET GRUBU TÜRÜ"
+
     def test_tecrube_formulleri_var(self, tek_personel):
         """Tecrübe satırlarında K sütununda formül olmalı."""
         data = olustur_dk_bytes(tek_personel)
