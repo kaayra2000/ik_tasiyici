@@ -129,23 +129,30 @@ class TestUnvanFormulu:
     """unvan_formulu fonksiyonu için testler."""
 
     def test_kidemli_basuzman_en_ust(self):
-        sonuc = unvan_formulu("N28")
+        sonuc = unvan_formulu("N28", "M3")
+        assert '"Kıdemli Başuzman Araştırmacı"' in sonuc
         assert '"Kıdemli Başuzman"' in sonuc
         # 16+ yıl en baştaki koşul olmalı
         assert sonuc.index("16") < sonuc.index("12")
 
     def test_uzman_yardimcisi_son(self):
         """Uzman Yardımcısı son seçenek olmalı."""
-        sonuc = unvan_formulu("N28")
+        sonuc = unvan_formulu("N28", "M3")
         assert '"Uzman Yardımcısı"' in sonuc
+        assert 'M3="A"' in sonuc
         # Diğer ünvanlardan sonra gelmeli
         assert sonuc.index('"Uzman Yardımcısı"') > sonuc.index('"Uzman"')
 
     def test_tum_unvanlar(self):
         """Formül tüm 5 ünvanı içermeli."""
-        sonuc = unvan_formulu("N28")
+        sonuc = unvan_formulu("N28", "M3")
         for unvan in [
-            "Kıdemli Başuzman", "Başuzman", "Kıdemli Uzman", "Uzman", "Uzman Yardımcısı"
+            "Kıdemli Başuzman",
+            "Başuzman",
+            "Kıdemli Uzman",
+            "Uzman",
+            "Uzman Yardımcısı",
+            "Araştırmacı",
         ]:
             assert unvan in sonuc
 
@@ -154,19 +161,20 @@ class TestHizmetGrubuFormulu:
     """hizmet_grubu_formulu fonksiyonu için testler."""
 
     def test_ag2_en_ust(self):
-        sonuc = hizmet_grubu_formulu("N28")
-        assert '"A/AG-2"' in sonuc
+        sonuc = hizmet_grubu_formulu("N28", "M3")
+        assert 'M3&"-2"' in sonuc
 
     def test_ag6_son(self):
-        sonuc = hizmet_grubu_formulu("N28")
-        assert '"A/AG-6"' in sonuc
-        # A/AG-6 en sona gelmeli
-        assert sonuc.index('"A/AG-6"') > sonuc.index('"A/AG-5"')
+        sonuc = hizmet_grubu_formulu("N28", "M3")
+        assert 'M3&"-6"' in sonuc
+        # -6 en sona gelmeli
+        assert sonuc.index('M3&"-6"') > sonuc.index('M3&"-5"')
 
     def test_tum_gruplar(self):
         """Formül tüm 5 hizmet grubunu içermeli."""
-        sonuc = hizmet_grubu_formulu("N28")
-        for grup in ["A/AG-2", "A/AG-3", "A/AG-4", "A/AG-5", "A/AG-6"]:
+        sonuc = hizmet_grubu_formulu("N28", "M3")
+        assert 'OR(M3="A",M3="AG")' in sonuc
+        for grup in ['M3&"-2"', 'M3&"-3"', 'M3&"-4"', 'M3&"-5"', 'M3&"-6"']:
             assert grup in sonuc
 
 

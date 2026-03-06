@@ -8,6 +8,8 @@ Mevcut ``excel_writer.py`` içindeki iç fonksiyonlardan birebir taşınmıştı
 
 from __future__ import annotations
 
+from copy import copy
+
 from src.config.constants import (
     TECRUBE_BASLANGIC_SATIR,
     TECRUBE_BITIS_SATIR,
@@ -37,11 +39,20 @@ _HUCRE_TCKN = "C3"
 _HUCRE_BIRIM = "D3"
 _HUCRE_UNVAN = "E3"
 _HUCRE_KADEME = "F3"
+_HUCRE_HIZMET_GRUBU_BASLIK = "M2"
+_HUCRE_HIZMET_GRUBU_TURU = "M3"
+_HUCRE_HIZMET_GRUBU_BASLIK_STIL_KAYNAGI = "H2"
+_HUCRE_HIZMET_GRUBU_TURU_STIL_KAYNAGI = "H3"
+_HIZMET_GRUBU_SUTUNU = "M"
+_HIZMET_GRUBU_MIN_SUTUN_GENISLIGI = 22
 
 # Toplam / hesap satırları
 _SATIR_TOPLAM_PRIM = TECRUBE_BITIS_SATIR + 1        # 19
 _SATIR_ALANDA_PRIM = TECRUBE_BITIS_SATIR + 1        # 19
 
+# M3 görünür seçim hücresidir:
+# M3 = Hizmet Grubu Türü (A / AG)
+#
 # Z sütununu gizli hesaplama için kullanıyoruz:
 # Z1 = Tecrübe Yılı, Z2 = Hizmet Grubu, Z3 = Kademe, Z4 = En Yüksek Öğrenim
 _TECRUBE_YILI_HUCRE = "Z1"
@@ -82,6 +93,19 @@ class ExcelWriteStrategyV1(ExcelWriteStrategy):
         ws[_HUCRE_AD_SOYAD] = personel.ad_soyad
         ws[_HUCRE_TCKN] = personel.tckn
         ws[_HUCRE_BIRIM] = personel.birim
+        ws[_HUCRE_HIZMET_GRUBU_BASLIK] = "HİZMET GRUBU TÜRÜ"
+        ws[_HUCRE_HIZMET_GRUBU_TURU] = "AG"
+        ExcelWriteStrategyV1._kopyala_hucre_bicimi(
+            ws,
+            _HUCRE_HIZMET_GRUBU_BASLIK_STIL_KAYNAGI,
+            _HUCRE_HIZMET_GRUBU_BASLIK,
+        )
+        ExcelWriteStrategyV1._kopyala_hucre_bicimi(
+            ws,
+            _HUCRE_HIZMET_GRUBU_TURU_STIL_KAYNAGI,
+            _HUCRE_HIZMET_GRUBU_TURU,
+        )
+        ExcelWriteStrategyV1._ayarla_hizmet_grubu_sutun_genisligi(ws)
 
     @staticmethod
     def _yaz_tecrube_satirlari(ws) -> None:
@@ -113,28 +137,62 @@ class ExcelWriteStrategyV1(ExcelWriteStrategy):
         )
 
         # Z2 = Hizmet Grubu
-        ws["Z2"] = hizmet_grubu_formulu(_TECRUBE_YILI_HUCRE)
+        ws["Z2"] = hizmet_grubu_formulu(
+            _TECRUBE_YILI_HUCRE,
+            _HUCRE_HIZMET_GRUBU_TURU,
+        )
 
         # Z3 = Kademe
         ws["Z3"] = kademe_formulu(_TECRUBE_YILI_HUCRE, _EN_YUKSEK_OGRENIM_HUCRE)
 
         # E3: Ünvan
-        ws[_HUCRE_UNVAN] = unvan_formulu(_TECRUBE_YILI_HUCRE)
+        ws[_HUCRE_UNVAN] = unvan_formulu(
+            _TECRUBE_YILI_HUCRE,
+            _HUCRE_HIZMET_GRUBU_TURU,
+        )
 
         # F3: Derece/Kademe
         ws[_HUCRE_KADEME] = '=IF(Z3="", Z2, Z2 & "/" & Z3)'
 
     @staticmethod
+    def _kopyala_hucre_bicimi(ws, kaynak_hucre: str, hedef_hucre: str) -> None:
+        """Hedef hücreye kaynak hücrenin biçimini uygular."""
+        ws[hedef_hucre]._style = copy(ws[kaynak_hucre]._style)
+
+    @staticmethod
+    def _ayarla_hizmet_grubu_sutun_genisligi(ws) -> None:
+        """Başlık metninin görünmesi için hizmet grubu sütununu genişletir."""
+        sutun = ws.column_dimensions[_HIZMET_GRUBU_SUTUNU]
+        mevcut = sutun.width or 0
+        sutun.width = max(mevcut, _HIZMET_GRUBU_MIN_SUTUN_GENISLIGI)
+
+    @staticmethod
     def _ekle_veri_dogrulama(ws) -> None:
-        """B6, B7 ve B8 hücreleri için öğrenim seviyeleri açılır listesini ekler."""
+        """Öğrenim ve hizmet grubu türü hücreleri için açılır listeleri ekler."""
         from openpyxl.worksheet.datavalidation import DataValidation
         from src.config.constants import OGRENIM_SEVIYELERI
 
-        dv = DataValidation(
+        # Şablondan M3 için gelen eski doğrulamayı temizleyip yeni A/AG listesini ekleriz.
+        if hasattr(ws, "data_validations") and hasattr(ws.data_validations, "dataValidation"):
+            ws.data_validations.dataValidation = [
+                dv
+                for dv in ws.data_validations.dataValidation
+                if str(dv.sqref) != _HUCRE_HIZMET_GRUBU_TURU
+            ]
+
+        ogrenim_dv = DataValidation(
             type="list",
             formula1=f'"{",".join(OGRENIM_SEVIYELERI)}"',
             allow_blank=True,
         )
-        ws.add_data_validation(dv)
+        ws.add_data_validation(ogrenim_dv)
         for row in range(6, 9):  # 6, 7, 8
-            dv.add(f"B{row}")
+            ogrenim_dv.add(f"B{row}")
+
+        hizmet_grubu_dv = DataValidation(
+            type="list",
+            formula1='"A,AG"',
+            allow_blank=True,
+        )
+        ws.add_data_validation(hizmet_grubu_dv)
+        hizmet_grubu_dv.add(_HUCRE_HIZMET_GRUBU_TURU)
