@@ -295,20 +295,24 @@ class EducationImporter:
 
         Program adında " - " varsa yalnızca önceki kısım alınır;
         bu sayede "ÖRGÜN ÖĞRETİM" gibi ekler kırpılır.
+        Ayrıca (YL) ve (DR) gibi ibareler temizlenir.
         """
-        if " - " in program:
-            return program.split(" - ")[0].strip()
-        return program
+        text = program
+        if " - " in text:
+            text = text.split(" - ")[0].strip()
+        
+        text = text.replace("(YL)", "").replace("(DR)", "").strip()
+        return text
 
     @staticmethod
     def _infer_level(program: str, faculty: str) -> str:
         """Program metninden şablondaki öğrenim seviyesini tahmin eder."""
         search_text = f"{program} {faculty}".upper()
-        if "DOKTORA" in search_text or "SANATTA YETERLİK" in search_text:
+        if "DOKTORA" in search_text or "SANATTA YETERLİK" in search_text or "(DR)" in search_text:
             return OGRENIM_DOKTORA
         if "TEZSİZ YÜKSEK LİSANS" in search_text or "TEZSIZ YUKSEK LISANS" in search_text:
             return OGRENIM_TEZSIZ_YL
-        if "YÜKSEK LİSANS" in search_text or "YUKSEK LISANS" in search_text or "MASTER" in search_text:
+        if "YÜKSEK LİSANS" in search_text or "YUKSEK LISANS" in search_text or "MASTER" in search_text or "(YL)" in search_text:
             return OGRENIM_TEZLI_YL
         return OGRENIM_LISANS
 
