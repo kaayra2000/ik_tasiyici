@@ -169,19 +169,18 @@ class MainWindow(QMainWindow):
 
     def _load_settings(self) -> None:
         """Son kaydedilen yolları yükler."""
-        input_path = self._settings.get_existing_file(
-            SettingsManager.KEY_INPUT_PATH
+        self._restore_open_selector(
+            self._input_selector,
+            SettingsManager.KEY_INPUT_PATH,
+            "Son kullanılan girdi dosyası yüklendi.",
+            "Son kullanılan girdi klasörü yüklendi.",
         )
-        if input_path:
-            self._input_selector.set_path(input_path)
-            self.log("Son kullanılan girdi dosyası yüklendi.")
-
-        template_path = self._settings.get_existing_file(
-            SettingsManager.KEY_TEMPLATE_PATH
+        self._restore_open_selector(
+            self._template_selector,
+            SettingsManager.KEY_TEMPLATE_PATH,
+            "Son kullanılan özel çıktı taslağı yüklendi.",
+            "Son kullanılan taslak klasörü yüklendi.",
         )
-        if template_path:
-            self._template_selector.set_path(template_path)
-            self.log("Son kullanılan özel çıktı taslağı yüklendi.")
 
         output_path = self._settings.get(SettingsManager.KEY_OUTPUT_PATH)
         if output_path:
@@ -194,6 +193,25 @@ class MainWindow(QMainWindow):
         action = self._version_actions.get(saved_version)
         if action:
             action.setChecked(True)
+
+    def _restore_open_selector(
+        self,
+        selector: FileSelectionWidget,
+        key: str,
+        success_message: str,
+        fallback_message: str,
+    ) -> None:
+        """Açma tipi seçiciler için dosya ya da son klasörü geri yükler."""
+        file_path = self._settings.get_existing_file(key)
+        if file_path:
+            selector.set_path(file_path)
+            self.log(success_message)
+            return
+
+        parent_dir = self._settings.get_parent_dir(key)
+        if parent_dir:
+            selector.set_dialog_path(parent_dir)
+            self.log(fallback_message)
 
     # ------------------------------------------------------------------
     # Sinyal slotları

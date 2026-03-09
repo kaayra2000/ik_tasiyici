@@ -67,9 +67,9 @@ def _apply_stylesheet(app) -> None:
 
 def _create_main_window():
     """Ana pencereyi olusturur."""
-    from src.gui.main_window import MainWindow
+    from src.gui.main_menu_window import MainMenuWindow
 
-    return MainWindow()
+    return MainMenuWindow()
 
 
 bootstrap_local_package_resolution(__package__, __file__, sys.path)

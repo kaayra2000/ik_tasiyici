@@ -56,6 +56,7 @@ class FileSelectionWidget(QWidget):
         self._dialog_title = dialog_title
         self._dialog_type = dialog_type
         self._file_filter = file_filter
+        self._dialog_path = ""
 
         self._init_ui(label_text, button_text)
 
@@ -92,6 +93,11 @@ class FileSelectionWidget(QWidget):
         :param path: Gösterilecek dosya yolu.
         """
         self._line_edit.setText(path)
+        self._dialog_path = path
+
+    def set_dialog_path(self, path: str) -> None:
+        """Dosya diyaloğunun açılacağı başlangıç yolunu ayarlar."""
+        self._dialog_path = path
 
     # ------------------------------------------------------------------
     # Slot (orkestratör — SRP: yalnızca koordinasyon)
@@ -116,7 +122,7 @@ class FileSelectionWidget(QWidget):
         dialog = QFileDialog(
             self,
             self._dialog_title,
-            self.get_path(),
+            self.get_path() or self._dialog_path,
             self._file_filter,
         )
         dialog.setOption(QFileDialog.Option.DontUseNativeDialog)
@@ -156,4 +162,5 @@ class FileSelectionWidget(QWidget):
         selected = dialog.selectedFiles()
         if selected:
             self._line_edit.setText(selected[0])
+            self._dialog_path = selected[0]
             self.file_selected.emit(selected[0])

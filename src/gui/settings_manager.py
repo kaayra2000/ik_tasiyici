@@ -23,6 +23,8 @@ class SettingsManager:
     KEY_TEMPLATE_PATH = "last_template_path"
     KEY_OUTPUT_PATH = "last_output_path"
     KEY_OUTPUT_VERSION = "last_output_version"
+    KEY_EDUCATION_TARGET_PATH = "last_education_target_path"
+    KEY_EDUCATION_SOURCE_PATH = "last_education_source_path"
 
     def __init__(
         self, org: str = "IK_Tasiyici", app: str = "TutanakOlusturucu"

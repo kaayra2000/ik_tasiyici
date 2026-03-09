@@ -69,3 +69,11 @@ class TestSettingsManager:
         assert SettingsManager.KEY_INPUT_PATH == "last_input_path"
         assert SettingsManager.KEY_TEMPLATE_PATH == "last_template_path"
         assert SettingsManager.KEY_OUTPUT_PATH == "last_output_path"
+        assert (
+            SettingsManager.KEY_EDUCATION_TARGET_PATH
+            == "last_education_target_path"
+        )
+        assert (
+            SettingsManager.KEY_EDUCATION_SOURCE_PATH
+            == "last_education_source_path"
+        )
