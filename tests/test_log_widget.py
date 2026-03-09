@@ -30,6 +30,17 @@ def widget(qapp):
 class TestLogWidget:
     """LogWidget blok loglama davranış testleri."""
 
+    def test_log_renders_plain_messages_as_markdown_list_item(
+        self,
+        widget: LogWidget,
+    ):
+        """Tekil log satırı markdown madde işareti olarak yazılmalı."""
+        widget.log("İşlem başlatılıyor...")
+
+        markdown = widget._text_edit.toMarkdown()
+        assert "- İşlem başlatılıyor..." in markdown
+        assert "İşlem başlatılıyor..." in widget._text_edit.toPlainText()
+
     def test_log_detail_block_writes_title_and_messages(self, widget: LogWidget):
         """Detay bloğu başlık ve tüm satırları yazmalı."""
         widget.log_detail_block(
@@ -43,6 +54,9 @@ class TestLogWidget:
             "Satır 2 atlandı",
             "Satır 3 atlandı",
         ]
+        markdown = widget._text_edit.toMarkdown()
+        assert "### Kaynak ayrıntıları:" in markdown
+        assert "- Satır 2 atlandı" in markdown
 
     def test_log_summary_block_skips_none_values(self, widget: LogWidget):
         """Özet bloğu None alanları yazmamalı."""
@@ -60,3 +74,6 @@ class TestLogWidget:
             "Durum: Başarılı",
             "Eklenen kayıt: 2",
         ]
+        markdown = widget._text_edit.toMarkdown()
+        assert "### Özet:" in markdown
+        assert "- **Durum:** Başarılı" in markdown
