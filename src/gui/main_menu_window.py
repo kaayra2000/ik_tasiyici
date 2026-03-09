@@ -14,7 +14,7 @@ from PyQt6.QtWidgets import (
 )
 
 from src.gui.education_import_window import EducationImportWindow
-from src.gui.main_window import MainWindow
+from src.gui.tutanak_window import TutanakWindow
 
 
 class MainMenuWindow(QMainWindow):
@@ -88,7 +88,7 @@ class MainMenuWindow(QMainWindow):
 
     def _open_tutanak_window(self) -> None:
         """Tutanak oluşturma ekranını açar."""
-        self._open_child_window(MainWindow())
+        self._open_child_window(TutanakWindow())
 
     def _open_education_import_window(self) -> None:
         """Mezuniyet içe aktarma ekranını açar."""

@@ -2,7 +2,7 @@
 Tutanak oluşturma iş mantığını kapsülleyen servis katmanı.
 
 Facade tasarım kalıbı ile core katmanına basit bir arayüz sunar.
-DIP: MainWindow artık doğrudan core fonksiyonlarına bağımlı değildir.
+DIP: TutanakWindow artık doğrudan core fonksiyonlarına bağımlı değildir.
 """
 
 from __future__ import annotations

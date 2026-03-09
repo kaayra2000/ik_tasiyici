@@ -68,7 +68,7 @@ def _apply_stylesheet(app) -> None:
         app.setStyleSheet(stylesheet_file.read())
 
 
-def _create_main_window():
+def _create_main_menu_window():
     """Ana pencereyi olusturur."""
     from src.gui.main_menu_window import MainMenuWindow
 
@@ -83,7 +83,7 @@ def main() -> None:
     app = _create_application(sys.argv)
     _apply_stylesheet(app)
 
-    window = _create_main_window()
+    window = _create_main_menu_window()
     window.show()
 
     sys.exit(app.exec())

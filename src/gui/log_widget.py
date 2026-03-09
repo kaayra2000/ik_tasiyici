@@ -1,7 +1,7 @@
 """
 Salt-okunur log gösterim bileşeni.
 
-Loglama sorumluluğunu MainWindow'dan ayırarak SRP sağlar.
+Loglama sorumluluğunu TutanakWindow'dan ayırarak SRP sağlar.
 """
 
 from __future__ import annotations

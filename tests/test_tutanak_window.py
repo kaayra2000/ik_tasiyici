@@ -8,7 +8,7 @@ os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 import pytest
 from PyQt6.QtWidgets import QApplication
 
-from src.gui.main_window import MainWindow
+from src.gui.tutanak_window import TutanakWindow
 
 
 @pytest.fixture(scope="session")
@@ -38,15 +38,15 @@ def service():
 @pytest.fixture()
 def window(qapp, settings, service):
     """Test için ana pencere örneği üretir."""
-    main_window = MainWindow(settings=settings, service=service)
+    main_window = TutanakWindow(settings=settings, service=service)
     yield main_window
     main_window.close()
 
 
-class TestMainWindow:
-    """MainWindow davranış testleri."""
+class TestTutanakWindow:
+    """TutanakWindow davranış testleri."""
 
-    @patch("src.gui.main_window.QDesktopServices.openUrl", return_value=True)
+    @patch("src.gui.tutanak_window.QDesktopServices.openUrl", return_value=True)
     def test_open_generated_output_opens_folder_and_file(
         self, mock_open_url, window, tmp_path
     ):
@@ -60,8 +60,8 @@ class TestMainWindow:
         ]
         assert opened_paths == [str(result_path.parent), str(result_path)]
 
-    @patch.object(MainWindow, "_open_generated_output")
-    @patch("src.gui.main_window.QMessageBox.information")
+    @patch.object(TutanakWindow, "_open_generated_output")
+    @patch("src.gui.tutanak_window.QMessageBox.information")
     def test_start_processing_opens_generated_output_after_success(
         self,
         mock_information,
@@ -110,7 +110,7 @@ class TestMainWindow:
         assert log_lines[-1] == f"Çıktı dosyası: {result_path}"
         mock_information.assert_called_once()
 
-    @patch("src.gui.main_window.QMessageBox.information")
+    @patch("src.gui.tutanak_window.QMessageBox.information")
     def test_start_processing_logs_row_rejection_reasons_when_no_valid_personnel(
         self,
         mock_information,

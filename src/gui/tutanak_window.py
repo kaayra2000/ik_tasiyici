@@ -29,7 +29,7 @@ from src.gui.settings_manager import SettingsManager
 from src.gui.tutanak_service import TutanakService
 
 
-class MainWindow(QMainWindow):
+class TutanakWindow(QMainWindow):
     """DK Tutanak Oluşturucu ana penceresi.
 
     Sorumluluklar ilgili bileşenlere devredilmiştir:
