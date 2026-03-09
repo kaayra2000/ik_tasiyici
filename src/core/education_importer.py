@@ -66,10 +66,14 @@ class EducationImportResult:
     appended_record_count: int = 0
     skipped_record_count: int = 0
     unmatched_tckns: list[str] = field(default_factory=list)
+    warning_messages: list[str] = field(default_factory=list)
 
 
 class EducationImporter:
     """Kaynak Excel'deki mezuniyet kayıtlarını tutanak dosyasına işler."""
+
+    def __init__(self) -> None:
+        self._last_warning_messages: list[str] = []
 
     def import_education(
         self,
@@ -79,6 +83,7 @@ class EducationImporter:
         """Kaynak mezuniyet dosyasını hedef tutanak workbook'una aktarır."""
         source_path = Path(source_path)
         target_path = Path(target_path)
+        self._last_warning_messages = []
 
         records_by_tckn = self._read_source_records(source_path)
         if not records_by_tckn:
@@ -100,18 +105,23 @@ class EducationImporter:
                 matched_tckns.add(tckn)
                 result.matched_sheet_count += 1
 
-                appended_count, skipped_count = self._apply_records_to_sheet(
+                appended_count, skipped_count, warning_messages = self._apply_records_to_sheet(
                     worksheet,
                     records_by_tckn[tckn],
                 )
                 result.appended_record_count += appended_count
                 result.skipped_record_count += skipped_count
+                self._last_warning_messages.extend(warning_messages)
                 if appended_count:
                     result.updated_sheet_count += 1
 
             result.unmatched_tckns = sorted(
                 tckn for tckn in records_by_tckn if tckn not in matched_tckns
             )
+            self._last_warning_messages.extend(
+                self._build_unmatched_messages(records_by_tckn, result.unmatched_tckns)
+            )
+            result.warning_messages = list(self._last_warning_messages)
 
             if result.appended_record_count:
                 self._save_workbook(workbook, target_path)
@@ -119,6 +129,10 @@ class EducationImporter:
             workbook.close()
 
         return result
+
+    def last_warning_messages(self) -> list[str]:
+        """Son içe aktarma denemesindeki uyarıları döndürür."""
+        return list(self._last_warning_messages)
 
     def _read_source_records(
         self,
@@ -132,9 +146,11 @@ class EducationImporter:
         self._validate_source_columns(dataframe)
 
         records_by_tckn: dict[str, list[EducationRecord]] = {}
-        for _, row in dataframe.iterrows():
-            record = self._row_to_record(row)
+        for index, row in dataframe.iterrows():
+            record, warning_message = self._row_to_record(row, int(index) + 2)
             if record is None:
+                if warning_message:
+                    self._last_warning_messages.append(warning_message)
                 continue
             records_by_tckn.setdefault(record.tckn, []).append(record)
 
@@ -163,35 +179,86 @@ class EducationImporter:
                 f"Kaynak mezuniyet dosyasında zorunlu sütunlar eksik: {sorted(missing_columns)}"
             )
 
-    def _row_to_record(self, row: pd.Series) -> EducationRecord | None:
+    def _row_to_record(
+        self,
+        row: pd.Series,
+        excel_row_no: int,
+    ) -> tuple[EducationRecord | None, str | None]:
         """Tek bir kaynak satırını işleyip geçerliyse EducationRecord döndürür."""
         raw_tckn = self._clean_text(row.get(_SOURCE_COL_TCKN))
         raw_name = self._clean_text(row.get(_SOURCE_COL_AD))
-        if not raw_tckn or not raw_name:
-            return None
-        if _MISSING_RECORD_MARKER in raw_name.upper():
-            return None
-
-        tckn = normalize_tckn(raw_tckn)
-        if not validate_tckn(tckn):
-            return None
-
         university = self._clean_text(row.get(_SOURCE_COL_UNIVERSITE))
         faculty = self._clean_text(row.get(_SOURCE_COL_FAKULTE))
         program = self._clean_text(row.get(_SOURCE_COL_PROGRAM))
+        raw_graduation_date = self._clean_text(row.get(_SOURCE_COL_MEZUNIYET_TARIHI))
+
+        if not any([raw_tckn, raw_name, university, faculty, program, raw_graduation_date]):
+            return None, None
+
+        if not raw_tckn:
+            return None, self._build_source_warning_message(
+                excel_row_no,
+                "TC KIMLIK NO boş",
+                raw_tckn=raw_tckn,
+                raw_name=raw_name,
+                university=university,
+                program=program,
+            )
+
+        if not raw_name:
+            return None, self._build_source_warning_message(
+                excel_row_no,
+                "AD alanı boş",
+                raw_tckn=raw_tckn,
+                raw_name=raw_name,
+                university=university,
+                program=program,
+            )
+
+        if _MISSING_RECORD_MARKER in raw_name.upper():
+            return None, self._build_source_warning_message(
+                excel_row_no,
+                "Kayıtta mezun kaydı bulunamadı ibaresi var",
+                raw_tckn=raw_tckn,
+                raw_name=raw_name,
+                university=university,
+                program=program,
+            )
+
+        tckn = normalize_tckn(raw_tckn)
+        if not validate_tckn(tckn):
+            return None, self._build_source_warning_message(
+                excel_row_no,
+                f"Geçersiz TCKN: {tckn}",
+                raw_tckn=tckn,
+                raw_name=raw_name,
+                university=university,
+                program=program,
+            )
+
         graduation_date = self._format_date(row.get(_SOURCE_COL_MEZUNIYET_TARIHI))
 
         school_text = self._build_school_text(university, faculty, program, graduation_date)
         department_text = self._build_department_text(program)
         if not school_text:
-            return None
+            return None, self._build_source_warning_message(
+                excel_row_no,
+                "Okul bilgisi üretilemedi",
+                raw_tckn=tckn,
+                raw_name=raw_name,
+                university=university,
+                program=program,
+            )
 
-        return EducationRecord(
-            tckn=tckn,
-            level=self._infer_level(program, faculty),
-            school_text=school_text,
-            department_text=department_text,
-            graduation_date=graduation_date,
+        return (
+            EducationRecord(
+                tckn=tckn,
+                level=self._infer_level(program, faculty),
+                school_text=school_text,
+                department_text=department_text,
+                graduation_date=graduation_date,
+            ),
+            None,
         )
 
     @staticmethod
@@ -281,7 +348,7 @@ class EducationImporter:
         self,
         worksheet,
         records: list[EducationRecord],
-    ) -> tuple[int, int]:
+    ) -> tuple[int, int, list[str]]:
         """Kayıtları ilk boş eğitim satırlarına yazar."""
         education_rows = self._locate_education_rows(worksheet)
         empty_rows: list[int] = []
@@ -309,13 +376,28 @@ class EducationImporter:
 
         appended_count = 0
         skipped_count = 0
+        warning_messages: list[str] = []
         for record in records:
             if record.fingerprint in existing_fingerprints:
                 skipped_count += 1
+                warning_messages.append(
+                    self._build_sheet_skip_message(
+                        worksheet.title,
+                        record,
+                        "Hedef sayfada aynı eğitim kaydı zaten var",
+                    )
+                )
                 continue
 
             if not empty_rows:
                 skipped_count += 1
+                warning_messages.append(
+                    self._build_sheet_skip_message(
+                        worksheet.title,
+                        record,
+                        "Boş eğitim satırı kalmadı",
+                    )
+                )
                 continue
 
             row = empty_rows.pop(0)
@@ -325,7 +407,7 @@ class EducationImporter:
             existing_fingerprints.add(record.fingerprint)
             appended_count += 1
 
-        return appended_count, skipped_count
+        return appended_count, skipped_count, warning_messages
 
     def _locate_education_rows(self, worksheet) -> list[int]:
         """Şablondaki eğitim satırlarını dinamik olarak bulur."""
@@ -361,3 +443,49 @@ class EducationImporter:
                 f"Hedef tutanak dosyası kaydedilemedi. Dosya açık olabilir: {target_path}"
             ) from exc
 
+    @staticmethod
+    def _build_source_warning_message(
+        excel_row_no: int,
+        reason: str,
+        raw_tckn: str,
+        raw_name: str,
+        university: str,
+        program: str,
+    ) -> str:
+        """Geçersiz kaynak satırı için kullanıcıya dönük log mesajı üretir."""
+        return (
+            f"Kaynak satır {excel_row_no} atlandı: {reason}. "
+            f"TCKN='{raw_tckn or '-'}', "
+            f"AD='{raw_name or '-'}', "
+            f"ÜNİVERSİTE='{university or '-'}', "
+            f"PROGRAM='{program or '-'}'"
+        )
+
+    @staticmethod
+    def _build_sheet_skip_message(
+        sheet_title: str,
+        record: EducationRecord,
+        reason: str,
+    ) -> str:
+        """Hedef sayfaya yazılamayan eğitim kaydı için log mesajı üretir."""
+        return (
+            f"'{sheet_title}' sayfasında kayıt atlandı: {reason}. "
+            f"TCKN='{record.tckn}', "
+            f"SEVİYE='{record.level}', "
+            f"OKUL='{record.school_text}', "
+            f"BÖLÜM='{record.department_text or '-'}'"
+        )
+
+    @staticmethod
+    def _build_unmatched_messages(
+        records_by_tckn: dict[str, list[EducationRecord]],
+        unmatched_tckns: list[str],
+    ) -> list[str]:
+        """Hedefte karşılığı bulunamayan TCKN'ler için log mesajı üretir."""
+        messages: list[str] = []
+        for tckn in unmatched_tckns:
+            messages.append(
+                f"Hedefte eşleşen sayfa bulunamadı: TCKN='{tckn}' "
+                f"({len(records_by_tckn.get(tckn, []))} kayıt)"
+            )
+        return messages

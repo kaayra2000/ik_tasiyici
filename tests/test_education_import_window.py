@@ -49,6 +49,10 @@ def service(tmp_path: Path):
         skipped_record_count=0,
         unmatched_tckns=["10000000078"],
     )
+    mock_service.son_import_uyarilari.return_value = [
+        "Kaynak satır 4 atlandı: Geçersiz TCKN: 35519215090. "
+        "TCKN='35519215090', AD='AYŞE', ÜNİVERSİTE='ÖRNEK', PROGRAM='BİLGİSAYAR'"
+    ]
     return mock_service
 
 
@@ -96,8 +100,48 @@ class TestEducationImportWindow:
             source_path=str(source_path),
             target_path=str(target_path),
         )
-        assert "Eklenen eğitim kaydı: 2" in window._log_widget._text_edit.toPlainText()
+        log_lines = window._log_widget._text_edit.toPlainText().splitlines()
+        detail_index = next(
+            i for i, line in enumerate(log_lines)
+            if "Geçersiz TCKN: 35519215090" in line
+        )
+        summary_index = log_lines.index("Özet:")
+        assert detail_index < summary_index
+        assert "Eklenen eğitim kaydı: 2" in "\n".join(log_lines)
+        assert log_lines[-1] == "Hedefte bulunamayan TCKN'ler: 10000000078"
         mock_information.assert_called_once()
+
+    @patch("src.gui.education_import_window.QMessageBox.critical")
+    def test_start_import_logs_warnings_on_failure(
+        self,
+        mock_critical,
+        window: EducationImportWindow,
+        service,
+        tmp_path: Path,
+    ):
+        """Hata durumunda da servis uyarıları log'a yazılmalı."""
+        target_path = tmp_path / "hedef.xlsx"
+        source_path = tmp_path / "mezuniyet.xlsx"
+        target_path.touch()
+        source_path.touch()
+
+        service.import_education.side_effect = ValueError("Kaynak dosyada işlenecek geçerli mezuniyet kaydı bulunamadı.")
+
+        window._target_selector.set_path(str(target_path))
+        window._source_selector.set_path(str(source_path))
+
+        window._start_import()
+
+        log_lines = window._log_widget._text_edit.toPlainText().splitlines()
+        detail_index = next(
+            i for i, line in enumerate(log_lines)
+            if "Geçersiz TCKN: 35519215090" in line
+        )
+        summary_index = log_lines.index("Özet:")
+        assert detail_index < summary_index
+        assert "işlenecek geçerli mezuniyet kaydı bulunamadı" in "\n".join(log_lines)
+        assert log_lines[-1] == "Hata: Kaynak dosyada işlenecek geçerli mezuniyet kaydı bulunamadı."
+        mock_critical.assert_called_once()
 
     @patch("src.gui.education_import_window.QMessageBox.warning")
     def test_start_import_requires_target_file(
@@ -112,4 +156,3 @@ class TestEducationImportWindow:
         window._start_import()
 
         mock_warning.assert_called_once()
-

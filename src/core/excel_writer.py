@@ -11,6 +11,7 @@ sınıflar olarak tanımlanır ve ``ExcelWriterFactory`` aracılığıyla yarat�
 
 from __future__ import annotations
 
+from dataclasses import dataclass, field
 from io import BytesIO
 from pathlib import Path
 from typing import List
@@ -35,6 +36,16 @@ from src.core.excel_writer_factory import ExcelWriterFactory
 # ---------------------------------------------------------------------------
 
 
+@dataclass(frozen=True)
+class TutanakOlusturmaRaporu:
+    """Tutanak oluşturma işleminin özetini taşır."""
+
+    output_path: Path
+    added_sheet_count: int = 0
+    skipped_existing_count: int = 0
+    warning_messages: list[str] = field(default_factory=list)
+
+
 def olustur_dk_dosyasi(
     personeller: List[Personel],
     cikti_dizini: str | Path = ".",
@@ -55,6 +66,32 @@ def olustur_dk_dosyasi(
     :param version: Çıktı versiyonu (ör. ``"v1"``).
     :returns: Oluşturulan dosyanın tam yolu.
     """
+    return olustur_dk_dosyasi_raporlu(
+        personeller=personeller,
+        cikti_dizini=cikti_dizini,
+        dosya_adi=dosya_adi,
+        template_path=template_path,
+        version=version,
+    ).output_path
+
+
+def olustur_dk_dosyasi_raporlu(
+    personeller: List[Personel],
+    cikti_dizini: str | Path = ".",
+    dosya_adi: str = OUTPUT_FILENAME,
+    template_path: str | Path | None = None,
+    version: str = DEFAULT_VERSION,
+) -> TutanakOlusturmaRaporu:
+    """
+    Personel listesinden DK Tutanağı üretip ayrıntılı işlem raporu döner.
+
+    :param personeller: İşlenecek personel listesi.
+    :param cikti_dizini: Çıktı dosyasının kaydedileceği dizin.
+    :param dosya_adi: Çıktı dosya adı.
+    :param template_path: Özel çıktı şablonu yolu (opsiyonel).
+    :param version: Çıktı versiyonu (ör. ``"v1"``).
+    :returns: Oluşturma özeti.
+    """
     strategy = ExcelWriterFactory.create(version)
     cikti_dizini = Path(cikti_dizini)
     cikti_dizini.mkdir(parents=True, exist_ok=True)
@@ -62,12 +99,21 @@ def olustur_dk_dosyasi(
 
     if cikti_yolu.exists():
         wb = openpyxl.load_workbook(cikti_yolu)
-        _personelleri_workbooka_ekle(wb, personeller, strategy, template_path)
+        added_sheet_count, skipped_existing_count, warning_messages = (
+            _personelleri_workbooka_ekle(wb, personeller, strategy, template_path)
+        )
     else:
-        wb = _workbook_olustur(personeller, strategy, template_path)
+        wb, added_sheet_count, skipped_existing_count, warning_messages = (
+            _workbook_olustur(personeller, strategy, template_path)
+        )
 
     wb.save(cikti_yolu)
-    return cikti_yolu
+    return TutanakOlusturmaRaporu(
+        output_path=cikti_yolu,
+        added_sheet_count=added_sheet_count,
+        skipped_existing_count=skipped_existing_count,
+        warning_messages=warning_messages,
+    )
 
 
 def olustur_dk_bytes(
@@ -86,7 +132,7 @@ def olustur_dk_bytes(
     :returns: xlsx içeriği bayt dizisi olarak.
     """
     strategy = ExcelWriterFactory.create(version)
-    wb = _workbook_olustur(personeller, strategy, template_path)
+    wb, _, _, _ = _workbook_olustur(personeller, strategy, template_path)
     buffer = BytesIO()
     wb.save(buffer)
     return buffer.getvalue()
@@ -101,18 +147,20 @@ def _workbook_olustur(
     personeller: List[Personel],
     strategy: ExcelWriteStrategy,
     template_path: str | Path | None = None,
-) -> Workbook:
+) -> tuple[Workbook, int, int, list[str]]:
     """Her personel için şablon sayfasından kopyalanmış Workbook oluşturur."""
     wb = Workbook()
     del wb[wb.active.title]
-    _personelleri_workbooka_ekle(wb, personeller, strategy, template_path)
+    added_sheet_count, skipped_existing_count, warning_messages = (
+        _personelleri_workbooka_ekle(wb, personeller, strategy, template_path)
+    )
 
     # openpyxl en az 1 sayfa olmadan kaydedemez;
     # boş liste durumunda boş bir kılavuz sayfası ekleriz.
     if not wb.sheetnames:
         wb.create_sheet("_bos")
 
-    return wb
+    return wb, added_sheet_count, skipped_existing_count, warning_messages
 
 
 def _personelleri_workbooka_ekle(
@@ -120,15 +168,20 @@ def _personelleri_workbooka_ekle(
     personeller: List[Personel],
     strategy: ExcelWriteStrategy,
     template_path: str | Path | None = None,
-) -> None:
+) -> tuple[int, int, list[str]]:
     """Workbook'a yalnızca eksik personel sayfalarını sona ekler."""
     template_wb = None
     template_ws = None
+    added_sheet_count = 0
+    skipped_existing_count = 0
+    warning_messages: list[str] = []
 
     try:
         for personel in personeller:
             sayfa_adi = _sayfa_adi_olustur(personel)
             if sayfa_adi in wb.sheetnames:
+                skipped_existing_count += 1
+                warning_messages.append(_build_skip_message(personel, sayfa_adi))
                 continue
 
             if template_ws is None:
@@ -140,9 +193,12 @@ def _personelleri_workbooka_ekle(
             ws = wb.create_sheet(title=sayfa_adi)
             _sayfa_icerigini_kopyala(template_ws, ws)
             strategy.sayfa_doldur(ws, personel)
+            added_sheet_count += 1
     finally:
         if template_wb is not None:
             template_wb.close()
+
+    return added_sheet_count, skipped_existing_count, warning_messages
 
 
 def _template_yolunu_coz(template_path: str | Path | None = None) -> Path:
@@ -230,3 +286,14 @@ def _sayfa_adi_olustur(personel: Personel) -> str:
     for karakter in r"\/?*[]":
         tam_ad = tam_ad.replace(karakter, "")
     return tam_ad[:MAX_SHEET_NAME_LEN]
+
+
+def _build_skip_message(personel: Personel, sayfa_adi: str) -> str:
+    """Workbook'ta zaten bulunan kayıt için log mesajı üretir."""
+    return (
+        "Kayıt atlandı: hedef dosyada zaten mevcut. "
+        f"SAYFA='{sayfa_adi}', "
+        f"TCKN='{personel.tckn}', "
+        f"AD SOYAD='{personel.ad_soyad}', "
+        f"BİRİMİ='{personel.birim}'"
+    )

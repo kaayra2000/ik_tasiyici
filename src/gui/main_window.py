@@ -246,19 +246,67 @@ class MainWindow(QMainWindow):
         """
         self._log_widget.log(message)
 
-    def _log_personel_okuma_uyarilari(self) -> None:
-        """Varsa, personel okuma sırasında atlanan satırları loglar."""
-        warning_getter = getattr(self._service, "son_personel_okuma_uyarilari", None)
-        if not callable(warning_getter):
+    def _get_service_messages(self, getter_name: str) -> list[str]:
+        """Servisten güvenli biçimde string mesaj listesi alır."""
+        getter = getattr(self._service, getter_name, None)
+        if not callable(getter):
+            return []
+
+        messages = getter()
+        if not isinstance(messages, list):
+            return []
+        return [message for message in messages if isinstance(message, str)]
+
+    def _get_service_report(self, getter_name: str):
+        """Servisten opsiyonel rapor nesnesi alır."""
+        getter = getattr(self._service, getter_name, None)
+        if not callable(getter):
+            return None
+        return getter()
+
+    def _log_detail_block(self, title: str, messages: list[str]) -> None:
+        """Detay mesajlarını blok halinde loglar."""
+        if not messages:
             return
 
-        warnings = warning_getter()
-        if not isinstance(warnings, list) or not warnings:
-            return
+        self.log(title)
+        for message in messages:
+            self.log(message)
 
-        self.log(f"Uyarı: {len(warnings)} satır geçersiz olduğu için atlandı.")
-        for warning in warnings:
-            self.log(warning)
+    def _log_processing_summary(
+        self,
+        *,
+        status: str,
+        valid_personnel_count: int,
+        version: str | None = None,
+        result_path: str | Path | None = None,
+        error_message: str | None = None,
+    ) -> None:
+        """İşlemin son özetini log alanının en altına yazar."""
+        personel_warnings = self._get_service_messages("son_personel_okuma_uyarilari")
+        tutanak_warnings = self._get_service_messages("son_tutanak_olusturma_uyarilari")
+        tutanak_report = self._get_service_report("son_tutanak_olusturma_raporu")
+
+        added_sheet_count = getattr(tutanak_report, "added_sheet_count", None)
+        skipped_existing_count = getattr(tutanak_report, "skipped_existing_count", None)
+        if not isinstance(added_sheet_count, int):
+            added_sheet_count = None
+        if not isinstance(skipped_existing_count, int):
+            skipped_existing_count = len(tutanak_warnings)
+
+        self.log("Özet:")
+        self.log(f"Durum: {status}")
+        self.log(f"Geçerli personel: {valid_personnel_count}")
+        self.log(f"Geçersiz/atlanan kaynak satır: {len(personel_warnings)}")
+        if version:
+            self.log(f"Çıktı versiyonu: {version}")
+        if added_sheet_count is not None:
+            self.log(f"Yeni eklenen sayfa: {added_sheet_count}")
+        self.log(f"Mevcut olduğu için atlanan kayıt: {skipped_existing_count}")
+        if result_path is not None:
+            self.log(f"Çıktı dosyası: {result_path}")
+        if error_message:
+            self.log(f"Hata: {error_message}")
 
     # ------------------------------------------------------------------
     # İş mantığı orkestresyonu
@@ -294,14 +342,29 @@ class MainWindow(QMainWindow):
         self.log("-" * 40)
         self.log("İşlem başlatılıyor...")
 
+        valid_personnel_count = 0
+        selected_version: str | None = None
+        result_path: str | Path | None = None
+        personel_details_logged = False
+        tutanak_details_logged = False
+
         try:
             self.log("Personel listesi okunuyor...")
             personeller = self._service.personel_oku(input_file)
-            self.log(f"Başarılı: {len(personeller)} personel okundu.")
-            self._log_personel_okuma_uyarilari()
+            valid_personnel_count = len(personeller)
+            self._log_detail_block(
+                "Personel okuma ayrıntıları:",
+                self._get_service_messages("son_personel_okuma_uyarilari"),
+            )
+            personel_details_logged = True
 
             if not personeller:
                 self.log("Uyarı: İşlenecek personel bulunamadı.")
+                self._log_processing_summary(
+                    status="İşlem yapılmadı",
+                    valid_personnel_count=0,
+                    error_message="İşlenecek geçerli personel kaydı bulunamadı.",
+                )
                 QMessageBox.information(
                     self,
                     "Bilgi",
@@ -319,8 +382,18 @@ class MainWindow(QMainWindow):
                 version=selected_version,
             )
 
-            self.log(f"İşlem tamamlandı!\nÇıktı dosyası: {result_path}")
+            self._log_detail_block(
+                "Tutanak oluşturma ayrıntıları:",
+                self._get_service_messages("son_tutanak_olusturma_uyarilari"),
+            )
+            tutanak_details_logged = True
             self._open_generated_output(result_path)
+            self._log_processing_summary(
+                status="Başarılı",
+                valid_personnel_count=valid_personnel_count,
+                version=selected_version,
+                result_path=result_path,
+            )
             QMessageBox.information(
                 self,
                 "Başarılı",
@@ -329,6 +402,23 @@ class MainWindow(QMainWindow):
 
         except Exception as e:
             self.log(f"HATA: {str(e)}")
+            if not personel_details_logged:
+                self._log_detail_block(
+                    "Personel okuma ayrıntıları:",
+                    self._get_service_messages("son_personel_okuma_uyarilari"),
+                )
+            if not tutanak_details_logged:
+                self._log_detail_block(
+                    "Tutanak oluşturma ayrıntıları:",
+                    self._get_service_messages("son_tutanak_olusturma_uyarilari"),
+                )
+            self._log_processing_summary(
+                status="Başarısız",
+                valid_personnel_count=valid_personnel_count,
+                version=selected_version,
+                result_path=result_path,
+                error_message=str(e),
+            )
             QMessageBox.critical(
                 self,
                 "Hata",

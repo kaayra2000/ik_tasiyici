@@ -15,6 +15,7 @@ import pytest
 from src.core.excel_reader import Personel
 from src.core.excel_writer import (
     _sayfa_adi_olustur,
+    olustur_dk_dosyasi_raporlu,
     olustur_dk_bytes,
 )
 from src.core.excel_write_strategy_v1 import ExcelWriteStrategyV1
@@ -191,3 +192,34 @@ class TestOlusturDkBytes:
         unvan_hucre = ws[_HUCRE_UNVAN].value
         assert unvan_hucre is not None
         assert str(unvan_hucre).startswith("=")
+
+
+class TestOlusturDkDosyasiRaporlu:
+    """olustur_dk_dosyasi_raporlu fonksiyonu için rapor testleri."""
+
+    def test_ayni_personel_ikinci_kez_atlanir(self, tmp_path):
+        """Aynı sayfa adı tekrar oluşursa atlama raporlanmalı."""
+        personeller = [
+            Personel(
+                tckn="10000000146",
+                ad_soyad="Fatma KARACA",
+                birim="Marmara Enstitüsü",
+            ),
+            Personel(
+                tckn="10000000146",
+                ad_soyad="Fatma KARACA",
+                birim="Marmara Enstitüsü",
+            ),
+        ]
+
+        rapor = olustur_dk_dosyasi_raporlu(
+            personeller=personeller,
+            cikti_dizini=tmp_path,
+            dosya_adi="DK_Tutanaklari.xlsx",
+        )
+
+        assert rapor.output_path == tmp_path / "DK_Tutanaklari.xlsx"
+        assert rapor.added_sheet_count == 1
+        assert rapor.skipped_existing_count == 1
+        assert len(rapor.warning_messages) == 1
+        assert "hedef dosyada zaten mevcut" in rapor.warning_messages[0]

@@ -25,3 +25,6 @@ class EducationImportService:
             target_path=target_path,
         )
 
+    def son_import_uyarilari(self) -> list[str]:
+        """Son mezuniyet içe aktarma denemesindeki uyarıları döndürür."""
+        return self._importer.last_warning_messages()

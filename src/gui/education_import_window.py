@@ -28,7 +28,7 @@ class EducationImportWindow(QMainWindow):
         service: EducationImportService | None = None,
     ) -> None:
         super().__init__()
-        self.setWindowTitle("İK Taşıyıcı - Mezuniyet/Meslek Bilgisi Ekle")
+        self.setWindowTitle("Mezuniyet/Meslek Bilgisi Ekle")
         self.setMinimumSize(680, 420)
 
         self._settings = settings or SettingsManager()
@@ -117,6 +117,51 @@ class EducationImportWindow(QMainWindow):
         """Log alanına mesaj yazar."""
         self._log_widget.log(message)
 
+    def _get_import_warnings(self) -> list[str]:
+        """Servisten güvenli biçimde içe aktarma uyarıları alır."""
+        warning_getter = getattr(self._service, "son_import_uyarilari", None)
+        if not callable(warning_getter):
+            return []
+
+        warnings = warning_getter()
+        if not isinstance(warnings, list):
+            return []
+        return [warning for warning in warnings if isinstance(warning, str)]
+
+    def _log_import_details(self, warnings: list[str]) -> None:
+        """Varsa, içe aktarma ayrıntılarını loglar."""
+        if not warnings:
+            return
+
+        self.log("İçe aktarma ayrıntıları:")
+        for warning in warnings:
+            self.log(warning)
+
+    def _log_summary(
+        self,
+        *,
+        status: str,
+        result: EducationImportResult | None = None,
+        warning_count: int = 0,
+        error_message: str | None = None,
+    ) -> None:
+        """İçe aktarma özetini log alanının en altına yazar."""
+        self.log("Özet:")
+        self.log(f"Durum: {status}")
+        self.log(f"Ayrıntı/uyarı kaydı: {warning_count}")
+        if result is not None:
+            self.log(f"Yedek oluşturuldu: {result.backup_path}")
+            self.log(f"Eşleşen sayfa sayısı: {result.matched_sheet_count}")
+            self.log(f"Güncellenen sayfa sayısı: {result.updated_sheet_count}")
+            self.log(f"Eklenen eğitim kaydı: {result.appended_record_count}")
+            self.log(f"Atlanan kayıt sayısı: {result.skipped_record_count}")
+            self.log(f"Hedefte bulunamayan TCKN sayısı: {len(result.unmatched_tckns)}")
+            if result.unmatched_tckns:
+                joined_tckns = ", ".join(result.unmatched_tckns)
+                self.log(f"Hedefte bulunamayan TCKN'ler: {joined_tckns}")
+        if error_message:
+            self.log(f"Hata: {error_message}")
+
     def _start_import(self) -> None:
         """Doğrulama sonrası içe aktarma sürecini başlatır."""
         target_path = self._target_selector.get_path()
@@ -156,12 +201,21 @@ class EducationImportWindow(QMainWindow):
         self.log("-" * 40)
         self.log("Mezuniyet aktarımı başlatılıyor...")
 
+        detail_logged = False
+
         try:
             result = self._service.import_education(
                 source_path=source_path,
                 target_path=target_path,
             )
-            self._log_result(result)
+            warnings = self._get_import_warnings()
+            self._log_import_details(warnings)
+            detail_logged = True
+            self._log_summary(
+                status="Başarılı",
+                result=result,
+                warning_count=len(warnings),
+            )
             QMessageBox.information(
                 self,
                 "Başarılı",
@@ -169,6 +223,14 @@ class EducationImportWindow(QMainWindow):
             )
         except PermissionError as exc:
             self.log(f"HATA: {exc}")
+            warnings = self._get_import_warnings()
+            if not detail_logged:
+                self._log_import_details(warnings)
+            self._log_summary(
+                status="Başarısız",
+                warning_count=len(warnings),
+                error_message=str(exc),
+            )
             QMessageBox.critical(
                 self,
                 "Dosya Kullanımda",
@@ -176,23 +238,16 @@ class EducationImportWindow(QMainWindow):
             )
         except Exception as exc:
             self.log(f"HATA: {exc}")
+            warnings = self._get_import_warnings()
+            if not detail_logged:
+                self._log_import_details(warnings)
+            self._log_summary(
+                status="Başarısız",
+                warning_count=len(warnings),
+                error_message=str(exc),
+            )
             QMessageBox.critical(
                 self,
                 "Hata",
                 f"Beklenmeyen bir hata oluştu:\n{exc}",
             )
-
-    def _log_result(self, result: EducationImportResult) -> None:
-        """İçe aktarma özetini log alanına yazar."""
-        self.log(f"Yedek oluşturuldu: {result.backup_path}")
-        self.log(f"Eşleşen sayfa sayısı: {result.matched_sheet_count}")
-        self.log(f"Güncellenen sayfa sayısı: {result.updated_sheet_count}")
-        self.log(f"Eklenen eğitim kaydı: {result.appended_record_count}")
-        self.log(f"Atlanan kayıt sayısı: {result.skipped_record_count}")
-
-        if result.unmatched_tckns:
-            joined_tckns = ", ".join(result.unmatched_tckns)
-            self.log(f"Hedefte bulunamayan TCKN'ler: {joined_tckns}")
-
-        self.log("Mezuniyet aktarımı tamamlandı.")
-

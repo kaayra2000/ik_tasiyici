@@ -161,12 +161,60 @@ class TestEducationImporter:
 
         assert result.appended_record_count == 1
         assert result.skipped_record_count == 1
+        assert any(
+            "Hedef sayfada aynı eğitim kaydı zaten var" in message
+            for message in result.warning_messages
+        )
 
         workbook = openpyxl.load_workbook(target_path)
         worksheet = workbook.active
         assert worksheet["C6"].value.startswith("İSTANBUL TEKNİK ÜNİVERSİTESİ")
         assert "ORTA DOĞU TEKNİK ÜNİVERSİTESİ" in worksheet["C7"].value
         workbook.close()
+
+    def test_import_education_reports_invalid_source_rows_before_raising(
+        self,
+        importer: EducationImporter,
+        tmp_path: Path,
+    ):
+        """Tüm kayıtlar elenirse kaynak satır uyarıları korunmalı."""
+        source_path = tmp_path / "mezuniyet.xlsx"
+        target_path = tmp_path / "tutanak.xlsx"
+
+        _write_source_xlsx(
+            [
+                {
+                    "TC KIMLIK NO": "35519215090",
+                    "AD": "AYŞE",
+                    "SOYAD": "KOŞUK",
+                    "MEZUNIYET TARIHI": "03/01/2022",
+                    "UNIVERSITE": "ÖRNEK ÜNİVERSİTE",
+                    "ENSMYOFAK": "MÜHENDİSLİK FAKÜLTESİ",
+                    "PROGRAM": "BİLGİSAYAR MÜHENDİSLİĞİ",
+                },
+                {
+                    "TC KIMLIK NO": "10000000146",
+                    "AD": "Mezun Kaydı Bulunamadı !!!",
+                    "SOYAD": "",
+                    "MEZUNIYET TARIHI": None,
+                    "UNIVERSITE": None,
+                    "ENSMYOFAK": None,
+                    "PROGRAM": None,
+                },
+            ],
+            source_path,
+        )
+        _create_target_workbook(target_path)
+
+        with pytest.raises(
+            ValueError,
+            match="işlenecek geçerli mezuniyet kaydı",
+        ):
+            importer.import_education(source_path, target_path)
+
+        warnings = importer.last_warning_messages()
+        assert any("Geçersiz TCKN: 35519215090" in message for message in warnings)
+        assert any("mezun kaydı bulunamadı ibaresi var" in message for message in warnings)
 
     def test_import_education_raises_for_empty_valid_source(
         self,
@@ -209,4 +257,3 @@ class TestEducationImporter:
             importer.import_education(source_path, target_path)
 
         assert not list(tmp_path.glob("*_eski_*.xlsx"))
-

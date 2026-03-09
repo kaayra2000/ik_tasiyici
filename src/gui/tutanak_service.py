@@ -16,7 +16,10 @@ from src.core.excel_reader import (
     PersonelOkumaRaporu,
     oku_personel_listesi_raporlu,
 )
-from src.core.excel_writer import olustur_dk_dosyasi
+from src.core.excel_writer import (
+    TutanakOlusturmaRaporu,
+    olustur_dk_dosyasi_raporlu,
+)
 
 
 class TutanakService:
@@ -28,6 +31,7 @@ class TutanakService:
 
     def __init__(self) -> None:
         self._son_personel_okuma_raporu: PersonelOkumaRaporu | None = None
+        self._son_tutanak_olusturma_raporu: TutanakOlusturmaRaporu | None = None
 
     def personel_oku(self, input_path: str) -> List[Personel]:
         """Kaynak Excel dosyasından personel listesini okur.
@@ -69,10 +73,21 @@ class TutanakService:
         :returns: Oluşturulan dosyanın tam yolu.
         """
         output_path_obj = Path(output_path)
-        return olustur_dk_dosyasi(
+        self._son_tutanak_olusturma_raporu = olustur_dk_dosyasi_raporlu(
             personeller=personeller,
             cikti_dizini=output_path_obj.parent,
             dosya_adi=output_path_obj.name,
             template_path=template_path,
             version=version,
         )
+        return self._son_tutanak_olusturma_raporu.output_path
+
+    def son_tutanak_olusturma_uyarilari(self) -> list[str]:
+        """Son tutanak oluşturma denemesindeki uyarıları döndürür."""
+        if self._son_tutanak_olusturma_raporu is None:
+            return []
+        return list(self._son_tutanak_olusturma_raporu.warning_messages)
+
+    def son_tutanak_olusturma_raporu(self) -> TutanakOlusturmaRaporu | None:
+        """Son tutanak oluşturma raporunu döndürür."""
+        return self._son_tutanak_olusturma_raporu

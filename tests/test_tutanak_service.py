@@ -6,6 +6,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from src.core.excel_reader import PersonelOkumaRaporu, SatirReddi
+from src.core.excel_writer import TutanakOlusturmaRaporu
 from src.gui.tutanak_service import TutanakService
 
 
@@ -56,11 +57,16 @@ class TestTutanakService:
         assert len(warnings) == 1
         assert "Geçersiz TCKN: 35519215090" in warnings[0]
 
-    @patch("src.gui.tutanak_service.olustur_dk_dosyasi")
+    @patch("src.gui.tutanak_service.olustur_dk_dosyasi_raporlu")
     def test_tutanak_olustur_basarili(self, mock_olustur, service):
         """Tutanak başarıyla oluşturulmalı."""
         expected_path = Path("/cikti/DK_Tutanaklari.xlsx")
-        mock_olustur.return_value = expected_path
+        mock_olustur.return_value = TutanakOlusturmaRaporu(
+            output_path=expected_path,
+            added_sheet_count=2,
+            skipped_existing_count=0,
+            warning_messages=[],
+        )
         personeller = [MagicMock(), MagicMock()]
 
         result = service.tutanak_olustur(
@@ -78,7 +84,7 @@ class TestTutanakService:
         )
         assert result == expected_path
 
-    @patch("src.gui.tutanak_service.olustur_dk_dosyasi")
+    @patch("src.gui.tutanak_service.olustur_dk_dosyasi_raporlu")
     def test_tutanak_olustur_hata(self, mock_olustur, service):
         """Core katmanıdaki hatalar yayılmalı."""
         mock_olustur.side_effect = ValueError("Şablon hatası")
@@ -88,3 +94,27 @@ class TestTutanakService:
                 template_path="/taslak.xlsx",
                 output_path="/cikti/dosya.xlsx",
             )
+
+    @patch("src.gui.tutanak_service.olustur_dk_dosyasi_raporlu")
+    def test_son_tutanak_olusturma_uyarilari_doner(self, mock_olustur, service):
+        """Var olan kayıt nedeniyle atlanan sayfalar GUI'ye iletilmeli."""
+        mock_olustur.return_value = TutanakOlusturmaRaporu(
+            output_path=Path("/cikti/DK_Tutanaklari.xlsx"),
+            added_sheet_count=1,
+            skipped_existing_count=2,
+            warning_messages=[
+                "Kayıt atlandı: hedef dosyada zaten mevcut. "
+                "SAYFA='Fatma KARACA - 10000000146', "
+                "TCKN='10000000146', AD SOYAD='Fatma KARACA', BİRİMİ='Marmara Enstitüsü'"
+            ],
+        )
+
+        service.tutanak_olustur(
+            personeller=[MagicMock()],
+            template_path="/taslak.xlsx",
+            output_path="/cikti/dosya.xlsx",
+        )
+
+        warnings = service.son_tutanak_olusturma_uyarilari()
+        assert len(warnings) == 1
+        assert "hedef dosyada zaten mevcut" in warnings[0]

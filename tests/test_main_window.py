@@ -78,6 +78,11 @@ class TestMainWindow:
 
         service.personel_oku.return_value = [MagicMock()]
         service.tutanak_olustur.return_value = result_path
+        service.son_tutanak_olusturma_uyarilari.return_value = [
+            "Kayıt atlandı: hedef dosyada zaten mevcut. "
+            "SAYFA='Fatma KARACA - 10000000146', "
+            "TCKN='10000000146', AD SOYAD='Fatma KARACA', BİRİMİ='Marmara Enstitüsü'"
+        ]
 
         window._input_selector.set_path(str(tmp_path / "girdi.xlsx"))
         window._template_selector.set_path(str(template_path))
@@ -95,6 +100,14 @@ class TestMainWindow:
             version="v1",
         )
         mock_open_generated_output.assert_called_once_with(result_path)
+        log_lines = window._log_widget._text_edit.toPlainText().splitlines()
+        detail_index = next(
+            i for i, line in enumerate(log_lines)
+            if "hedef dosyada zaten mevcut" in line
+        )
+        summary_index = log_lines.index("Özet:")
+        assert detail_index < summary_index
+        assert log_lines[-1] == f"Çıktı dosyası: {result_path}"
         mock_information.assert_called_once()
 
     @patch("src.gui.main_window.QMessageBox.information")
@@ -122,7 +135,13 @@ class TestMainWindow:
 
         window._start_processing()
 
-        log_text = window._log_widget._text_edit.toPlainText()
-        assert "Geçersiz TCKN: 35519215090" in log_text
-        assert "İşlenecek personel bulunamadı" in log_text
+        log_lines = window._log_widget._text_edit.toPlainText().splitlines()
+        detail_index = next(
+            i for i, line in enumerate(log_lines)
+            if "Geçersiz TCKN: 35519215090" in line
+        )
+        summary_index = log_lines.index("Özet:")
+        assert detail_index < summary_index
+        assert "İşlenecek personel bulunamadı" in "\n".join(log_lines)
+        assert log_lines[-1] == "Hata: İşlenecek geçerli personel kaydı bulunamadı."
         mock_information.assert_called_once()
