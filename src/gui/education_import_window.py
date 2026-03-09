@@ -17,6 +17,7 @@ from src.gui.education_import_service import EducationImportService
 from src.gui.file_selection_widget import DialogType, FileSelectionWidget
 from src.gui.log_widget import LogWidget
 from src.gui.settings_manager import SettingsManager
+from src.config.constants import make_tubitak_title
 
 
 class EducationImportWindow(QMainWindow):
@@ -28,7 +29,7 @@ class EducationImportWindow(QMainWindow):
         service: EducationImportService | None = None,
     ) -> None:
         super().__init__()
-        self.setWindowTitle("Mezuniyet/Meslek Bilgisi Ekle")
+        self.setWindowTitle(make_tubitak_title("Mezuniyet/Meslek Bilgisi Ekle"))
         self.setMinimumSize(680, 420)
 
         self._settings = settings or SettingsManager()

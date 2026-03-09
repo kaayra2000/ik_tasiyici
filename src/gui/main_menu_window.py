@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from PyQt6.QtCore import Qt
+from PyQt6.QtGui import QPixmap
 from PyQt6.QtWidgets import (
     QFrame,
     QHBoxLayout,
@@ -15,6 +16,7 @@ from PyQt6.QtWidgets import (
 
 from src.gui.education_import_window import EducationImportWindow
 from src.gui.tutanak_window import TutanakWindow
+from src.main import get_logo_path
 
 
 class MainMenuWindow(QMainWindow):
@@ -22,8 +24,8 @@ class MainMenuWindow(QMainWindow):
 
     def __init__(self) -> None:
         super().__init__()
-        self.setWindowTitle("İK Taşıyıcı")
-        self.setMinimumSize(720, 420)
+        self.setWindowTitle("Personel Asistan")
+        self.setMinimumSize(720, 480)
         self._active_window: QMainWindow | None = None
         self._init_ui()
 
@@ -41,7 +43,12 @@ class MainMenuWindow(QMainWindow):
         card_layout = QVBoxLayout(menu_card)
         card_layout.setSpacing(18)
 
-        title_label = QLabel("İK Taşıyıcı")
+        # -- TÜBİTAK Logosu --
+        logo_label = self._build_logo_label()
+        if logo_label is not None:
+            card_layout.addWidget(logo_label)
+
+        title_label = QLabel("Personel Asistan")
         title_label.setObjectName("menuTitle")
         title_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         card_layout.addWidget(title_label)
@@ -77,6 +84,21 @@ class MainMenuWindow(QMainWindow):
             alignment=Qt.AlignmentFlag.AlignHCenter,
         )
         outer_layout.addStretch()
+
+    @staticmethod
+    def _build_logo_label() -> QLabel | None:
+        """TÜBİTAK logo etiketini oluşturur; dosya yoksa None döner."""
+        logo_path = get_logo_path()
+        if not logo_path.exists():
+            return None
+        label = QLabel()
+        label.setObjectName("menuLogo")
+        label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        pixmap = QPixmap(str(logo_path))
+        label.setPixmap(
+            pixmap.scaledToHeight(64, Qt.TransformationMode.SmoothTransformation)
+        )
+        return label
 
     @staticmethod
     def _build_menu_button(text: str, object_name: str) -> QPushButton:

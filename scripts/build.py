@@ -20,7 +20,8 @@ def main():
         '--noconfirm',              # Sormadan üzerine yaz
         '--clean',                  # Geçici dosyaları temizle
         '--add-data=src/gui/style.qss:src/gui', # QSS dosyasını ekle
-        # '--icon=assets/icon.ico', # İkon varsa eklenebilir
+        '--add-data=src/assets/tubitak_logo.png:src/assets', # Logo dosyasını ekle
+        '--icon=src/assets/tubitak_logo.png', # EXE ikonunu ayarla
     ])
     
     print("Derleme tamamlandı! Çıktılar 'dist' klasöründe.")

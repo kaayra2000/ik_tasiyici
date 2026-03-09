@@ -21,7 +21,7 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-from src.config.constants import DEFAULT_VERSION, SUPPORTED_VERSIONS
+from src.config.constants import DEFAULT_VERSION, SUPPORTED_VERSIONS, make_tubitak_title
 
 from src.gui.file_selection_widget import DialogType, FileSelectionWidget
 from src.gui.log_widget import LogWidget
@@ -46,7 +46,7 @@ class TutanakWindow(QMainWindow):
         service: TutanakService | None = None,
     ) -> None:
         super().__init__()
-        self.setWindowTitle("DK Tutanak Oluşturucu")
+        self.setWindowTitle(make_tubitak_title("DK Tutanak Oluşturucu"))
         self.setMinimumSize(600, 400)
 
         # Bağımlılıkları dışarıdan al ya da varsayılanları oluştur (DIP)

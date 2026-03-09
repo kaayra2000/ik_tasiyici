@@ -42,12 +42,18 @@ def bootstrap_local_package_resolution(
 def _create_application(argv: list[str]):
     """QApplication ornegini olusturur ve temel stilleri uygular."""
     from src.config.constants import APP_NAME, APP_ORGANIZATION_NAME
+    from PyQt6.QtGui import QIcon
     from PyQt6.QtWidgets import QApplication
 
     app = QApplication(argv)
     app.setOrganizationName(APP_ORGANIZATION_NAME)
     app.setApplicationName(APP_NAME)
     app.setStyle("Fusion")
+
+    logo_path = get_logo_path()
+    if logo_path.exists():
+        app.setWindowIcon(QIcon(str(logo_path)))
+
     return app
 
 
@@ -56,6 +62,13 @@ def _get_stylesheet_path() -> Path:
     if hasattr(sys, "_MEIPASS"):
         return Path(sys._MEIPASS) / "src" / "gui" / "style.qss"
     return Path(__file__).parent / "gui" / "style.qss"
+
+
+def get_logo_path() -> Path:
+    """Calisma ortamina gore TUBİTAK logo dosyasi yolunu doner."""
+    if hasattr(sys, "_MEIPASS"):
+        return Path(sys._MEIPASS) / "src" / "assets" / "tubitak_logo.png"
+    return Path(__file__).parent / "assets" / "tubitak_logo.png"
 
 
 def _apply_stylesheet(app) -> None:

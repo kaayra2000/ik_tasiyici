@@ -11,9 +11,14 @@ from __future__ import annotations
 # Uygulama kimliği
 # ---------------------------------------------------------------------------
 
-APP_ORGANIZATION_NAME: str = "IK_Tasiyici"
-APP_NAME: str = "TutanakOlusturucu"
+APP_ORGANIZATION_NAME: str = "TUBITAK"
+APP_NAME: str = "Personel Asistan"
 LOG_DIR_NAME: str = "logs"
+
+
+def make_tubitak_title(subtitle: str) -> str:
+    """'TÜBİTAK – <subtitle>' formatinda pencere başligi doner."""
+    return f"TÜBİTAK – {subtitle}"
 
 # ---------------------------------------------------------------------------
 # Kaynak Excel sütun adları
