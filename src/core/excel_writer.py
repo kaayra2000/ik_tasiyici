@@ -45,6 +45,9 @@ def olustur_dk_dosyasi(
     """
     Personel listesinden DK Tutanağı Excel dosyasını oluşturur.
 
+    Hedef dosya zaten varsa mevcut sayfalar korunur; yalnızca workbook'ta
+    bulunmayan personeller yeni sayfalar olarak sona eklenir.
+
     :param personeller: İşlenecek personel listesi.
     :param cikti_dizini: Çıktı dosyasının kaydedileceği dizin.
     :param dosya_adi: Çıktı dosya adı.
@@ -53,10 +56,16 @@ def olustur_dk_dosyasi(
     :returns: Oluşturulan dosyanın tam yolu.
     """
     strategy = ExcelWriterFactory.create(version)
-    wb = _workbook_olustur(personeller, strategy, template_path)
     cikti_dizini = Path(cikti_dizini)
     cikti_dizini.mkdir(parents=True, exist_ok=True)
     cikti_yolu = cikti_dizini / dosya_adi
+
+    if cikti_yolu.exists():
+        wb = openpyxl.load_workbook(cikti_yolu)
+        _personelleri_workbooka_ekle(wb, personeller, strategy, template_path)
+    else:
+        wb = _workbook_olustur(personeller, strategy, template_path)
+
     wb.save(cikti_yolu)
     return cikti_yolu
 
@@ -94,46 +103,9 @@ def _workbook_olustur(
     template_path: str | Path | None = None,
 ) -> Workbook:
     """Her personel için şablon sayfasından kopyalanmış Workbook oluşturur."""
-    # template path
-    if template_path is None:
-        project_root = Path(__file__).resolve().parent.parent.parent
-        t_path = project_root / TEMPLATE_PATH
-    else:
-        t_path = Path(template_path)
-
-    wb = openpyxl.load_workbook(t_path)
-    template_ws = wb.active
-    template_ws_title = template_ws.title
-
-    for personel in personeller:
-        sayfa_adi = _sayfa_adi_olustur(personel)
-        ws = wb.copy_worksheet(template_ws)
-        ws.title = sayfa_adi
-
-        # Şablondaki eksik kalan önemli biçimleri/kuralları manuel aktar
-        ws.conditional_formatting = copy(template_ws.conditional_formatting)
-        if hasattr(template_ws, 'data_validations'):
-            ws.data_validations = copy(template_ws.data_validations)
-
-        ws.print_area = template_ws.print_area
-        ws.print_options = copy(template_ws.print_options)
-        ws.page_setup = copy(template_ws.page_setup)
-        ws.freeze_panes = template_ws.freeze_panes
-
-        # Garanti olması için sütun/satır genişliklerini/yüksekliklerini aktar
-        for row_idx, row_dim in template_ws.row_dimensions.items():
-            ws.row_dimensions[row_idx] = copy(row_dim)
-            ws.row_dimensions[row_idx].worksheet = ws
-        for col_idx, col_dim in template_ws.column_dimensions.items():
-            ws.column_dimensions[col_idx] = copy(col_dim)
-            ws.column_dimensions[col_idx].worksheet = ws
-
-        # Strateji aracılığıyla sayfayı doldur
-        strategy.sayfa_doldur(ws, personel)
-
-    # Orijinal şablon sayfasını kaldır
-    if template_ws_title in wb.sheetnames:
-        del wb[template_ws_title]
+    wb = Workbook()
+    del wb[wb.active.title]
+    _personelleri_workbooka_ekle(wb, personeller, strategy, template_path)
 
     # openpyxl en az 1 sayfa olmadan kaydedemez;
     # boş liste durumunda boş bir kılavuz sayfası ekleriz.
@@ -141,6 +113,105 @@ def _workbook_olustur(
         wb.create_sheet("_bos")
 
     return wb
+
+
+def _personelleri_workbooka_ekle(
+    wb: Workbook,
+    personeller: List[Personel],
+    strategy: ExcelWriteStrategy,
+    template_path: str | Path | None = None,
+) -> None:
+    """Workbook'a yalnızca eksik personel sayfalarını sona ekler."""
+    template_wb = None
+    template_ws = None
+
+    try:
+        for personel in personeller:
+            sayfa_adi = _sayfa_adi_olustur(personel)
+            if sayfa_adi in wb.sheetnames:
+                continue
+
+            if template_ws is None:
+                template_wb = openpyxl.load_workbook(_template_yolunu_coz(template_path))
+                if not template_wb.sheetnames:
+                    raise ValueError("Şablon workbook içinde hiç sayfa yok.")
+                template_ws = template_wb.active
+
+            ws = wb.create_sheet(title=sayfa_adi)
+            _sayfa_icerigini_kopyala(template_ws, ws)
+            strategy.sayfa_doldur(ws, personel)
+    finally:
+        if template_wb is not None:
+            template_wb.close()
+
+
+def _template_yolunu_coz(template_path: str | Path | None = None) -> Path:
+    """Şablon dosya yolunu çözümler ve dosyanın varlığını doğrular."""
+    if template_path is None:
+        project_root = Path(__file__).resolve().parent.parent.parent
+        t_path = project_root / TEMPLATE_PATH
+    else:
+        t_path = Path(template_path)
+
+    if not t_path.exists():
+        raise FileNotFoundError(f"Excel şablonu bulunamadı: {t_path}")
+
+    return t_path
+
+
+def _sayfa_icerigini_kopyala(kaynak_ws, hedef_ws) -> None:
+    """Harici workbook'taki şablon sayfasını hedef workbook'a klonlar."""
+    for (satir, sutun), kaynak_hucre in kaynak_ws._cells.items():
+        hedef_hucre = hedef_ws.cell(row=satir, column=sutun)
+        hedef_hucre._value = kaynak_hucre._value
+        hedef_hucre.data_type = kaynak_hucre.data_type
+
+        if kaynak_hucre.has_style:
+            hedef_hucre.font = copy(kaynak_hucre.font)
+            hedef_hucre.fill = copy(kaynak_hucre.fill)
+            hedef_hucre.border = copy(kaynak_hucre.border)
+            hedef_hucre.alignment = copy(kaynak_hucre.alignment)
+            hedef_hucre.number_format = kaynak_hucre.number_format
+            hedef_hucre.protection = copy(kaynak_hucre.protection)
+
+        if kaynak_hucre.hyperlink:
+            hedef_hucre._hyperlink = copy(kaynak_hucre.hyperlink)
+
+        if kaynak_hucre.comment:
+            hedef_hucre.comment = copy(kaynak_hucre.comment)
+
+    for anahtar, boyut in kaynak_ws.row_dimensions.items():
+        hedef_boyut = hedef_ws.row_dimensions[anahtar]
+        hedef_boyut.height = boyut.height
+        hedef_boyut.hidden = boyut.hidden
+        hedef_boyut.outlineLevel = boyut.outlineLevel
+        hedef_boyut.outline_level = boyut.outline_level
+        hedef_boyut.collapsed = boyut.collapsed
+
+    for anahtar, boyut in kaynak_ws.column_dimensions.items():
+        hedef_boyut = hedef_ws.column_dimensions[anahtar]
+        hedef_boyut.width = boyut.width
+        hedef_boyut.hidden = boyut.hidden
+        hedef_boyut.bestFit = boyut.bestFit
+        hedef_boyut.outlineLevel = boyut.outlineLevel
+        hedef_boyut.outline_level = boyut.outline_level
+        hedef_boyut.collapsed = boyut.collapsed
+
+    hedef_ws.sheet_format = copy(kaynak_ws.sheet_format)
+    hedef_ws.sheet_properties = copy(kaynak_ws.sheet_properties)
+    hedef_ws.views = copy(kaynak_ws.views)
+    hedef_ws.merged_cells = copy(kaynak_ws.merged_cells)
+    hedef_ws.page_margins = copy(kaynak_ws.page_margins)
+    hedef_ws.page_setup = copy(kaynak_ws.page_setup)
+    hedef_ws.print_options = copy(kaynak_ws.print_options)
+    hedef_ws.protection = copy(kaynak_ws.protection)
+    hedef_ws.conditional_formatting = copy(kaynak_ws.conditional_formatting)
+
+    if hasattr(kaynak_ws, "data_validations"):
+        hedef_ws.data_validations = copy(kaynak_ws.data_validations)
+
+    hedef_ws.freeze_panes = kaynak_ws.freeze_panes
+    hedef_ws._print_area = copy(kaynak_ws._print_area)
 
 
 def _sayfa_adi_olustur(personel: Personel) -> str:
