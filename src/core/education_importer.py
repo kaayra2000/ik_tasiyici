@@ -261,7 +261,7 @@ class EducationImporter:
             raise FileNotFoundError(f"Hedef tutanak dosyası bulunamadı: {target_path}")
 
         timestamp = datetime.now().strftime("%Y%m%d_%H%M")
-        backup_name = f"{target_path.stem}_yedek_{timestamp}{target_path.suffix}"
+        backup_name = f"{target_path.stem}_eski_{timestamp}{target_path.suffix}"
         backup_path = target_path.with_name(backup_name)
         copy2(target_path, backup_path)
         return backup_path

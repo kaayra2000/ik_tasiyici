@@ -96,3 +96,33 @@ class TestMainWindow:
         )
         mock_open_generated_output.assert_called_once_with(result_path)
         mock_information.assert_called_once()
+
+    @patch("src.gui.main_window.QMessageBox.information")
+    def test_start_processing_logs_row_rejection_reasons_when_no_valid_personnel(
+        self,
+        mock_information,
+        window,
+        service,
+        tmp_path,
+    ):
+        """Geçersiz satır nedenleri log'a yazılmalı."""
+        template_path = tmp_path / "taslak.xlsx"
+        template_path.touch()
+        output_path = tmp_path / "cikti.xlsx"
+
+        service.personel_oku.return_value = []
+        service.son_personel_okuma_uyarilari.return_value = [
+            "Satır 2 atlandı: Geçersiz TCKN: 35519215090. "
+            "TCKN='35519215090', AD SOYAD='Ayşe KOŞUK', BİRİMİ='C123'"
+        ]
+
+        window._input_selector.set_path(str(tmp_path / "girdi.xlsx"))
+        window._template_selector.set_path(str(template_path))
+        window._output_selector.set_path(str(output_path))
+
+        window._start_processing()
+
+        log_text = window._log_widget._text_edit.toPlainText()
+        assert "Geçersiz TCKN: 35519215090" in log_text
+        assert "İşlenecek personel bulunamadı" in log_text
+        mock_information.assert_called_once()

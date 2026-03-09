@@ -14,7 +14,11 @@ import openpyxl
 import pandas as pd
 import pytest
 
-from src.core.excel_reader import Personel, oku_personel_listesi
+from src.core.excel_reader import (
+    Personel,
+    oku_personel_listesi,
+    oku_personel_listesi_raporlu,
+)
 
 
 # ---------------------------------------------------------------------------
@@ -100,6 +104,34 @@ class TestOkuPersonelListesi:
         personeller = oku_personel_listesi(dosya)
         assert len(personeller) == 1
         assert personeller[0].ad_soyad == "Geçerli Kişi"
+
+    def test_gecersiz_satir_nedeni_raporlanir(self, tmp_path: Path):
+        """Atlanan satırlar için neden ve satır numarası döndürülmeli."""
+        dosya = tmp_path / "test_rapor.xlsx"
+        _xlsx_yaz(
+            [
+                {
+                    "TCKN": "35519215090",
+                    "AD SOYAD": "Ayşe KOŞUK",
+                    "BİRİMİ": "C123",
+                },
+                {
+                    "TCKN": "10000000146",
+                    "AD SOYAD": "Geçerli Kişi",
+                    "BİRİMİ": "Birim B",
+                },
+            ],
+            dosya,
+        )
+
+        rapor = oku_personel_listesi_raporlu(dosya)
+
+        assert len(rapor.personeller) == 1
+        assert len(rapor.reddedilen_satirlar) == 1
+        red = rapor.reddedilen_satirlar[0]
+        assert red.excel_satir_no == 2
+        assert red.sebep == "Geçersiz TCKN: 35519215090"
+        assert "Satır 2 atlandı" in red.log_mesaji
 
     def test_bos_satir_filtelenir(self, tmp_path: Path):
         """TCKN veya Ad Soyad boş olan satırlar atlanmalı."""

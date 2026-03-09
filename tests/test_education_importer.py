@@ -95,7 +95,7 @@ class TestEducationImporter:
         result = importer.import_education(source_path, target_path)
 
         assert result.backup_path.exists()
-        assert "_yedek_" in result.backup_path.name
+        assert "_eski_" in result.backup_path.name
         assert result.matched_sheet_count == 1
         assert result.updated_sheet_count == 1
         assert result.appended_record_count == 2
@@ -208,5 +208,5 @@ class TestEducationImporter:
         ):
             importer.import_education(source_path, target_path)
 
-        assert not list(tmp_path.glob("*_yedek_*.xlsx"))
+        assert not list(tmp_path.glob("*_eski_*.xlsx"))
 

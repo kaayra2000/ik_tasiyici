@@ -246,6 +246,20 @@ class MainWindow(QMainWindow):
         """
         self._log_widget.log(message)
 
+    def _log_personel_okuma_uyarilari(self) -> None:
+        """Varsa, personel okuma sırasında atlanan satırları loglar."""
+        warning_getter = getattr(self._service, "son_personel_okuma_uyarilari", None)
+        if not callable(warning_getter):
+            return
+
+        warnings = warning_getter()
+        if not isinstance(warnings, list) or not warnings:
+            return
+
+        self.log(f"Uyarı: {len(warnings)} satır geçersiz olduğu için atlandı.")
+        for warning in warnings:
+            self.log(warning)
+
     # ------------------------------------------------------------------
     # İş mantığı orkestresyonu
     # ------------------------------------------------------------------
@@ -284,6 +298,7 @@ class MainWindow(QMainWindow):
             self.log("Personel listesi okunuyor...")
             personeller = self._service.personel_oku(input_file)
             self.log(f"Başarılı: {len(personeller)} personel okundu.")
+            self._log_personel_okuma_uyarilari()
 
             if not personeller:
                 self.log("Uyarı: İşlenecek personel bulunamadı.")
@@ -291,7 +306,7 @@ class MainWindow(QMainWindow):
                     self,
                     "Bilgi",
                     "İşlenecek geçerli personel kaydı bulunamadı.\n"
-                    "(Birim veya isim boş olabilir)",
+                    "Detaylar için işlem sonuçları alanına bakın.",
                 )
                 return
 

@@ -42,6 +42,38 @@ class Personel:
     """Çalıştığı enstitü / birim."""
 
 
+@dataclass(frozen=True)
+class SatirReddi:
+    """Geçersiz olduğu için atlanan bir Excel satırını açıklar."""
+
+    excel_satir_no: int
+    sebep: str
+    tckn: str = ""
+    ad_soyad: str = ""
+    birim: str = ""
+
+    @property
+    def log_mesaji(self) -> str:
+        """GUI log'u için kullanıcıya dönük açıklama üretir."""
+        alanlar = [
+            f"TCKN='{self.tckn or '-'}'",
+            f"AD SOYAD='{self.ad_soyad or '-'}'",
+            f"BİRİMİ='{self.birim or '-'}'",
+        ]
+        return (
+            f"Satır {self.excel_satir_no} atlandı: {self.sebep}. "
+            + ", ".join(alanlar)
+        )
+
+
+@dataclass(frozen=True)
+class PersonelOkumaRaporu:
+    """Excel okuma sonucundaki geçerli kayıtları ve red nedenlerini taşır."""
+
+    personeller: List[Personel]
+    reddedilen_satirlar: List[SatirReddi]
+
+
 # ---------------------------------------------------------------------------
 # Okuma fonksiyonları
 # ---------------------------------------------------------------------------
@@ -58,6 +90,18 @@ def oku_personel_listesi(dosya_yolu: str | Path) -> List[Personel]:
     :raises FileNotFoundError: Dosya bulunamazsa.
     :raises ValueError: Zorunlu sütunlar eksikse.
     """
+    return oku_personel_listesi_raporlu(dosya_yolu).personeller
+
+
+def oku_personel_listesi_raporlu(dosya_yolu: str | Path) -> PersonelOkumaRaporu:
+    """
+    Kaynak Excel dosyasını okuyarak geçerli kayıtları ve red nedenlerini döner.
+
+    :param dosya_yolu: Kaynak xlsx dosyasının yolu.
+    :returns: Geçerli kayıtlar ve reddedilen satırlar.
+    :raises FileNotFoundError: Dosya bulunamazsa.
+    :raises ValueError: Zorunlu sütunlar eksikse.
+    """
     dosya_yolu = Path(dosya_yolu)
     if not dosya_yolu.exists():
         raise FileNotFoundError(f"Kaynak dosya bulunamadı: {dosya_yolu}")
@@ -67,12 +111,19 @@ def oku_personel_listesi(dosya_yolu: str | Path) -> List[Personel]:
     _zorunlu_sutunları_dogrula(df)
 
     personeller: List[Personel] = []
-    for _, satir in df.iterrows():
-        personel = _satiri_isle(satir)
+    reddedilen_satirlar: List[SatirReddi] = []
+    for index, satir in df.iterrows():
+        excel_satir_no = int(index) + 2
+        personel, red_nedeni = _satiri_isle(satir, excel_satir_no)
         if personel is not None:
             personeller.append(personel)
+        if red_nedeni is not None:
+            reddedilen_satirlar.append(red_nedeni)
 
-    return personeller
+    return PersonelOkumaRaporu(
+        personeller=personeller,
+        reddedilen_satirlar=reddedilen_satirlar,
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -93,32 +144,46 @@ def _zorunlu_sutunları_dogrula(df: pd.DataFrame) -> None:
         raise ValueError(f"Kaynak dosyada zorunlu sütunlar eksik: {eksik}")
 
 
-def _satiri_isle(satir: pd.Series) -> Personel | None:
+def _satiri_isle(
+    satir: pd.Series,
+    excel_satir_no: int,
+) -> tuple[Personel | None, SatirReddi | None]:
     """
     Tek bir DataFrame satırını işler ve geçerliyse :class:`Personel` döner.
 
-    Geçersiz ya da eksik veri içeren satırlar için ``None`` döner.
+    Geçersiz ya da eksik veri içeren satırlar için red nedeni üretir.
 
     :param satir: İşlenecek satır.
-    :returns: :class:`Personel` veya ``None``.
+    :param excel_satir_no: Excel içindeki gerçek satır numarası.
+    :returns: ``(Personel | None, SatirReddi | None)``.
     """
     ham_tckn = satir.get(COL_TCKN)
     ham_ad_soyad = satir.get(COL_AD_SOYAD)
     ham_birim = satir.get(COL_BIRIM)
 
-    # Pandas NaN veya None kontrolü
-    if pd.isna(ham_tckn) or pd.isna(ham_ad_soyad) or pd.isna(ham_birim):
-        return None
+    tckn = normalize_tckn(str(ham_tckn).strip()) if not pd.isna(ham_tckn) else ""
+    ad_soyad = "" if pd.isna(ham_ad_soyad) else str(ham_ad_soyad).strip()
+    birim = "" if pd.isna(ham_birim) else str(ham_birim).strip()
 
-    tckn = normalize_tckn(str(ham_tckn).strip())
-    ad_soyad = str(ham_ad_soyad).strip()
-    birim = str(ham_birim).strip()
+    hata_nedenleri: list[str] = []
+    if not tckn:
+        hata_nedenleri.append("TCKN boş")
+    elif not validate_tckn(tckn):
+        hata_nedenleri.append(f"Geçersiz TCKN: {tckn}")
 
-    if not validate_tckn(tckn):
-        return None
     if not validate_ad_soyad(ad_soyad):
-        return None
-    if not validate_birim(birim):
-        return None
+        hata_nedenleri.append("AD SOYAD boş")
 
-    return Personel(tckn=tckn, ad_soyad=ad_soyad, birim=birim)
+    if not validate_birim(birim):
+        hata_nedenleri.append("BİRİMİ boş")
+
+    if hata_nedenleri:
+        return None, SatirReddi(
+            excel_satir_no=excel_satir_no,
+            sebep="; ".join(hata_nedenleri),
+            tckn=tckn,
+            ad_soyad=ad_soyad,
+            birim=birim,
+        )
+
+    return Personel(tckn=tckn, ad_soyad=ad_soyad, birim=birim), None

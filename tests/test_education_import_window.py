@@ -42,7 +42,7 @@ def service(tmp_path: Path):
     """EducationImportWindow için servis taklidi döndürür."""
     mock_service = MagicMock()
     mock_service.import_education.return_value = EducationImportResult(
-        backup_path=tmp_path / "hedef_yedek_20260309_1200.xlsx",
+        backup_path=tmp_path / "hedef_eski_20260309_1200.xlsx",
         matched_sheet_count=1,
         updated_sheet_count=1,
         appended_record_count=2,
