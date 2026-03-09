@@ -108,6 +108,7 @@ def olustur_dk_dosyasi_raporlu(
         )
 
     wb.save(cikti_yolu)
+    wb.close()
     return TutanakOlusturmaRaporu(
         output_path=cikti_yolu,
         added_sheet_count=added_sheet_count,
@@ -135,6 +136,7 @@ def olustur_dk_bytes(
     wb, _, _, _ = _workbook_olustur(personeller, strategy, template_path)
     buffer = BytesIO()
     wb.save(buffer)
+    wb.close()
     return buffer.getvalue()
 
 
@@ -281,7 +283,12 @@ def _sayfa_icerigini_kopyala(kaynak_ws, hedef_ws) -> None:
         hedef_ws.data_validations = copy(kaynak_ws.data_validations)
 
     hedef_ws.freeze_panes = kaynak_ws.freeze_panes
-    hedef_ws._print_area = copy(kaynak_ws._print_area)
+
+    # NOT: copy(PrintArea) nesnesi MultiCellRange'e dönüşür ve sayfa
+    # nitelendirmesini kaybeder → Excel bozuk Named Range hatası verir.
+    # Public setter kullanarak doğru formatta yazdırma alanı oluşturulur.
+    if kaynak_ws._print_area:
+        hedef_ws.print_area = str(kaynak_ws._print_area)
 
 
 def _sayfa_adi_olustur(personel: Personel) -> str:
