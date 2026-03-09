@@ -150,15 +150,19 @@ def _workbook_olustur(
 ) -> tuple[Workbook, int, int, list[str]]:
     """Her personel için şablon sayfasından kopyalanmış Workbook oluşturur."""
     wb = Workbook()
-    del wb[wb.active.title]
     added_sheet_count, skipped_existing_count, warning_messages = (
         _personelleri_workbooka_ekle(wb, personeller, strategy, template_path)
     )
 
     # openpyxl en az 1 sayfa olmadan kaydedemez;
-    # boş liste durumunda boş bir kılavuz sayfası ekleriz.
+    # Eğer hiç personel sayfası oluşturulmadıysa varsayılan aktif sayfayı
+    # silmek yerine `_bos` olarak yeniden adlandırıyoruz. Bu koruma
+    # openpyxl'in workbook seviyesindeki varsayılan stillerinin korunmasını
+    # sağlar (uyarıyı ortadan kaldırır) ve önceki davranışı taklit eder.
     if not wb.sheetnames:
         wb.create_sheet("_bos")
+    elif added_sheet_count == 0 and len(wb.sheetnames) == 1 and wb.sheetnames[0] == "Sheet":
+        wb.active.title = "_bos"
 
     return wb, added_sheet_count, skipped_existing_count, warning_messages
 
@@ -190,7 +194,17 @@ def _personelleri_workbooka_ekle(
                     raise ValueError("Şablon workbook içinde hiç sayfa yok.")
                 template_ws = template_wb.active
 
-            ws = wb.create_sheet(title=sayfa_adi)
+            # Reuse the default active sheet for the first generated page to
+            # preserve workbook-level defaults (openpyxl's default style).
+            if (
+                len(wb.sheetnames) == 1
+                and wb.active is not None
+                and not getattr(wb.active, "_cells", {})
+            ):
+                ws = wb.active
+                ws.title = sayfa_adi
+            else:
+                ws = wb.create_sheet(title=sayfa_adi)
             _sayfa_icerigini_kopyala(template_ws, ws)
             strategy.sayfa_doldur(ws, personel)
             added_sheet_count += 1
