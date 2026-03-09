@@ -397,14 +397,10 @@ class EducationImporter:
 
             row = empty_rows.pop(0)
             worksheet[f"B{row}"] = record.level
-            # Append graduation date to the school cell (previous behavior)
-            # so tests and templates that expect the date in the same cell
-            # continue to work.
-            if record.graduation_date:
-                worksheet[f"C{row}"] = f"{record.school_text} - {record.graduation_date}"
-            else:
-                worksheet[f"C{row}"] = record.school_text
+            worksheet[f"C{row}"] = record.school_text
             worksheet[f"E{row}"] = record.department_text
+            if record.graduation_date:
+                worksheet[f"I{row}"] = record.graduation_date
             existing_fingerprints.add(record.fingerprint)
             appended_count += 1
 
