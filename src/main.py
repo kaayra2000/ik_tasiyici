@@ -66,9 +66,10 @@ def _get_stylesheet_path() -> Path:
 
 def get_logo_path() -> Path:
     """Calisma ortamina gore TUBİTAK logo dosyasi yolunu doner."""
+    tubitak_logo_file = "tubitak_logo.png"
     if hasattr(sys, "_MEIPASS"):
-        return Path(sys._MEIPASS) / "src" / "assets" / "tubitak_logo.png"
-    return Path(__file__).parent / "assets" / "tubitak_logo.png"
+        return Path(sys._MEIPASS) / "src" / "assets" / tubitak_logo_file
+    return Path(__file__).parent / "assets" / tubitak_logo_file
 
 
 def _apply_stylesheet(app) -> None:

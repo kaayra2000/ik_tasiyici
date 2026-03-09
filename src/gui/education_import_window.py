@@ -29,7 +29,7 @@ class EducationImportWindow(QMainWindow):
         service: EducationImportService | None = None,
     ) -> None:
         super().__init__()
-        self.setWindowTitle(make_tubitak_title("Mezuniyet/Meslek Bilgisi Ekle"))
+        self.setWindowTitle(make_tubitak_title("Mezuniyet Bilgisi Ekle"))
         self.setMinimumSize(680, 420)
 
         self._settings = settings or SettingsManager()
@@ -217,7 +217,7 @@ class EducationImportWindow(QMainWindow):
             QMessageBox.information(
                 self,
                 "Başarılı",
-                "Mezuniyet/Meslek bilgileri hedef tutanağa işlendi.",
+                "Mezuniyet bilgileri hedef tutanağa işlendi.",
             )
         except PermissionError as exc:
             self.log(f"HATA: {exc}")

@@ -71,7 +71,7 @@ class MainMenuWindow(QMainWindow):
         button_row.addWidget(self._tutanak_button)
 
         self._education_button = self._build_menu_button(
-            "Mezuniyet/Meslek Bilgisi Ekle",
+            "Mezuniyet Bilgisi Ekle",
             "menuSecondaryButton",
         )
         self._education_button.clicked.connect(self._open_education_import_window)
