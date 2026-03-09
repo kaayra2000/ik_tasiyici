@@ -7,7 +7,10 @@ Tüm sorumluluklar ilgili bileşenlere devredilmiştir (SRP).
 
 from __future__ import annotations
 
-from PyQt6.QtGui import QAction, QActionGroup
+from pathlib import Path
+
+from PyQt6.QtCore import QUrl
+from PyQt6.QtGui import QAction, QActionGroup, QDesktopServices
 from PyQt6.QtWidgets import (
     QMainWindow,
     QMenu,
@@ -241,8 +244,6 @@ class MainWindow(QMainWindow):
             QMessageBox.warning(self, "Uyarı", "Lütfen bir çıktı taslağı seçin.")
             return
 
-        from pathlib import Path
-
         if not Path(template_file).is_file():
             QMessageBox.warning(
                 self,
@@ -286,6 +287,7 @@ class MainWindow(QMainWindow):
             )
 
             self.log(f"İşlem tamamlandı!\nÇıktı dosyası: {result_path}")
+            self._open_generated_output(result_path)
             QMessageBox.information(
                 self,
                 "Başarılı",
@@ -299,3 +301,20 @@ class MainWindow(QMainWindow):
                 "Hata",
                 f"Beklenmeyen bir hata oluştu:\n{str(e)}",
             )
+
+    def _open_generated_output(self, result_path: str | Path) -> None:
+        """Oluşturulan dosyayı ve bulunduğu klasörü açar."""
+        output_file = Path(result_path).resolve()
+        output_dir = output_file.parent
+
+        self._open_local_path(output_dir, "çıktı klasörü")
+        self._open_local_path(output_file, "oluşturulan tutanak")
+
+    def _open_local_path(self, path: Path, description: str) -> bool:
+        """Yerel bir dosya ya da klasörü işletim sistemine devrederek açar."""
+        opened = QDesktopServices.openUrl(QUrl.fromLocalFile(str(path)))
+        if opened:
+            self.log(f"{description.capitalize()} açıldı: {path}")
+        else:
+            self.log(f"Uyarı: {description} otomatik açılamadı: {path}")
+        return opened
