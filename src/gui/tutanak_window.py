@@ -7,15 +7,17 @@ Tüm sorumluluklar ilgili bileşenlere devredilmiştir (SRP).
 
 from __future__ import annotations
 
+from dataclasses import dataclass, field
 from pathlib import Path
 
-from PyQt6.QtCore import QUrl
+from PyQt6.QtCore import QThread, QUrl, pyqtSignal
 from PyQt6.QtGui import QAction, QActionGroup, QDesktopServices
 from PyQt6.QtWidgets import (
     QMainWindow,
     QMenu,
     QMenuBar,
     QMessageBox,
+    QProgressBar,
     QPushButton,
     QVBoxLayout,
     QWidget,
@@ -27,6 +29,75 @@ from src.gui.file_selection_widget import DialogType, FileSelectionWidget
 from src.gui.log_widget import LogWidget
 from src.gui.settings_manager import SettingsManager
 from src.gui.tutanak_service import TutanakService
+
+
+# ---------------------------------------------------------------------------
+# Arka-plan iş parçacıkları (QThread tabanlı worker'lar)
+# ---------------------------------------------------------------------------
+
+
+class _PersonelOkuWorker(QThread):
+    """Personel okuma işlemini arka planda yürütür."""
+
+    finished = pyqtSignal(list)   # List[Personel]
+    error = pyqtSignal(str)
+
+    def __init__(self, service: TutanakService, input_path: str) -> None:
+        super().__init__()
+        self._service = service
+        self._input_path = input_path
+
+    def run(self) -> None:  # noqa: D102
+        try:
+            personeller = self._service.personel_oku(self._input_path)
+            self.finished.emit(personeller)
+        except Exception as exc:  # noqa: BLE001
+            self.error.emit(str(exc))
+
+
+class _TutanakOlusturWorker(QThread):
+    """Tutanak oluşturma işlemini arka planda yürütür."""
+
+    finished = pyqtSignal(object)   # Path
+    error = pyqtSignal(str)
+
+    def __init__(
+        self,
+        service: TutanakService,
+        personeller: list,
+        template_path: str,
+        output_path: str,
+        version: str,
+    ) -> None:
+        super().__init__()
+        self._service = service
+        self._personeller = personeller
+        self._template_path = template_path
+        self._output_path = output_path
+        self._version = version
+
+    def run(self) -> None:  # noqa: D102
+        try:
+            result_path = self._service.tutanak_olustur(
+                personeller=self._personeller,
+                template_path=self._template_path,
+                output_path=self._output_path,
+                version=self._version,
+            )
+            self.finished.emit(result_path)
+        except Exception as exc:  # noqa: BLE001
+            self.error.emit(str(exc))
+
+
+@dataclass
+class TutanakProcessState:
+    """Tutanak oluşturma sürecinin geçici durum verilerini tutar."""
+    valid_personnel_count: int = 0
+    selected_version: str | None = None
+    personeller: list = field(default_factory=list)
+    personel_details_logged: bool = False
+    pending_template_file: str = ""
+    pending_output_path: str = ""
 
 
 class TutanakWindow(QMainWindow):
@@ -52,6 +123,13 @@ class TutanakWindow(QMainWindow):
         # Bağımlılıkları dışarıdan al ya da varsayılanları oluştur (DIP)
         self._settings = settings or SettingsManager()
         self._service = service or TutanakService()
+
+        # Arka plan worker referansları (GC'den korumak için)
+        self._okuma_worker: _PersonelOkuWorker | None = None
+        self._olusturma_worker: _TutanakOlusturWorker | None = None
+
+        # İşlem sırasında kullanılacak geçici durum nesnesi
+        self._process_state = TutanakProcessState()
 
         self._init_menu_bar()
         self._init_ui()
@@ -152,6 +230,14 @@ class TutanakWindow(QMainWindow):
         # -- Log Alanı --
         self._log_widget = LogWidget(log_name="ana_pencere")
         main_layout.addWidget(self._log_widget)
+
+        # -- İlerleme Çubuğu --
+        self._progress_bar = QProgressBar()
+        self._progress_bar.setRange(0, 0)   # belirsiz mod (pulse)
+        self._progress_bar.setTextVisible(False)
+        self._progress_bar.setFixedHeight(16)
+        self._progress_bar.setVisible(False)
+        main_layout.addWidget(self._progress_bar)
 
         # -- Başlat Butonu --
         self._start_button = QPushButton("Tutanakları Oluştur")
@@ -299,11 +385,20 @@ class TutanakWindow(QMainWindow):
         )
 
     # ------------------------------------------------------------------
-    # İş mantığı orkestresyonu
+    # İlerleme çubuğu yardımcıları
+    # ------------------------------------------------------------------
+
+    def _set_busy(self, busy: bool) -> None:
+        """İşlem süresince butonu devre dışı bırakır ve progress bar'ı gösterir."""
+        self._start_button.setEnabled(not busy)
+        self._progress_bar.setVisible(busy)
+
+    # ------------------------------------------------------------------
+    # İş mantığı orkestresyonu – personel okuma aşaması
     # ------------------------------------------------------------------
 
     def _start_processing(self) -> None:
-        """Doğrulama kontrolleri yapar ve tutanak oluşturma sürecini başlatır."""
+        """Doğrulama kontrolleri yapar ve personel okuma işlemini başlatır."""
         input_file = self._input_selector.get_path()
         if not input_file:
             QMessageBox.warning(self, "Uyarı", "Lütfen bir girdi dosyası seçin.")
@@ -331,89 +426,129 @@ class TutanakWindow(QMainWindow):
 
         self.log("-" * 40)
         self.log("İşlem başlatılıyor...")
+        self.log("Personel listesi okunuyor...")
 
-        valid_personnel_count = 0
-        selected_version: str | None = None
-        result_path: str | Path | None = None
-        personel_details_logged = False
-        tutanak_details_logged = False
+        # Yeni işlem için durumu sıfırla
+        self._process_state = TutanakProcessState(
+            pending_template_file=template_file,
+            pending_output_path=output_path,
+        )
 
-        try:
-            self.log("Personel listesi okunuyor...")
-            personeller = self._service.personel_oku(input_file)
-            valid_personnel_count = len(personeller)
+        self._set_busy(True)
+
+        self._okuma_worker = _PersonelOkuWorker(self._service, input_file)
+        self._okuma_worker.finished.connect(self._on_personel_oku_finished)
+        self._okuma_worker.error.connect(self._on_personel_oku_error)
+        self._okuma_worker.start()
+
+    def _on_personel_oku_finished(self, personeller: list) -> None:
+        """Personel okuma başarıyla tamamlandığında çağrılır."""
+        self._process_state.valid_personnel_count = len(personeller)
+        self._log_widget.log_detail_block(
+            "Personel okuma ayrıntıları:",
+            self._get_service_messages("son_personel_okuma_uyarilari"),
+        )
+        self._process_state.personel_details_logged = True
+
+        if not personeller:
+            self._set_busy(False)
+            self.log("Uyarı: İşlenecek personel bulunamadı.")
+            self._log_processing_summary(
+                status="İşlem yapılmadı",
+                valid_personnel_count=0,
+                error_message="İşlenecek geçerli personel kaydı bulunamadı.",
+            )
+            QMessageBox.information(
+                self,
+                "Bilgi",
+                "İşlenecek geçerli personel kaydı bulunamadı.\n"
+                "Detaylar için işlem sonuçları alanına bakın.",
+            )
+            return
+
+        self._process_state.personeller = personeller
+        self._process_state.selected_version = self._get_selected_version()
+        self.log(f"DK tutanakları oluşturuluyor (versiyon: {self._process_state.selected_version})...")
+
+        self._olusturma_worker = _TutanakOlusturWorker(
+            self._service,
+            personeller,
+            self._process_state.pending_template_file,
+            self._process_state.pending_output_path,
+            self._process_state.selected_version,
+        )
+        self._olusturma_worker.finished.connect(self._on_tutanak_olustur_finished)
+        self._olusturma_worker.error.connect(self._on_tutanak_olustur_error)
+        self._olusturma_worker.start()
+
+    def _on_personel_oku_error(self, error_message: str) -> None:
+        """Personel okuma hata verdiğinde çağrılır."""
+        self._set_busy(False)
+        self.log(f"HATA: {error_message}")
+        if not self._process_state.personel_details_logged:
             self._log_widget.log_detail_block(
                 "Personel okuma ayrıntıları:",
                 self._get_service_messages("son_personel_okuma_uyarilari"),
             )
-            personel_details_logged = True
+        self._log_widget.log_detail_block(
+            "Tutanak oluşturma ayrıntıları:",
+            self._get_service_messages("son_tutanak_olusturma_uyarilari"),
+        )
+        self._log_processing_summary(
+            status="Başarısız",
+            valid_personnel_count=self._process_state.valid_personnel_count,
+            version=self._process_state.selected_version,
+            error_message=error_message,
+        )
+        QMessageBox.critical(
+            self,
+            "Hata",
+            f"Beklenmeyen bir hata oluştu:\n{error_message}",
+        )
 
-            if not personeller:
-                self.log("Uyarı: İşlenecek personel bulunamadı.")
-                self._log_processing_summary(
-                    status="İşlem yapılmadı",
-                    valid_personnel_count=0,
-                    error_message="İşlenecek geçerli personel kaydı bulunamadı.",
-                )
-                QMessageBox.information(
-                    self,
-                    "Bilgi",
-                    "İşlenecek geçerli personel kaydı bulunamadı.\n"
-                    "Detaylar için işlem sonuçları alanına bakın.",
-                )
-                return
+    # ------------------------------------------------------------------
+    # Tutanak oluşturma aşaması
+    # ------------------------------------------------------------------
 
-            selected_version = self._get_selected_version()
-            self.log(f"DK tutanakları oluşturuluyor (versiyon: {selected_version})...")
-            result_path = self._service.tutanak_olustur(
-                personeller=personeller,
-                template_path=template_file,
-                output_path=output_path,
-                version=selected_version,
-            )
+    def _on_tutanak_olustur_finished(self, result_path: object) -> None:
+        """Tutanak oluşturma başarıyla tamamlandığında çağrılır."""
+        self._set_busy(False)
+        self._log_widget.log_detail_block(
+            "Tutanak oluşturma ayrıntıları:",
+            self._get_service_messages("son_tutanak_olusturma_uyarilari"),
+        )
+        self._open_generated_output(result_path)  # type: ignore[arg-type]
+        self._log_processing_summary(
+            status="Başarılı",
+            valid_personnel_count=self._process_state.valid_personnel_count,
+            version=self._process_state.selected_version,
+            result_path=result_path,  # type: ignore[arg-type]
+        )
+        QMessageBox.information(
+            self,
+            "Başarılı",
+            f"İşlem tamamlandı!\nDosya kaydedildi:\n{result_path}",
+        )
 
-            self._log_widget.log_detail_block(
-                "Tutanak oluşturma ayrıntıları:",
-                self._get_service_messages("son_tutanak_olusturma_uyarilari"),
-            )
-            tutanak_details_logged = True
-            self._open_generated_output(result_path)
-            self._log_processing_summary(
-                status="Başarılı",
-                valid_personnel_count=valid_personnel_count,
-                version=selected_version,
-                result_path=result_path,
-            )
-            QMessageBox.information(
-                self,
-                "Başarılı",
-                f"İşlem tamamlandı!\nDosya kaydedildi:\n{result_path}",
-            )
-
-        except Exception as e:
-            self.log(f"HATA: {str(e)}")
-            if not personel_details_logged:
-                self._log_widget.log_detail_block(
-                    "Personel okuma ayrıntıları:",
-                    self._get_service_messages("son_personel_okuma_uyarilari"),
-                )
-            if not tutanak_details_logged:
-                self._log_widget.log_detail_block(
-                    "Tutanak oluşturma ayrıntıları:",
-                    self._get_service_messages("son_tutanak_olusturma_uyarilari"),
-                )
-            self._log_processing_summary(
-                status="Başarısız",
-                valid_personnel_count=valid_personnel_count,
-                version=selected_version,
-                result_path=result_path,
-                error_message=str(e),
-            )
-            QMessageBox.critical(
-                self,
-                "Hata",
-                f"Beklenmeyen bir hata oluştu:\n{str(e)}",
-            )
+    def _on_tutanak_olustur_error(self, error_message: str) -> None:
+        """Tutanak oluşturma hata verdiğinde çağrılır."""
+        self._set_busy(False)
+        self.log(f"HATA: {error_message}")
+        self._log_widget.log_detail_block(
+            "Tutanak oluşturma ayrıntıları:",
+            self._get_service_messages("son_tutanak_olusturma_uyarilari"),
+        )
+        self._log_processing_summary(
+            status="Başarısız",
+            valid_personnel_count=self._process_state.valid_personnel_count,
+            version=self._process_state.selected_version,
+            error_message=error_message,
+        )
+        QMessageBox.critical(
+            self,
+            "Hata",
+            f"Beklenmeyen bir hata oluştu:\n{error_message}",
+        )
 
     def _open_generated_output(self, result_path: str | Path) -> None:
         """Oluşturulan dosyayı ve bulunduğu klasörü açar."""
