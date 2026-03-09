@@ -124,7 +124,7 @@ class TestExcelWriteStrategyV1:
         unvan = template_ws["E3"].value
         assert unvan is not None
         assert str(unvan).startswith("=")
-        assert 'M3="A"' in str(unvan)
+        assert 'M3="AG"' in str(unvan)
 
     def test_sayfa_doldur_kademe_formul(self, strategy, personel, template_ws):
         """Kademe hücresi formül içermeli."""

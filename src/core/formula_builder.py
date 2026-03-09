@@ -174,14 +174,14 @@ def unvan_formulu(
 
     :param tecrube_yili_hucre: Tecrübe yılı değerinin bulunduğu hücre (ör. ``"Z1"``).
     :param hizmet_grubu_turu_hucre: Hizmet grubu türü seçiminin bulunduğu hücre
-        (ör. ``"M3"``). ``"A"`` ise ünvanlara ``" Araştırmacı"`` eklenir.
+        (ör. ``"M3"``). ``"AG"`` ise ünvanlara ``" Araştırmacı"`` eklenir.
     :returns: İç içe IF formülü string'i.
     """
     t = tecrube_yili_hucre
     g = hizmet_grubu_turu_hucre
 
     def varyant(unvan: str) -> str:
-        return f'IF({g}="A","{unvan} Araştırmacı","{unvan}")'
+        return f'IF({g}="AG","{unvan} Araştırmacı","{unvan}")'
 
     return (
         f'=IF({t}>=16,{varyant("Kıdemli Başuzman")},'

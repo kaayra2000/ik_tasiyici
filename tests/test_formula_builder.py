@@ -139,7 +139,7 @@ class TestUnvanFormulu:
         """Uzman Yardımcısı son seçenek olmalı."""
         sonuc = unvan_formulu("N28", "M3")
         assert '"Uzman Yardımcısı"' in sonuc
-        assert 'M3="A"' in sonuc
+        assert 'M3="AG"' in sonuc
         # Diğer ünvanlardan sonra gelmeli
         assert sonuc.index('"Uzman Yardımcısı"') > sonuc.index('"Uzman"')
 
