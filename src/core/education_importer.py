@@ -238,7 +238,7 @@ class EducationImporter:
 
         graduation_date = self._format_date(row.get(_SOURCE_COL_MEZUNIYET_TARIHI))
 
-        school_text = self._build_school_text(university, faculty, program, graduation_date)
+        school_text = university
         department_text = self._build_department_text(program)
         if not school_text:
             return None, self._build_source_warning_message(
@@ -288,25 +288,16 @@ class EducationImporter:
             return text
         return parsed.strftime("%d.%m.%Y")
 
-    @staticmethod
-    def _build_school_text(
-        university: str,
-        faculty: str,
-        program: str,
-        graduation_date: str,
-    ) -> str:
-        """Okul hücresine yazılacak birleşik metni üretir."""
-        parts = [university, faculty, program]
-        text = " - ".join(part for part in parts if part)
-        if graduation_date:
-            if text:
-                return f"{text} - {graduation_date}"
-            return graduation_date
-        return text
 
     @staticmethod
     def _build_department_text(program: str) -> str:
-        """Bölüm hücresine yazılacak metni üretir."""
+        """Bölüm hücresine yazılacak metni üretir.
+
+        Program adında " - " varsa yalnızca önceki kısım alınır;
+        bu sayede "ÖRGÜN ÖĞRETİM" gibi ekler kırpılır.
+        """
+        if " - " in program:
+            return program.split(" - ")[0].strip()
         return program
 
     @staticmethod
@@ -404,6 +395,8 @@ class EducationImporter:
             worksheet[f"B{row}"] = record.level
             worksheet[f"C{row}"] = record.school_text
             worksheet[f"E{row}"] = record.department_text
+            if record.graduation_date:
+                worksheet[f"I{row}"] = record.graduation_date
             existing_fingerprints.add(record.fingerprint)
             appended_count += 1
 
