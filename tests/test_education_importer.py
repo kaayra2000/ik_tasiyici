@@ -105,10 +105,12 @@ class TestEducationImporter:
         workbook = openpyxl.load_workbook(target_path)
         worksheet = workbook.active
         assert worksheet["B6"].value == "Lisans"
-        assert "İSTANBUL TEKNİK ÜNİVERSİTESİ" in worksheet["C6"].value
+        assert worksheet["C6"].value == "İSTANBUL TEKNİK ÜNİVERSİTESİ"
         assert worksheet["E6"].value == "ELEKTRONİK VE HABERLEŞME MÜHENDİSLİĞİ"
+        assert worksheet["I6"].value == "03.01.2022"
         assert worksheet["B7"].value == "Tezli Yüksek Lisans"
-        assert "15.07.2024" in worksheet["C7"].value
+        assert worksheet["C7"].value == "BOĞAZİÇİ ÜNİVERSİTESİ"
+        assert worksheet["I7"].value == "15.07.2024"
         workbook.close()
 
     def test_import_education_preserves_existing_rows_and_skips_duplicates(

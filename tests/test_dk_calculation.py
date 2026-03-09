@@ -5,7 +5,7 @@ D-K tablosu hesaplama fonksiyonları için testler.
 import pytest
 from src.config.dk_table import (
     hesapla_tecrube_yili,
-    belirle_hizmet_grubu,
+    belirle_seviye,
     belirle_unvan,
     belirle_kademe,
     hesapla_dk,
@@ -39,148 +39,148 @@ class TestHesaplaTecrübeYili:
         assert hesapla_tecrube_yili(180) == pytest.approx(0.5)
 
 
-class TestBelirleHizmetGrubu:
-    """belirle_hizmet_grubu fonksiyonu için testler."""
+class TestBelirleSeviye:
+    """belirle_seviye fonksiyonu için testler."""
 
     def test_sifir_yil(self):
-        assert belirle_hizmet_grubu(0.0) == "A/AG-6"
+        assert belirle_seviye(0.0) == "6"
 
     def test_iki_yil(self):
-        assert belirle_hizmet_grubu(2.0) == "A/AG-6"
+        assert belirle_seviye(2.0) == "6"
 
     def test_uc_yil(self):
-        assert belirle_hizmet_grubu(3.0) == "A/AG-5"
+        assert belirle_seviye(3.0) == "5"
 
     def test_alti_yil(self):
-        assert belirle_hizmet_grubu(6.0) == "A/AG-5"
+        assert belirle_seviye(6.0) == "5"
 
     def test_sekiz_yil(self):
-        assert belirle_hizmet_grubu(8.0) == "A/AG-4"
+        assert belirle_seviye(8.0) == "4"
 
     def test_oniki_yil(self):
-        assert belirle_hizmet_grubu(12.0) == "A/AG-3"
+        assert belirle_seviye(12.0) == "3"
 
     def test_onalti_yil(self):
-        assert belirle_hizmet_grubu(16.0) == "A/AG-2"
+        assert belirle_seviye(16.0) == "2"
 
     def test_yirmi_yil(self):
-        assert belirle_hizmet_grubu(20.0) == "A/AG-2"
+        assert belirle_seviye(20.0) == "2"
 
 
 class TestBelirleUnvan:
     """belirle_unvan fonksiyonu için testler."""
 
-    def test_ag6(self):
-        assert belirle_unvan("A/AG-6") == "Uzman Yardımcısı"
+    def test_seviye_6(self):
+        assert belirle_unvan("6") == "Uzman Yardımcısı"
 
-    def test_ag5(self):
-        assert belirle_unvan("A/AG-5") == "Uzman"
+    def test_seviye_5(self):
+        assert belirle_unvan("5") == "Uzman"
 
-    def test_ag4(self):
-        assert belirle_unvan("A/AG-4") == "Kıdemli Uzman"
+    def test_seviye_4(self):
+        assert belirle_unvan("4") == "Kıdemli Uzman"
 
-    def test_ag3(self):
-        assert belirle_unvan("A/AG-3") == "Başuzman"
+    def test_seviye_3(self):
+        assert belirle_unvan("3") == "Başuzman"
 
-    def test_ag2(self):
-        assert belirle_unvan("A/AG-2") == "Kıdemli Başuzman"
+    def test_seviye_2(self):
+        assert belirle_unvan("2") == "Kıdemli Başuzman"
 
-    def test_bilinmeyen_grup(self):
+    def test_bilinmeyen_seviye(self):
         with pytest.raises(ValueError):
-            belirle_unvan("A/AG-9")
+            belirle_unvan("9")
 
 
 class TestBelirleKademe:
     """belirle_kademe fonksiyonu için testler."""
 
-    # A/AG-6 testleri
-    def test_ag6_lisans_0_yil(self):
-        assert belirle_kademe(0.5, "A/AG-6", OGRENIM_LISANS) == "5-6"
+    # Seviye 6 testleri
+    def test_seviye_6_lisans_0_yil(self):
+        assert belirle_kademe(0.5, "6", OGRENIM_LISANS) == "5-6"
 
-    def test_ag6_tezli_yl_0_yil(self):
-        assert belirle_kademe(0.5, "A/AG-6", OGRENIM_TEZLI_YL) == "3"
+    def test_seviye_6_tezli_yl_0_yil(self):
+        assert belirle_kademe(0.5, "6", OGRENIM_TEZLI_YL) == "3"
 
-    def test_ag6_lisans_2_5_yil(self):
-        assert belirle_kademe(2.5, "A/AG-6", OGRENIM_LISANS) == "3-4"
+    def test_seviye_6_lisans_2_5_yil(self):
+        assert belirle_kademe(2.5, "6", OGRENIM_LISANS) == "3-4"
 
-    def test_ag6_doktora_returns_none(self):
-        """A/AG-6 için Doktora kademesi yoktur."""
-        assert belirle_kademe(0.5, "A/AG-6", OGRENIM_DOKTORA) is None
+    def test_seviye_6_doktora_returns_none(self):
+        """Seviye 6 için Doktora kademesi yoktur."""
+        assert belirle_kademe(0.5, "6", OGRENIM_DOKTORA) is None
 
-    # A/AG-5 testleri
-    def test_ag5_lisans_3_yil(self):
-        assert belirle_kademe(3.0, "A/AG-5", OGRENIM_LISANS) == "5"
+    # Seviye 5 testleri
+    def test_seviye_5_lisans_3_yil(self):
+        assert belirle_kademe(3.0, "5", OGRENIM_LISANS) == "5"
 
-    def test_ag5_doktora_4_yil(self):
-        assert belirle_kademe(4.0, "A/AG-5", OGRENIM_DOKTORA) == "2"
+    def test_seviye_5_doktora_4_yil(self):
+        assert belirle_kademe(4.0, "5", OGRENIM_DOKTORA) == "2"
 
-    def test_ag5_tezli_yl_7_yil(self):
-        assert belirle_kademe(7.0, "A/AG-5", OGRENIM_TEZLI_YL) == "2"
+    def test_seviye_5_tezli_yl_7_yil(self):
+        assert belirle_kademe(7.0, "5", OGRENIM_TEZLI_YL) == "2"
 
-    # A/AG-4 testleri
-    def test_ag4_lisans_8_yil(self):
-        assert belirle_kademe(8.0, "A/AG-4", OGRENIM_LISANS) == "5"
+    # Seviye 4 testleri
+    def test_seviye_4_lisans_8_yil(self):
+        assert belirle_kademe(8.0, "4", OGRENIM_LISANS) == "5"
 
-    def test_ag4_doktora_10_yil(self):
-        assert belirle_kademe(10.0, "A/AG-4", OGRENIM_DOKTORA) == "3"
+    def test_seviye_4_doktora_10_yil(self):
+        assert belirle_kademe(10.0, "4", OGRENIM_DOKTORA) == "3"
 
-    # A/AG-3 testleri
-    def test_ag3_tezli_yl_13_yil(self):
-        assert belirle_kademe(13.0, "A/AG-3", OGRENIM_TEZLI_YL) == "4"
+    # Seviye 3 testleri
+    def test_seviye_3_tezli_yl_13_yil(self):
+        assert belirle_kademe(13.0, "3", OGRENIM_TEZLI_YL) == "4"
 
-    def test_ag3_lisans_15_yil(self):
-        assert belirle_kademe(15.0, "A/AG-3", OGRENIM_LISANS) == "3"
+    def test_seviye_3_lisans_15_yil(self):
+        assert belirle_kademe(15.0, "3", OGRENIM_LISANS) == "3"
 
-    # A/AG-2 testleri
-    def test_ag2_lisans_16_yil(self):
-        assert belirle_kademe(16.0, "A/AG-2", OGRENIM_LISANS) == "4"
+    # Seviye 2 testleri
+    def test_seviye_2_lisans_16_yil(self):
+        assert belirle_kademe(16.0, "2", OGRENIM_LISANS) == "4"
 
-    def test_ag2_tezsiz_yl_20_yil(self):
-        assert belirle_kademe(20.0, "A/AG-2", OGRENIM_TEZSIZ_YL) == "3-4"
+    def test_seviye_2_tezsiz_yl_20_yil(self):
+        assert belirle_kademe(20.0, "2", OGRENIM_TEZSIZ_YL) == "3-4"
 
-    def test_ag2_doktora_18_yil(self):
-        assert belirle_kademe(18.0, "A/AG-2", OGRENIM_DOKTORA) == "3"
+    def test_seviye_2_doktora_18_yil(self):
+        assert belirle_kademe(18.0, "2", OGRENIM_DOKTORA) == "3"
 
 
 class TestHesaplaDK:
     """hesapla_dk fonksiyonu entegrasyon testleri."""
 
     def test_uzman_yardimcisi_lisans(self):
-        """1 yıl Lisans → A/AG-6, Uzman Yardımcısı, kademe 5-6."""
+        """1 yıl Lisans -> Seviye 6, Uzman Yardımcısı, kademe 5-6."""
         sonuc = hesapla_dk(360.0, OGRENIM_LISANS)
         assert sonuc.unvan == "Uzman Yardımcısı"
-        assert sonuc.hizmet_grubu == "A/AG-6"
+        assert sonuc.seviye == "6"
         assert sonuc.kademe == "5-6"
 
     def test_uzman_tezli_yl(self):
-        """4 yıl Tezli YL → A/AG-5, Uzman, kademe 4."""
+        """4 yıl Tezli YL -> Seviye 5, Uzman, kademe 4."""
         sonuc = hesapla_dk(4 * GUN_PER_YIL, OGRENIM_TEZLI_YL)
         assert sonuc.unvan == "Uzman"
-        assert sonuc.hizmet_grubu == "A/AG-5"
+        assert sonuc.seviye == "5"
         assert sonuc.kademe == "4"
 
     def test_kidemli_uzman_doktora(self):
-        """9 yıl Doktora → A/AG-4, Kıdemli Uzman, kademe 3."""
+        """9 yıl Doktora -> Seviye 4, Kıdemli Uzman, kademe 3."""
         sonuc = hesapla_dk(9 * GUN_PER_YIL, OGRENIM_DOKTORA)
         assert sonuc.unvan == "Kıdemli Uzman"
-        assert sonuc.hizmet_grubu == "A/AG-4"
+        assert sonuc.seviye == "4"
         assert sonuc.kademe == "3"
 
     def test_basuzman_lisans(self):
-        """13 yıl Lisans → A/AG-3, Başuzman, kademe 5."""
+        """13 yıl Lisans -> Seviye 3, Başuzman, kademe 5."""
         sonuc = hesapla_dk(13 * GUN_PER_YIL, OGRENIM_LISANS)
         assert sonuc.unvan == "Başuzman"
-        assert sonuc.hizmet_grubu == "A/AG-3"
+        assert sonuc.seviye == "3"
         assert sonuc.kademe == "5"
 
     def test_kidemli_basuzman_doktora(self):
-        """17 yıl Doktora → A/AG-2, Kıdemli Başuzman, kademe 3."""
+        """17 yıl Doktora -> Seviye 2, Kıdemli Başuzman, kademe 3."""
         sonuc = hesapla_dk(17 * GUN_PER_YIL, OGRENIM_DOKTORA)
         assert sonuc.unvan == "Kıdemli Başuzman"
-        assert sonuc.hizmet_grubu == "A/AG-2"
+        assert sonuc.seviye == "2"
         assert sonuc.kademe == "3"
 
-    def test_doktora_ag6_raises(self):
-        """A/AG-6 kademesinde Doktora için hesaplama hata vermeli."""
+    def test_doktora_seviye_6_raises(self):
+        """Seviye 6 kademesinde Doktora için hesaplama hata vermeli."""
         with pytest.raises(ValueError):
             hesapla_dk(180.0, OGRENIM_DOKTORA)

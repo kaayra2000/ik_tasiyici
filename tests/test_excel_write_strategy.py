@@ -144,7 +144,7 @@ class TestExcelWriteStrategyV1:
     def test_sayfa_doldur_hizmet_grubu_formulu_M3e_bagli(self, strategy, personel, template_ws):
         """Hizmet grubu formülü seçim hücresi olarak M3'ü kullanmalı."""
         strategy.sayfa_doldur(template_ws, personel)
-        assert 'M3&"-' in str(template_ws["Z2"].value)
+        assert 'OR(M3="A",M3="AG")' in str(template_ws["Z2"].value)
 
     def test_is_abstract_strategy_subclass(self):
         """V1 stratejisi ExcelWriteStrategy alt sınıfı olmalı."""
