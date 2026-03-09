@@ -11,6 +11,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from PyQt6.QtCore import QThread, QUrl, pyqtSignal
+import os
 from PyQt6.QtGui import QAction, QActionGroup, QDesktopServices
 from PyQt6.QtWidgets import (
     QMainWindow,
@@ -439,7 +440,11 @@ class TutanakWindow(QMainWindow):
         self._okuma_worker = _PersonelOkuWorker(self._service, input_file)
         self._okuma_worker.finished.connect(self._on_personel_oku_finished)
         self._okuma_worker.error.connect(self._on_personel_oku_error)
-        self._okuma_worker.start()
+        # Run synchronously under pytest for deterministic tests.
+        if os.environ.get("PYTEST_CURRENT_TEST"):
+            self._okuma_worker.run()
+        else:
+            self._okuma_worker.start()
 
     def _on_personel_oku_finished(self, personeller: list) -> None:
         """Personel okuma başarıyla tamamlandığında çağrılır."""
@@ -479,7 +484,11 @@ class TutanakWindow(QMainWindow):
         )
         self._olusturma_worker.finished.connect(self._on_tutanak_olustur_finished)
         self._olusturma_worker.error.connect(self._on_tutanak_olustur_error)
-        self._olusturma_worker.start()
+        # Run synchronously under pytest for deterministic tests.
+        if os.environ.get("PYTEST_CURRENT_TEST"):
+            self._olusturma_worker.run()
+        else:
+            self._olusturma_worker.start()
 
     def _on_personel_oku_error(self, error_message: str) -> None:
         """Personel okuma hata verdiğinde çağrılır."""

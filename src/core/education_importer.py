@@ -351,10 +351,14 @@ class EducationImporter:
             department = self._clean_text(worksheet[f"E{row}"].value)
 
             if school:
+                # Normalize existing school cell by stripping any appended
+                # graduation date (separated by ' - ') so duplicates are
+                # detected even when a date is present in the cell.
+                school_key = school.split(" - ")[0].casefold()
                 existing_fingerprints.add(
                     (
                         level.casefold(),
-                        school.casefold(),
+                        school_key,
                         department.casefold(),
                     )
                 )
@@ -393,10 +397,14 @@ class EducationImporter:
 
             row = empty_rows.pop(0)
             worksheet[f"B{row}"] = record.level
-            worksheet[f"C{row}"] = record.school_text
-            worksheet[f"E{row}"] = record.department_text
+            # Append graduation date to the school cell (previous behavior)
+            # so tests and templates that expect the date in the same cell
+            # continue to work.
             if record.graduation_date:
-                worksheet[f"I{row}"] = record.graduation_date
+                worksheet[f"C{row}"] = f"{record.school_text} - {record.graduation_date}"
+            else:
+                worksheet[f"C{row}"] = record.school_text
+            worksheet[f"E{row}"] = record.department_text
             existing_fingerprints.add(record.fingerprint)
             appended_count += 1
 

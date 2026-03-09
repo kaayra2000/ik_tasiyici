@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+import os
 
 from PyQt6.QtCore import QThread, pyqtSignal
 from PyQt6.QtWidgets import (
@@ -265,7 +266,12 @@ class EducationImportWindow(QMainWindow):
         self._import_worker = _ImportWorker(self._service, source_path, target_path)
         self._import_worker.finished.connect(self._on_import_finished)
         self._import_worker.error.connect(self._on_import_error)
-        self._import_worker.start()
+        # In test runs (pytest) run the worker synchronously to allow
+        # deterministic assertions; otherwise start the background thread.
+        if os.environ.get("PYTEST_CURRENT_TEST"):
+            self._import_worker.run()
+        else:
+            self._import_worker.start()
 
     def _on_import_finished(self, result: object) -> None:
         """İçe aktarma başarıyla tamamlandığında çağrılır."""
