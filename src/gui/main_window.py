@@ -264,15 +264,6 @@ class MainWindow(QMainWindow):
             return None
         return getter()
 
-    def _log_detail_block(self, title: str, messages: list[str]) -> None:
-        """Detay mesajlarını blok halinde loglar."""
-        if not messages:
-            return
-
-        self.log(title)
-        for message in messages:
-            self.log(message)
-
     def _log_processing_summary(
         self,
         *,
@@ -294,19 +285,18 @@ class MainWindow(QMainWindow):
         if not isinstance(skipped_existing_count, int):
             skipped_existing_count = len(tutanak_warnings)
 
-        self.log("Özet:")
-        self.log(f"Durum: {status}")
-        self.log(f"Geçerli personel: {valid_personnel_count}")
-        self.log(f"Geçersiz/atlanan kaynak satır: {len(personel_warnings)}")
-        if version:
-            self.log(f"Çıktı versiyonu: {version}")
-        if added_sheet_count is not None:
-            self.log(f"Yeni eklenen sayfa: {added_sheet_count}")
-        self.log(f"Mevcut olduğu için atlanan kayıt: {skipped_existing_count}")
-        if result_path is not None:
-            self.log(f"Çıktı dosyası: {result_path}")
-        if error_message:
-            self.log(f"Hata: {error_message}")
+        self._log_widget.log_summary_block(
+            [
+                ("Durum", status),
+                ("Geçerli personel", valid_personnel_count),
+                ("Geçersiz/atlanan kaynak satır", len(personel_warnings)),
+                ("Çıktı versiyonu", version),
+                ("Yeni eklenen sayfa", added_sheet_count),
+                ("Mevcut olduğu için atlanan kayıt", skipped_existing_count),
+                ("Çıktı dosyası", result_path),
+                ("Hata", error_message),
+            ]
+        )
 
     # ------------------------------------------------------------------
     # İş mantığı orkestresyonu
@@ -352,7 +342,7 @@ class MainWindow(QMainWindow):
             self.log("Personel listesi okunuyor...")
             personeller = self._service.personel_oku(input_file)
             valid_personnel_count = len(personeller)
-            self._log_detail_block(
+            self._log_widget.log_detail_block(
                 "Personel okuma ayrıntıları:",
                 self._get_service_messages("son_personel_okuma_uyarilari"),
             )
@@ -382,7 +372,7 @@ class MainWindow(QMainWindow):
                 version=selected_version,
             )
 
-            self._log_detail_block(
+            self._log_widget.log_detail_block(
                 "Tutanak oluşturma ayrıntıları:",
                 self._get_service_messages("son_tutanak_olusturma_uyarilari"),
             )
@@ -403,12 +393,12 @@ class MainWindow(QMainWindow):
         except Exception as e:
             self.log(f"HATA: {str(e)}")
             if not personel_details_logged:
-                self._log_detail_block(
+                self._log_widget.log_detail_block(
                     "Personel okuma ayrıntıları:",
                     self._get_service_messages("son_personel_okuma_uyarilari"),
                 )
             if not tutanak_details_logged:
-                self._log_detail_block(
+                self._log_widget.log_detail_block(
                     "Tutanak oluşturma ayrıntıları:",
                     self._get_service_messages("son_tutanak_olusturma_uyarilari"),
                 )

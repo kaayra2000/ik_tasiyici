@@ -128,15 +128,6 @@ class EducationImportWindow(QMainWindow):
             return []
         return [warning for warning in warnings if isinstance(warning, str)]
 
-    def _log_import_details(self, warnings: list[str]) -> None:
-        """Varsa, içe aktarma ayrıntılarını loglar."""
-        if not warnings:
-            return
-
-        self.log("İçe aktarma ayrıntıları:")
-        for warning in warnings:
-            self.log(warning)
-
     def _log_summary(
         self,
         *,
@@ -146,21 +137,27 @@ class EducationImportWindow(QMainWindow):
         error_message: str | None = None,
     ) -> None:
         """İçe aktarma özetini log alanının en altına yazar."""
-        self.log("Özet:")
-        self.log(f"Durum: {status}")
-        self.log(f"Ayrıntı/uyarı kaydı: {warning_count}")
+        rows: list[tuple[str, object]] = [
+            ("Durum", status),
+            ("Ayrıntı/uyarı kaydı", warning_count),
+        ]
         if result is not None:
-            self.log(f"Yedek oluşturuldu: {result.backup_path}")
-            self.log(f"Eşleşen sayfa sayısı: {result.matched_sheet_count}")
-            self.log(f"Güncellenen sayfa sayısı: {result.updated_sheet_count}")
-            self.log(f"Eklenen eğitim kaydı: {result.appended_record_count}")
-            self.log(f"Atlanan kayıt sayısı: {result.skipped_record_count}")
-            self.log(f"Hedefte bulunamayan TCKN sayısı: {len(result.unmatched_tckns)}")
+            rows.extend(
+                [
+                    ("Yedek oluşturuldu", result.backup_path),
+                    ("Eşleşen sayfa sayısı", result.matched_sheet_count),
+                    ("Güncellenen sayfa sayısı", result.updated_sheet_count),
+                    ("Eklenen eğitim kaydı", result.appended_record_count),
+                    ("Atlanan kayıt sayısı", result.skipped_record_count),
+                    ("Hedefte bulunamayan TCKN sayısı", len(result.unmatched_tckns)),
+                ]
+            )
             if result.unmatched_tckns:
                 joined_tckns = ", ".join(result.unmatched_tckns)
-                self.log(f"Hedefte bulunamayan TCKN'ler: {joined_tckns}")
+                rows.append(("Hedefte bulunamayan TCKN'ler", joined_tckns))
         if error_message:
-            self.log(f"Hata: {error_message}")
+            rows.append(("Hata", error_message))
+        self._log_widget.log_summary_block(rows)
 
     def _start_import(self) -> None:
         """Doğrulama sonrası içe aktarma sürecini başlatır."""
@@ -209,7 +206,7 @@ class EducationImportWindow(QMainWindow):
                 target_path=target_path,
             )
             warnings = self._get_import_warnings()
-            self._log_import_details(warnings)
+            self._log_widget.log_detail_block("İçe aktarma ayrıntıları:", warnings)
             detail_logged = True
             self._log_summary(
                 status="Başarılı",
@@ -225,7 +222,7 @@ class EducationImportWindow(QMainWindow):
             self.log(f"HATA: {exc}")
             warnings = self._get_import_warnings()
             if not detail_logged:
-                self._log_import_details(warnings)
+                self._log_widget.log_detail_block("İçe aktarma ayrıntıları:", warnings)
             self._log_summary(
                 status="Başarısız",
                 warning_count=len(warnings),
@@ -240,7 +237,7 @@ class EducationImportWindow(QMainWindow):
             self.log(f"HATA: {exc}")
             warnings = self._get_import_warnings()
             if not detail_logged:
-                self._log_import_details(warnings)
+                self._log_widget.log_detail_block("İçe aktarma ayrıntıları:", warnings)
             self._log_summary(
                 status="Başarısız",
                 warning_count=len(warnings),
