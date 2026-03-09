@@ -8,6 +8,14 @@ sabit tanımları içerir.
 from __future__ import annotations
 
 # ---------------------------------------------------------------------------
+# Uygulama kimliği
+# ---------------------------------------------------------------------------
+
+APP_ORGANIZATION_NAME: str = "IK_Tasiyici"
+APP_NAME: str = "TutanakOlusturucu"
+LOG_DIR_NAME: str = "logs"
+
+# ---------------------------------------------------------------------------
 # Kaynak Excel sütun adları
 # ---------------------------------------------------------------------------
 

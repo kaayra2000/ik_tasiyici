@@ -1,6 +1,7 @@
 """LogWidget birim testleri."""
 
 import os
+from unittest.mock import patch
 
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
@@ -77,3 +78,28 @@ class TestLogWidget:
         markdown = widget._text_edit.toMarkdown()
         assert "### Özet:" in markdown
         assert "- **Durum:** Başarılı" in markdown
+
+    @patch("src.gui.log_widget.QStandardPaths.writableLocation")
+    def test_log_persists_markdown_to_writable_location(
+        self,
+        mock_writable_location,
+        qapp,
+        tmp_path,
+    ):
+        """Log içeriği Qt'nin verdiği yazılabilir dizine markdown olarak kaydedilmeli."""
+        mock_writable_location.return_value = str(tmp_path)
+        widget = LogWidget(log_name="test_oturumu")
+
+        try:
+            widget.log("İşlem başlatılıyor...")
+            widget.log_summary_block([("Durum", "Başarılı")])
+
+            log_file = widget.log_file_path()
+            assert log_file is not None
+            assert log_file.exists()
+            assert log_file.suffix == ".md"
+            assert log_file.parent == tmp_path / "logs"
+            assert "- İşlem başlatılıyor..." in log_file.read_text(encoding="utf-8")
+            assert "### Özet:" in log_file.read_text(encoding="utf-8")
+        finally:
+            widget.close()

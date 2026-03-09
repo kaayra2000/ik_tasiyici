@@ -41,9 +41,12 @@ def bootstrap_local_package_resolution(
 
 def _create_application(argv: list[str]):
     """QApplication ornegini olusturur ve temel stilleri uygular."""
+    from src.config.constants import APP_NAME, APP_ORGANIZATION_NAME
     from PyQt6.QtWidgets import QApplication
 
     app = QApplication(argv)
+    app.setOrganizationName(APP_ORGANIZATION_NAME)
+    app.setApplicationName(APP_NAME)
     app.setStyle("Fusion")
     return app
 

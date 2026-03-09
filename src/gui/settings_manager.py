@@ -11,6 +11,8 @@ from pathlib import Path
 
 from PyQt6.QtCore import QSettings
 
+from src.config.constants import APP_NAME, APP_ORGANIZATION_NAME
+
 
 class SettingsManager:
     """Uygulama ayarlarını yöneten Facade sınıfı.
@@ -27,7 +29,9 @@ class SettingsManager:
     KEY_EDUCATION_SOURCE_PATH = "last_education_source_path"
 
     def __init__(
-        self, org: str = "IK_Tasiyici", app: str = "TutanakOlusturucu"
+        self,
+        org: str = APP_ORGANIZATION_NAME,
+        app: str = APP_NAME,
     ) -> None:
         self._settings = QSettings(org, app)
 

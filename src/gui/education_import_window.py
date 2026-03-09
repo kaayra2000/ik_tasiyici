@@ -62,7 +62,7 @@ class EducationImportWindow(QMainWindow):
         self._source_selector.file_selected.connect(self._on_source_selected)
         main_layout.addWidget(self._source_selector)
 
-        self._log_widget = LogWidget()
+        self._log_widget = LogWidget(log_name="mezuniyet_aktarimi")
         main_layout.addWidget(self._log_widget)
 
         self._start_button = QPushButton("İşlemi Başlat")

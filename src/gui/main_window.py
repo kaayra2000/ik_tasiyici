@@ -150,7 +150,7 @@ class MainWindow(QMainWindow):
         main_layout.addWidget(self._output_selector)
 
         # -- Log Alanı --
-        self._log_widget = LogWidget()
+        self._log_widget = LogWidget(log_name="ana_pencere")
         main_layout.addWidget(self._log_widget)
 
         # -- Başlat Butonu --

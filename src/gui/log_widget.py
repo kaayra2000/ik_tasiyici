@@ -7,10 +7,15 @@ Loglama sorumluluğunu MainWindow'dan ayırarak SRP sağlar.
 from __future__ import annotations
 
 from collections.abc import Iterable
+from datetime import datetime
+from pathlib import Path
 import re
 from typing import Any
 
+from PyQt6.QtCore import QStandardPaths
 from PyQt6.QtWidgets import QLabel, QTextEdit, QVBoxLayout, QWidget
+
+from src.config.constants import APP_NAME, LOG_DIR_NAME
 
 
 class LogWidget(QWidget):
@@ -21,10 +26,14 @@ class LogWidget(QWidget):
     """
 
     def __init__(
-        self, title: str = "İşlem Sonuçları:", parent: QWidget | None = None
+        self,
+        title: str = "İşlem Sonuçları:",
+        parent: QWidget | None = None,
+        log_name: str | None = None,
     ) -> None:
         super().__init__(parent)
         self._markdown_blocks: list[str] = []
+        self._log_file_path = self._resolve_log_file_path(log_name or title)
         self._init_ui(title)
 
     def _init_ui(self, title: str) -> None:
@@ -96,6 +105,11 @@ class LogWidget(QWidget):
         """Log alanını temizler."""
         self._markdown_blocks.clear()
         self._text_edit.clear()
+        self._persist_markdown_to_file()
+
+    def log_file_path(self) -> Path | None:
+        """Log dosyası yolunu döndürür."""
+        return self._log_file_path
 
     def _append_markdown_block(self, markdown: str) -> None:
         """Markdown bloğunu belgeye ekleyip görünümü yeniler."""
@@ -103,9 +117,71 @@ class LogWidget(QWidget):
             return
 
         self._markdown_blocks.append(markdown.strip())
-        self._text_edit.setMarkdown("\n\n".join(self._markdown_blocks))
+        markdown_document = "\n\n".join(self._markdown_blocks)
+        self._text_edit.setMarkdown(markdown_document)
+        self._persist_markdown_to_file()
         scrollbar = self._text_edit.verticalScrollBar()
         scrollbar.setValue(scrollbar.maximum())
+
+    def _persist_markdown_to_file(self) -> None:
+        """Mevcut markdown log içeriğini dosyaya yazar."""
+        if self._log_file_path is None:
+            return
+
+        try:
+            self._log_file_path.write_text(
+                "\n\n".join(self._markdown_blocks),
+                encoding="utf-8",
+            )
+        except OSError:
+            # Dosya yazımı başarısız olursa UI akışını bozmayız.
+            return
+
+    @classmethod
+    def _resolve_log_file_path(cls, raw_name: str) -> Path | None:
+        """Oturuma ait log dosyası yolunu çözümler."""
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
+        log_name = cls._sanitize_log_name(raw_name)
+
+        for location in (
+            QStandardPaths.StandardLocation.AppLocalDataLocation,
+            QStandardPaths.StandardLocation.AppDataLocation,
+            QStandardPaths.StandardLocation.TempLocation,
+        ):
+            directory = cls._resolve_log_directory(location)
+            if directory is None:
+                continue
+
+            try:
+                directory.mkdir(parents=True, exist_ok=True)
+            except OSError:
+                continue
+
+            return directory / f"{timestamp}_{log_name}.md"
+
+        return None
+
+    @classmethod
+    def _resolve_log_directory(
+        cls,
+        location: QStandardPaths.StandardLocation,
+    ) -> Path | None:
+        """Qt standart dizinlerinden log klasörünü türetir."""
+        location_path = QStandardPaths.writableLocation(location)
+        if not location_path:
+            return None
+
+        base_path = Path(location_path)
+        if location == QStandardPaths.StandardLocation.TempLocation:
+            return base_path / APP_NAME / LOG_DIR_NAME
+        return base_path / LOG_DIR_NAME
+
+    @staticmethod
+    def _sanitize_log_name(raw_name: str) -> str:
+        """Log dosyası adını platform bağımsız güvenli hale getirir."""
+        normalized = re.sub(r"[^\w.-]+", "_", str(raw_name), flags=re.UNICODE)
+        normalized = normalized.strip("._")
+        return normalized or "log"
 
     @staticmethod
     def _escape_markdown(text: str) -> str:

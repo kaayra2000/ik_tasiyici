@@ -3,8 +3,10 @@
 from __future__ import annotations
 
 from pathlib import Path
+from unittest.mock import MagicMock, patch
 
 from src import main
+from src.config.constants import APP_NAME, APP_ORGANIZATION_NAME
 
 
 class TestMainBootstrap:
@@ -46,3 +48,20 @@ class TestMainStylesheetPath:
         stylesheet_path = main._get_stylesheet_path()
 
         assert stylesheet_path == Path(main.__file__).parent / "gui" / "style.qss"
+
+
+class TestMainApplication:
+    """QApplication kurulum testleri."""
+
+    @patch("PyQt6.QtWidgets.QApplication")
+    def test_create_application_sets_qt_identity(self, mock_qapplication):
+        """Qt uygulama metadata'si organization/app ismi ile ayarlanmalı."""
+        app = MagicMock()
+        mock_qapplication.return_value = app
+
+        result = main._create_application(["ik_tasiyici"])
+
+        assert result is app
+        app.setOrganizationName.assert_called_once_with(APP_ORGANIZATION_NAME)
+        app.setApplicationName.assert_called_once_with(APP_NAME)
+        app.setStyle.assert_called_once_with("Fusion")
