@@ -13,7 +13,7 @@ import re
 from typing import Any
 
 from PyQt6.QtCore import QStandardPaths
-from PyQt6.QtWidgets import QLabel, QTextEdit, QVBoxLayout, QWidget
+from PyQt6.QtWidgets import QHBoxLayout, QLabel, QPushButton, QTextEdit, QVBoxLayout, QWidget
 
 from src.config.constants import APP_NAME, LOG_DIR_NAME
 
@@ -40,11 +40,22 @@ class LogWidget(QWidget):
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
 
+        top_layout = QHBoxLayout()
+        top_layout.setContentsMargins(0, 0, 0, 0)
+
         self._label = QLabel(title)
+        
+        self._clear_button = QPushButton("Kayıtları Temizle")
+        self._clear_button.clicked.connect(self.clear)
+        
+        top_layout.addWidget(self._label)
+        top_layout.addStretch()
+        top_layout.addWidget(self._clear_button)
+
         self._text_edit = QTextEdit()
         self._text_edit.setReadOnly(True)
 
-        layout.addWidget(self._label)
+        layout.addLayout(top_layout)
         layout.addWidget(self._text_edit)
 
     # ------------------------------------------------------------------
