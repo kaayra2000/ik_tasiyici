@@ -34,6 +34,10 @@ class LogWidget(QWidget):
         super().__init__(parent)
         self._markdown_blocks: list[str] = []
         self._log_file_path = self._resolve_log_file_path(log_name or title)
+        
+        if self._log_file_path:
+            self._append_to_file(f"---\n**[Yeni Oturum - {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}]**")
+            
         self._init_ui(title)
 
     def _init_ui(self, title: str) -> None:
@@ -45,10 +49,16 @@ class LogWidget(QWidget):
 
         self._label = QLabel(title)
         
+        path_str = str(self._log_file_path.parent) if self._log_file_path else ""
+        self._path_label = QLabel(f'<a href="file://{path_str}" style="color: gray; text-decoration: none;">[Klasör: {path_str}]</a>' if path_str else "")
+        self._path_label.setOpenExternalLinks(True)
+        
         self._clear_button = QPushButton("Kayıtları Temizle")
         self._clear_button.clicked.connect(self.clear)
         
         top_layout.addWidget(self._label)
+        top_layout.addSpacing(10)
+        top_layout.addWidget(self._path_label)
         top_layout.addStretch()
         top_layout.addWidget(self._clear_button)
 
@@ -116,7 +126,6 @@ class LogWidget(QWidget):
         """Log alanını temizler."""
         self._markdown_blocks.clear()
         self._text_edit.clear()
-        self._persist_markdown_to_file()
 
     def log_file_path(self) -> Path | None:
         """Log dosyası yolunu döndürür."""
@@ -124,34 +133,33 @@ class LogWidget(QWidget):
 
     def _append_markdown_block(self, markdown: str) -> None:
         """Markdown bloğunu belgeye ekleyip görünümü yeniler."""
-        if not markdown.strip():
+        stripped = markdown.strip()
+        if not stripped:
             return
 
-        self._markdown_blocks.append(markdown.strip())
+        self._markdown_blocks.append(stripped)
         markdown_document = "\n\n".join(self._markdown_blocks)
         self._text_edit.setMarkdown(markdown_document)
-        self._persist_markdown_to_file()
+        self._append_to_file(stripped)
+        
         scrollbar = self._text_edit.verticalScrollBar()
         scrollbar.setValue(scrollbar.maximum())
 
-    def _persist_markdown_to_file(self) -> None:
-        """Mevcut markdown log içeriğini dosyaya yazar."""
+    def _append_to_file(self, content: str) -> None:
+        """Yeni markdown içeriğini dosyaya ekler."""
         if self._log_file_path is None:
             return
 
         try:
-            self._log_file_path.write_text(
-                "\n\n".join(self._markdown_blocks),
-                encoding="utf-8",
-            )
+            with open(self._log_file_path, "a", encoding="utf-8") as file:
+                file.write(content + "\n\n")
         except OSError:
             # Dosya yazımı başarısız olursa UI akışını bozmayız.
-            return
+            pass
 
     @classmethod
     def _resolve_log_file_path(cls, raw_name: str) -> Path | None:
         """Oturuma ait log dosyası yolunu çözümler."""
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
         log_name = cls._sanitize_log_name(raw_name)
 
         for location in (
@@ -168,7 +176,7 @@ class LogWidget(QWidget):
             except OSError:
                 continue
 
-            return directory / f"{timestamp}_{log_name}.md"
+            return directory / f"{log_name}.md"
 
         return None
 
