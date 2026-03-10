@@ -26,6 +26,18 @@ def main():
     bump_type = args.bump_type
     release_notes = args.message
     
+    try:
+        print("Getting current commit...")
+        result = subprocess.run(['git', 'rev-parse', 'HEAD'], capture_output=True, text=True, check=True)
+        current_commit = result.stdout.strip()
+        print(f"Current commit: {current_commit}")
+        
+        run_command(['git', 'checkout', 'main'])
+        run_command(['git', 'merge', current_commit])
+    except subprocess.CalledProcessError:
+        print("Git işlemleri sırasında bir hata oluştu (checkout veya merge başarısız).")
+        sys.exit(1)
+        
     project_root = Path(__file__).parent.parent
     pyproject_path = project_root / 'pyproject.toml'
     
