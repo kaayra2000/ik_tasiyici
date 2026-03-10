@@ -143,9 +143,33 @@ class MainMenuWindow(QMainWindow):
             pass
         return "develop"
 
+    @staticmethod
+    def _get_release_notes() -> str:
+        """Sürüm notlarını okur. Bulunamazsa varsayılan metin döner."""
+        try:
+            from pathlib import Path
+            import sys
+            
+            meipass = getattr(sys, '_MEIPASS', None)
+            if meipass is not None:
+                base_path = Path(meipass)
+            else:
+                base_path = Path(__file__).parent.parent.parent
+                
+            notes_file = base_path / 'release_notes.txt'
+            if notes_file.exists():
+                return notes_file.read_text(encoding='utf-8').strip()
+        except Exception:
+            pass
+        return "Şu an geliştirme aşamasındadır (develop)."
+
     def _show_info_dialog(self) -> None:
         """Hakkında ve Sürüm Notları penceresini gösterir."""
         version = self._get_app_version()
+        notes = self._get_release_notes()
+        
+        # Sürüm notlarındaki satır sonlarını HTML <br> etiketine çeviriyoruz
+        notes_html = notes.replace('\n', '<br>')
         
         msg_box = QMessageBox(self)
         msg_box.setWindowTitle("Hakkında ve Sürüm Notları")
@@ -156,9 +180,7 @@ class MainMenuWindow(QMainWindow):
         <p><b>Versiyon:</b> {version}</p>
         <hr>
         <h4>Sürüm Notları:</h4>
-        <ul>
-            <li>Şu an geliştirme aşamasındadır (develop).</li>
-        </ul>
+        <p>{notes_html}</p>
         """
         
         msg_box.setText(about_text)

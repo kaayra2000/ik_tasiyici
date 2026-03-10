@@ -7,3 +7,4 @@ build/
 **/*_eski_*
 *.spec
 version.txt
+release_notes.txt

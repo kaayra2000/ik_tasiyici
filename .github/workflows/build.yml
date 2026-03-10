@@ -49,8 +49,7 @@ jobs:
       with:
         name: DK_Tutanak_Olusturucu-${{ runner.os }}
         path: |
-          dist/DK_Tutanak_Olusturucu
-          dist/DK_Tutanak_Olusturucu.exe
+          dist/DK_Tutanak_Olusturucu_v*
         if-no-files-found: warn
         retention-days: 7
 
