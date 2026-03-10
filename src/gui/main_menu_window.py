@@ -9,6 +9,7 @@ from PyQt6.QtWidgets import (
     QHBoxLayout,
     QLabel,
     QMainWindow,
+    QMessageBox,
     QPushButton,
     QVBoxLayout,
     QWidget,
@@ -35,6 +36,19 @@ class MainMenuWindow(QMainWindow):
         self.setCentralWidget(central_widget)
 
         outer_layout = QVBoxLayout(central_widget)
+        
+        # Üst barda sağa yaslı info butonu
+        top_bar_layout = QHBoxLayout()
+        top_bar_layout.addStretch()
+        self._info_button = QPushButton("ℹ️")
+        self._info_button.setObjectName("infoButton")
+        self._info_button.setFixedSize(32, 32)
+        self._info_button.setToolTip("Hakkında ve Sürüm Notları")
+        self._info_button.clicked.connect(self._show_info_dialog)
+        
+        top_bar_layout.addWidget(self._info_button)
+        
+        outer_layout.addLayout(top_bar_layout)
         outer_layout.addStretch()
 
         menu_card = QFrame()
@@ -107,6 +121,28 @@ class MainMenuWindow(QMainWindow):
         button.setObjectName(object_name)
         button.setMinimumHeight(96)
         return button
+
+    def _show_info_dialog(self) -> None:
+        """Hakkında ve Sürüm Notları penceresini gösterir."""
+        version = "develop"
+        
+        msg_box = QMessageBox(self)
+        msg_box.setWindowTitle("Hakkında ve Sürüm Notları")
+        msg_box.setTextFormat(Qt.TextFormat.RichText)
+        
+        about_text = f"""
+        <h3>Personel Asistan</h3>
+        <p><b>Versiyon:</b> {version}</p>
+        <hr>
+        <h4>Sürüm Notları:</h4>
+        <ul>
+            <li>Şu an geliştirme aşamasındadır (develop).</li>
+        </ul>
+        """
+        
+        msg_box.setText(about_text)
+        msg_box.setIcon(QMessageBox.Icon.Information)
+        msg_box.exec()
 
     def _open_tutanak_window(self) -> None:
         """Tutanak oluşturma ekranını açar."""

@@ -91,6 +91,23 @@ QPushButton#actionButton:pressed {
     background-color: #40739e;
 }
 
+/* Info Butonu (#infoButton) */
+QPushButton#infoButton {
+    background-color: transparent;
+    color: #2f3640;
+    border-radius: 16px;
+    padding: 0px 0px 4px 0px;
+    font-size: 20px;
+}
+
+QPushButton#infoButton:hover {
+    background-color: #e0e0e0;
+}
+
+QPushButton#infoButton:pressed {
+    background-color: #d0d0d0;
+}
+
 QPushButton#menuPrimaryButton,
 QPushButton#menuSecondaryButton {
     color: white;
