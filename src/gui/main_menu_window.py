@@ -122,9 +122,30 @@ class MainMenuWindow(QMainWindow):
         button.setMinimumHeight(96)
         return button
 
+    @staticmethod
+    def _get_app_version() -> str:
+        """Uygulamanın sürüm bilgisini okur. Bulunamazsa 'develop' döner."""
+        try:
+            from pathlib import Path
+            import sys
+            
+            # PyInstaller ile derlenmişse _MEIPASS kullan
+            meipass = getattr(sys, '_MEIPASS', None)
+            if meipass is not None:
+                base_path = Path(meipass)
+            else:
+                base_path = Path(__file__).parent.parent.parent
+                
+            version_file = base_path / 'version.txt'
+            if version_file.exists():
+                return version_file.read_text(encoding='utf-8').strip()
+        except Exception:
+            pass
+        return "develop"
+
     def _show_info_dialog(self) -> None:
         """Hakkında ve Sürüm Notları penceresini gösterir."""
-        version = "develop"
+        version = self._get_app_version()
         
         msg_box = QMessageBox(self)
         msg_box.setWindowTitle("Hakkında ve Sürüm Notları")

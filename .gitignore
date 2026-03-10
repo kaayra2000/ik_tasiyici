@@ -6,3 +6,4 @@ dist/
 build/
 **/*_eski_*
 *.spec
+version.txt
