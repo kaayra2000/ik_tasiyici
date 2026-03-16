@@ -52,8 +52,8 @@ _HUCRE_EKSIK_GUN_BASLIK_METNI = "Eksik Gün Sayısı"
 _EKSIK_GUN_SUTUNU = "M"
 
 # Toplam / hesap satırları
-_SATIR_TOPLAM_PRIM = TECRUBE_BITIS_SATIR + 1        # 19
-_SATIR_ALANDA_PRIM = TECRUBE_BITIS_SATIR + 1        # 19
+_SATIR_TOPLAM_PRIM = TECRUBE_BITIS_SATIR + 1        # 28
+_SATIR_ALANDA_PRIM = TECRUBE_BITIS_SATIR + 1        # 28
 
 # M3 görünür seçim hücresidir:
 # M3 = Hizmet Grubu Türü (A / AG)
@@ -65,7 +65,7 @@ _EN_YUKSEK_OGRENIM_HUCRE = "Z4"
 
 # Şablondaki öğrenim satırları parametreleri (B=Ad, C=Okul, K=Alanında)
 _OGRENIM_BAS_SATIR = 6
-_OGRENIM_BIT_SATIR = 8
+_OGRENIM_BIT_SATIR = 10
 _OGRENIM_AD_SUTUN = "B"
 _OGRENIM_OKUL_SUTUN = "C"
 _OGRENIM_ALANINDA_SUTUN = "K"
@@ -212,7 +212,7 @@ class ExcelWriteStrategyV1(ExcelWriteStrategy):
             allow_blank=True,
         )
         ws.add_data_validation(ogrenim_dv)
-        for row in range(6, 9):  # 6, 7, 8
+        for row in range(6, 11):  # 6, 7, 8, 9, 10
             ogrenim_dv.add(f"B{row}")
 
         hizmet_grubu_dv = DataValidation(

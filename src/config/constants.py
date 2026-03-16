@@ -51,11 +51,11 @@ TEMPLATE_PATH: str = "docs/cikti_taslagi_dolu.xlsx"
 # ---------------------------------------------------------------------------
 
 #: Tecrübe satırlarının başladığı satır numarası (1-indexed).
-#: Satır 10 başlık satırı olduğundan veriler 11'den başlar.
-TECRUBE_BASLANGIC_SATIR: int = 11
+#: Satır 12 başlık satırı olduğundan veriler 13'den başlar.
+TECRUBE_BASLANGIC_SATIR: int = 13
 
 #: Tecrübe satırlarının bittiği satır numarası (varsayılan)
-TECRUBE_BITIS_SATIR: int = 18
+TECRUBE_BITIS_SATIR: int = 27
 
 # ---------------------------------------------------------------------------
 # Sütun harfleri (karar tutanağı şablonunda)
