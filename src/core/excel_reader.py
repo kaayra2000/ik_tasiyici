@@ -18,8 +18,7 @@ from src.config.constants import COL_TCKN, COL_AD_SOYAD, COL_BIRIM
 from src.core.validators import (
     normalize_tckn,
     validate_tckn,
-    validate_ad_soyad,
-    validate_birim,
+    validate_ad_soyad
 )
 
 
@@ -173,9 +172,6 @@ def _satiri_isle(
 
     if not validate_ad_soyad(ad_soyad):
         hata_nedenleri.append("AD SOYAD boş")
-
-    if not validate_birim(birim):
-        hata_nedenleri.append("BİRİMİ boş")
 
     if hata_nedenleri:
         return None, SatirReddi(

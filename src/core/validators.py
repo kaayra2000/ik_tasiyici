@@ -60,18 +60,6 @@ def validate_ad_soyad(ad_soyad: str) -> bool:
     return bool(ad_soyad.strip())
 
 
-def validate_birim(birim: str) -> bool:
-    """
-    Birim alanının geçerliliğini doğrular.
-
-    :param birim: Doğrulanacak birim/enstitü bilgisi.
-    :returns: Geçerliyse True, boş/None ise False.
-    """
-    if not birim or not isinstance(birim, str):
-        return False
-    return bool(birim.strip())
-
-
 def normalize_tckn(tckn: object) -> str:
     """
     TCKN değerini standart 11 haneli string formatına çevirir.

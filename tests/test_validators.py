@@ -3,7 +3,7 @@ TCKN ve diğer validasyon fonksiyonları için testler.
 """
 
 import pytest
-from src.core.validators import validate_tckn, validate_ad_soyad, validate_birim, normalize_tckn
+from src.core.validators import validate_tckn, validate_ad_soyad, normalize_tckn
 
 
 class TestValidateTCKN:
@@ -101,16 +101,3 @@ class TestValidateAdSoyad:
 
     def test_none(self):
         assert validate_ad_soyad(None) is False
-
-
-class TestValidateBirim:
-    """validate_birim fonksiyonu için test sınıfı."""
-
-    def test_gecerli_birim(self):
-        assert validate_birim("Marmara Enstitüsü") is True
-
-    def test_bos_string(self):
-        assert validate_birim("") is False
-
-    def test_none(self):
-        assert validate_birim(None) is False
