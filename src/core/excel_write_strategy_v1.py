@@ -45,6 +45,11 @@ _HUCRE_HIZMET_GRUBU_BASLIK_STIL_KAYNAGI = "H2"
 _HUCRE_HIZMET_GRUBU_TURU_STIL_KAYNAGI = "H3"
 _HIZMET_GRUBU_SUTUNU = "M"
 _HIZMET_GRUBU_MIN_SUTUN_GENISLIGI = 22
+_HUCRE_EKSIK_GUN_BASLIK = "M10"
+_HUCRE_EKSIK_GUN_BASLIK_STIL_KAYNAGI = "L10"
+_HUCRE_EKSIK_GUN_STIL_KAYNAGI = "L11"
+_HUCRE_EKSIK_GUN_BASLIK_METNI = "Eksik Gün Sayısı"
+_EKSIK_GUN_SUTUNU = "M"
 
 # Toplam / hesap satırları
 _SATIR_TOPLAM_PRIM = TECRUBE_BITIS_SATIR + 1        # 19
@@ -110,9 +115,22 @@ class ExcelWriteStrategyV1(ExcelWriteStrategy):
     @staticmethod
     def _yaz_tecrube_satirlari(ws) -> None:
         """Her mesleki tecrübe satırı için Excel formüllerini yazar."""
+        ws[_HUCRE_EKSIK_GUN_BASLIK] = _HUCRE_EKSIK_GUN_BASLIK_METNI
+        ExcelWriteStrategyV1._kopyala_hucre_bicimi(
+            ws,
+            _HUCRE_EKSIK_GUN_BASLIK_STIL_KAYNAGI,
+            _HUCRE_EKSIK_GUN_BASLIK,
+        )
+        ExcelWriteStrategyV1._ayarla_eksik_gun_sutun_genisligi(ws)
+
         for satir in range(TECRUBE_BASLANGIC_SATIR, TECRUBE_BITIS_SATIR + 1):
             ws.cell(row=satir, column=11).value = prim_gunu_formulu(satir)
             ws.cell(row=satir, column=12).value = alanda_prim_formulu(satir)
+            ExcelWriteStrategyV1._kopyala_hucre_bicimi(
+                ws,
+                _HUCRE_EKSIK_GUN_STIL_KAYNAGI,
+                f"{_EKSIK_GUN_SUTUNU}{satir}",
+            )
 
     @staticmethod
     def _yaz_hesap_satirlari(ws) -> None:
@@ -165,6 +183,14 @@ class ExcelWriteStrategyV1(ExcelWriteStrategy):
         sutun = ws.column_dimensions[_HIZMET_GRUBU_SUTUNU]
         mevcut = sutun.width or 0
         sutun.width = max(mevcut, _HIZMET_GRUBU_MIN_SUTUN_GENISLIGI)
+
+    @staticmethod
+    def _ayarla_eksik_gun_sutun_genisligi(ws) -> None:
+        """Eksik gün başlığının görünmesi için M sütununu genişletir."""
+        kaynak = ws.column_dimensions["L"]
+        hedef = ws.column_dimensions[_EKSIK_GUN_SUTUNU]
+        if kaynak.width and (hedef.width is None or hedef.width < kaynak.width):
+            hedef.width = kaynak.width
 
     @staticmethod
     def _ekle_veri_dogrulama(ws) -> None:

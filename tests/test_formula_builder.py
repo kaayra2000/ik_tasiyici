@@ -83,11 +83,11 @@ class TestToplamAlandaPrimFormulu:
     def test_varsayilan_aralik(self):
         sonuc = toplam_alanda_prim_formulu()
         # TECRUBE_BASLANGIC_SATIR=11, TECRUBE_BITIS_SATIR=18
-        assert sonuc == "=SUM(L11:L18)"
+        assert sonuc == "=SUM(L11:L18)-SUM(M11:M18)"
 
     def test_ozel_aralik(self):
         sonuc = toplam_alanda_prim_formulu(bitis_satir=20)
-        assert sonuc == "=SUM(L11:L20)"
+        assert sonuc == "=SUM(L11:L20)-SUM(M11:M20)"
 
 
 class TestTecrübeYiliFormulu:

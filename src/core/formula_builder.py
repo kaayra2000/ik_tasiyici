@@ -16,6 +16,7 @@ from src.config.constants import (
     COL_ALANINDA,
     COL_TOPLAM_PRIM,
     COL_ALANDA_PRIM,
+    COL_EKSIK_GUN,
     GUN_PER_YIL,
     TECRUBE_BASLANGIC_SATIR,
     TECRUBE_BITIS_SATIR,
@@ -93,9 +94,11 @@ def toplam_alanda_prim_formulu(
 
     :param bitis_satir: Son tecrübe satırının numarası.
     :param baslangic_satir: İlk tecrübe satırının numarası.
-    :returns: ``=SUM(L11:L{n})`` biçiminde formül.
+    :returns: ``=SUM(L11:L{n})-SUM(M11:M{n})`` biçiminde formül.
     """
-    return f"=SUM({COL_ALANDA_PRIM}{baslangic_satir}:{COL_ALANDA_PRIM}{bitis_satir})"
+    alanda = f"{COL_ALANDA_PRIM}{baslangic_satir}:{COL_ALANDA_PRIM}{bitis_satir}"
+    eksik = f"{COL_EKSIK_GUN}{baslangic_satir}:{COL_EKSIK_GUN}{bitis_satir}"
+    return f"=SUM({alanda})-SUM({eksik})"
 
 
 # ---------------------------------------------------------------------------

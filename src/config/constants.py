@@ -76,6 +76,9 @@ COL_TOPLAM_PRIM: str = "K"
 #: Çalışma alanında prim günü sütunu
 COL_ALANDA_PRIM: str = "L"
 
+#: Eksik gün sayısı sütunu
+COL_EKSIK_GUN: str = "M"
+
 # ---------------------------------------------------------------------------
 # Öğrenim durumu değerleri
 # ---------------------------------------------------------------------------
