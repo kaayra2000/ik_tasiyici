@@ -65,8 +65,8 @@ class TestToplamPrimFormulu:
 
     def test_varsayilan_aralik(self):
         sonuc = toplam_prim_formulu()
-        # TECRUBE_BASLANGIC_SATIR=11, TECRUBE_BITIS_SATIR=18
-        assert sonuc == "=SUM(K11:K18)"
+        # TECRUBE_BASLANGIC_SATIR=13, TECRUBE_BITIS_SATIR=27
+        assert sonuc == "=SUM(K13:K27)"
 
     def test_ozel_aralik(self):
         sonuc = toplam_prim_formulu(bitis_satir=30, baslangic_satir=10)
@@ -82,12 +82,12 @@ class TestToplamAlandaPrimFormulu:
 
     def test_varsayilan_aralik(self):
         sonuc = toplam_alanda_prim_formulu()
-        # TECRUBE_BASLANGIC_SATIR=11, TECRUBE_BITIS_SATIR=18
-        assert sonuc == "=SUM(L11:L18)-SUM(M11:M18)"
+        # TECRUBE_BASLANGIC_SATIR=13, TECRUBE_BITIS_SATIR=27
+        assert sonuc == "=SUM(L13:L27)-SUM(M13:M27)"
 
     def test_ozel_aralik(self):
         sonuc = toplam_alanda_prim_formulu(bitis_satir=20)
-        assert sonuc == "=SUM(L11:L20)-SUM(M11:M20)"
+        assert sonuc == "=SUM(L13:L20)-SUM(M13:M20)"
 
 
 class TestTecrübeYiliFormulu:
