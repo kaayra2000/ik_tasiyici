@@ -9,8 +9,8 @@ $ python demo.py
 """
 
 from pathlib import Path
-from src.core.excel_reader import oku_personel_listesi
-from src.core.excel_writer import olustur_dk_dosyasi
+from src.core.excel_reader import oku_personel_listesi_raporlu
+from src.core.excel_writer import olustur_dk_dosyasi_raporlu
 
 
 def main():
@@ -19,13 +19,14 @@ def main():
 
     print(f"[{input_file}] dosyası okunuyor...")
     try:
-        personeller = oku_personel_listesi(input_file)
+        rapor = oku_personel_listesi_raporlu(input_file)
+        personeller = rapor.personeller
         print(f"Başarılı: {len(personeller)} geçerli personel okundu.")
 
         if personeller:
             print("DK tutanakları Excel dosyası oluşturuluyor...")
-            output_path = olustur_dk_dosyasi(personeller)
-            print(f"Başarılı: Çıktı dosyası oluşturuldu -> {output_path}")
+            tutanak_rapor = olustur_dk_dosyasi_raporlu(personeller)
+            print(f"Başarılı: Çıktı dosyası oluşturuldu -> {tutanak_rapor.output_path}")
         else:
             print("Uyarı: Geçerli personel bulunamadığı için dosya oluşturulmadı.")
 

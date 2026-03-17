@@ -16,7 +16,6 @@ import pytest
 
 from src.core.excel_reader import (
     Personel,
-    oku_personel_listesi,
     oku_personel_listesi_raporlu,
 )
 
@@ -64,29 +63,30 @@ def gecerli_xlsx(tmp_path: Path) -> Path:
 
 
 # ---------------------------------------------------------------------------
-# Testler: oku_personel_listesi
+# Testler: oku_personel_listesi_raporlu
 # ---------------------------------------------------------------------------
 
 
-class TestOkuPersonelListesi:
-    """oku_personel_listesi fonksiyonu için testler."""
+class TestOkuPersonelListesiRaporlu:
+    """oku_personel_listesi_raporlu fonksiyonu için testler."""
 
     def test_gecerli_kayitlari_okur(self, gecerli_xlsx: Path):
         """Geçerli üç kayıt doğru okunmalı."""
-        personeller = oku_personel_listesi(gecerli_xlsx)
-        assert len(personeller) == 3
+        rapor = oku_personel_listesi_raporlu(gecerli_xlsx)
+        assert len(rapor.personeller) == 3
 
     def test_ilk_personel_bilgileri(self, gecerli_xlsx: Path):
         """İlk personelin alanları doğru dolu olmalı."""
-        personeller = oku_personel_listesi(gecerli_xlsx)
-        p = personeller[0]
+        rapor = oku_personel_listesi_raporlu(gecerli_xlsx)
+        p = rapor.personeller[0]
         assert p.tckn == "10000000146"
         assert p.ad_soyad == "Fatma KARACA"
         assert p.birim == "Marmara Enstitüsü"
 
     def test_personel_frozen_dataclass(self, gecerli_xlsx: Path):
         """Personel nesnesi değiştirilemez olmalı (frozen dataclass)."""
-        personel = oku_personel_listesi(gecerli_xlsx)[0]
+        rapor = oku_personel_listesi_raporlu(gecerli_xlsx)
+        personel = rapor.personeller[0]
         with pytest.raises((AttributeError, TypeError)):
             personel.tckn = "00000000000"  # type: ignore[misc]
 
@@ -108,9 +108,9 @@ class TestOkuPersonelListesi:
             ],
             dosya,
         )
-        personeller = oku_personel_listesi(dosya)
-        assert len(personeller) == 1
-        assert personeller[0].ad_soyad == "Geçerli Kişi"
+        rapor = oku_personel_listesi_raporlu(dosya)
+        assert len(rapor.personeller) == 1
+        assert rapor.personeller[0].ad_soyad == "Geçerli Kişi"
 
     def test_gecersiz_satir_nedeni_raporlanir(self, tmp_path: Path):
         """Atlanan satırlar için neden ve satır numarası döndürülmeli."""
@@ -151,13 +151,13 @@ class TestOkuPersonelListesi:
             ],
             dosya,
         )
-        personeller = oku_personel_listesi(dosya)
-        assert len(personeller) == 1
+        rapor = oku_personel_listesi_raporlu(dosya)
+        assert len(rapor.personeller) == 1
 
     def test_dosya_bulunamazsa_hata(self, tmp_path: Path):
         """Var olmayan dosya için FileNotFoundError fırlatılmalı."""
         with pytest.raises(FileNotFoundError):
-            oku_personel_listesi(tmp_path / "yok.xlsx")
+            oku_personel_listesi_raporlu(tmp_path / "yok.xlsx")
 
     def test_eksik_sutun_hata(self, tmp_path: Path):
         """Zorunlu sütun eksikse ValueError fırlatılmalı."""
@@ -167,7 +167,7 @@ class TestOkuPersonelListesi:
         )
         df.to_excel(dosya, index=False)
         with pytest.raises(ValueError, match="BİRİMİ"):
-            oku_personel_listesi(dosya)
+            oku_personel_listesi_raporlu(dosya)
 
     def test_tckn_sayisal_normalize(self, tmp_path: Path):
         """Excel'den sayısal olarak okunan TCKN normalize edilmeli."""
@@ -178,6 +178,6 @@ class TestOkuPersonelListesi:
         ws.append(["TCKN", "AD SOYAD", "BİRİMİ"])
         ws.append([10000000146, "Test Kişi", "Birim"])
         wb.save(dosya)
-        personeller = oku_personel_listesi(dosya)
-        assert len(personeller) == 1
-        assert personeller[0].tckn == "10000000146"
+        rapor = oku_personel_listesi_raporlu(dosya)
+        assert len(rapor.personeller) == 1
+        assert rapor.personeller[0].tckn == "10000000146"

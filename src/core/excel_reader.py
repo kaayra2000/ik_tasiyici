@@ -72,20 +72,6 @@ class PersonelOkumaRaporu:
 # ---------------------------------------------------------------------------
 
 
-def oku_personel_listesi(dosya_yolu: str | Path) -> List[Personel]:
-    """
-    Kaynak Excel dosyasını okuyarak geçerli personel listesini döner.
-
-    Geçersiz veya eksik satırlar sessizce atlanır.
-
-    :param dosya_yolu: Kaynak xlsx dosyasının yolu.
-    :returns: Geçerli :class:`Personel` nesnelerinin listesi.
-    :raises FileNotFoundError: Dosya bulunamazsa.
-    :raises ValueError: Zorunlu sütunlar eksikse.
-    """
-    return oku_personel_listesi_raporlu(dosya_yolu).personeller
-
-
 def oku_personel_listesi_raporlu(dosya_yolu: str | Path) -> PersonelOkumaRaporu:
     """
     Kaynak Excel dosyasını okuyarak geçerli kayıtları ve red nedenlerini döner.

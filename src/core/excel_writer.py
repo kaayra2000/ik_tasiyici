@@ -12,7 +12,6 @@ sınıflar olarak tanımlanır ve ``ExcelWriterFactory`` aracılığıyla yarat�
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from io import BytesIO
 from pathlib import Path
 from typing import List
 from copy import copy
@@ -43,35 +42,6 @@ class TutanakOlusturmaRaporu:
     added_sheet_count: int = 0
     skipped_existing_count: int = 0
     warning_messages: list[str] = field(default_factory=list)
-
-
-def olustur_dk_dosyasi(
-    personeller: List[Personel],
-    cikti_dizini: str | Path = ".",
-    dosya_adi: str = OUTPUT_FILENAME,
-    template_path: str | Path | None = None,
-    version: str = DEFAULT_VERSION,
-) -> Path:
-    """
-    Personel listesinden DK Tutanağı Excel dosyasını oluşturur.
-
-    Hedef dosya zaten varsa mevcut sayfalar korunur; yalnızca workbook'ta
-    bulunmayan personeller yeni sayfalar olarak sona eklenir.
-
-    :param personeller: İşlenecek personel listesi.
-    :param cikti_dizini: Çıktı dosyasının kaydedileceği dizin.
-    :param dosya_adi: Çıktı dosya adı.
-    :param template_path: Özel çıktı şablonu yolu (opsiyonel).
-    :param version: Çıktı versiyonu (ör. ``"v1"``).
-    :returns: Oluşturulan dosyanın tam yolu.
-    """
-    return olustur_dk_dosyasi_raporlu(
-        personeller=personeller,
-        cikti_dizini=cikti_dizini,
-        dosya_adi=dosya_adi,
-        template_path=template_path,
-        version=version,
-    ).output_path
 
 
 def olustur_dk_dosyasi_raporlu(
@@ -115,28 +85,6 @@ def olustur_dk_dosyasi_raporlu(
         warning_messages=warning_messages,
     )
 
-
-def olustur_dk_bytes(
-    personeller: List[Personel],
-    template_path: str | Path | None = None,
-    version: str = DEFAULT_VERSION,
-) -> bytes:
-    """
-    Personel listesinden DK Tutanağı Excel dosyasını bellekte oluşturur.
-
-    Test ve ön izleme amacıyla kullanışlıdır.
-
-    :param personeller: İşlenecek personel listesi.
-    :param template_path: Özel çıktı şablonu yolu (opsiyonel).
-    :param version: Çıktı versiyonu (ör. ``"v1"``).
-    :returns: xlsx içeriği bayt dizisi olarak.
-    """
-    strategy = ExcelWriterFactory.create(version)
-    wb, _, _, _ = _workbook_olustur(personeller, strategy, template_path)
-    buffer = BytesIO()
-    wb.save(buffer)
-    wb.close()
-    return buffer.getvalue()
 
 
 # ---------------------------------------------------------------------------
