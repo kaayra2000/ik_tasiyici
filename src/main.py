@@ -37,7 +37,7 @@ def bootstrap_local_package_resolution(
     _prepend_import_path(import_path, project_root)
 
 
-def _create_application(argv: list[str]):
+def _create_application(argv: list[str]) -> "QApplication":
     """QApplication ornegini olusturur ve temel stilleri uygular."""
     from src.config.constants import APP_NAME, APP_ORGANIZATION_NAME
     from PyQt6.QtGui import QIcon
@@ -70,7 +70,7 @@ def get_logo_path() -> Path:
     return Path(__file__).parent / "assets" / tubitak_logo_file
 
 
-def _apply_stylesheet(app) -> None:
+def _apply_stylesheet(app: "QApplication") -> None:
     """QSS dosyasi varsa uygulamaya uygular."""
     qss_path = _get_stylesheet_path()
     if not qss_path.exists():
@@ -80,7 +80,7 @@ def _apply_stylesheet(app) -> None:
         app.setStyleSheet(stylesheet_file.read())
 
 
-def _create_main_menu_window():
+def _create_main_menu_window() -> "MainMenuWindow":
     """Ana pencereyi olusturur."""
     from src.gui.main_menu_window import MainMenuWindow
 

@@ -342,7 +342,7 @@ class TutanakWindow(QMainWindow):
             return []
         return [message for message in messages if isinstance(message, str)]
 
-    def _get_service_report(self, getter_name: str):
+    def _get_service_report(self, getter_name: str) -> object:
         """Servisten opsiyonel rapor nesnesi alır."""
         getter = getattr(self._service, getter_name, None)
         if not callable(getter):

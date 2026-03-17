@@ -8,6 +8,7 @@ from pathlib import Path
 from shutil import copy2
 
 import openpyxl
+import openpyxl.worksheet.worksheet
 import pandas as pd
 
 from src.config.constants import (
@@ -357,7 +358,7 @@ class EducationImporter:
 
     def _apply_records_to_sheet(
         self,
-        worksheet,
+        worksheet: openpyxl.worksheet.worksheet.Worksheet,
         records: list[EducationRecord],
     ) -> tuple[int, int, list[str]]:
         """Kayıtları ilk boş eğitim satırlarına yazar."""
@@ -426,7 +427,7 @@ class EducationImporter:
 
         return appended_count, skipped_count, warning_messages
 
-    def _locate_education_rows(self, worksheet) -> list[int]:
+    def _locate_education_rows(self, worksheet: openpyxl.worksheet.worksheet.Worksheet) -> list[int]:
         """Şablondaki eğitim satırlarını dinamik olarak bulur."""
         school_header_row = None
         experience_header_row = None
@@ -451,7 +452,7 @@ class EducationImporter:
         return list(_DEFAULT_EDUCATION_ROWS)
 
     @staticmethod
-    def _save_workbook(workbook, target_path: Path) -> None:
+    def _save_workbook(workbook: openpyxl.Workbook, target_path: Path) -> None:
         """Workbook'u hedef dosya üzerine güvenli biçimde kaydeder."""
         try:
             workbook.save(target_path)

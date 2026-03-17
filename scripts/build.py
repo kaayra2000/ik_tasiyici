@@ -53,7 +53,7 @@ def run_pyinstaller(exe_name: str) -> None:
     )
 
 
-def main():
+def main() -> None:
     """
     Uygulamayı PyInstaller ile derler.
     """

@@ -7,12 +7,12 @@ from pathlib import Path
 import tomllib
 
 
-def run_command(cmd, check=True):
+def run_command(cmd: list[str], check: bool = True) -> None:
     print(f"Executing: {' '.join(cmd)}")
     subprocess.run(cmd, check=check)
 
 
-def main():
+def main() -> None:
     parser = argparse.ArgumentParser(
         description="Projenin sürüm numarasını arttırır, git commit ve tag işlemlerini yapar."
     )

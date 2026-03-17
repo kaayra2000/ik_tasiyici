@@ -20,7 +20,7 @@ class ExcelWriteStrategy(ABC):
     """
 
     @abstractmethod
-    def sayfa_doldur(self, ws, personel: Personel) -> None:
+    def sayfa_doldur(self, ws: "openpyxl.worksheet.worksheet.Worksheet", personel: Personel) -> None:
         """Kopyalanmış şablon çalışma sayfasına personel verisini doldurur.
 
         :param ws: openpyxl çalışma sayfası nesnesi.
