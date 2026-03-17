@@ -180,10 +180,15 @@ class ExcelWriteStrategyV1(ExcelWriteStrategy):
         ws[_HUCRE_KADEME] = '=IF(Z3="", Z2, Z2 & "/" & Z3)'
 
         # K30: Kademe Başlangıcı
-        ws["K30"] = kademe_baslangic_formulu(_TECRUBE_YILI_HUCRE, _EN_YUKSEK_OGRENIM_HUCRE)
+        k30_hucre = ws["K30"]
+        k30_hucre.value = kademe_baslangic_formulu(_TECRUBE_YILI_HUCRE, _EN_YUKSEK_OGRENIM_HUCRE)
 
         # L30: Kademe Bitişi
-        ws["L30"] = kademe_bitis_formulu(_TECRUBE_YILI_HUCRE, _EN_YUKSEK_OGRENIM_HUCRE)
+        l30_hucre = ws["L30"]
+        l30_hucre.value = kademe_bitis_formulu(_TECRUBE_YILI_HUCRE, _EN_YUKSEK_OGRENIM_HUCRE)
+
+        # K30 ve L30'a tam sayı formatı uygula
+        ExcelWriteStrategyV1._uygula_tam_sayi_formati(k30_hucre, l30_hucre)
 
     @staticmethod
     def _yaz_360_yil_ay_gun(ws) -> None:
@@ -194,7 +199,15 @@ class ExcelWriteStrategyV1(ExcelWriteStrategy):
         yil_hucre.value = tecrube_360_yil_formulu()
         ay_hucre.value = tecrube_360_ay_formulu()
         gun_hucre.value = tecrube_360_gun_formulu()
-        for hucre in (yil_hucre, ay_hucre, gun_hucre):
+        ExcelWriteStrategyV1._uygula_tam_sayi_formati(yil_hucre, ay_hucre, gun_hucre)
+
+    @staticmethod
+    def _uygula_tam_sayi_formati(*hucreler) -> None:
+        """Verilen hücrelere tam sayı formatı (0) uygular.
+        
+        Virgülden sonraki kısımları göstermez (1.00 yerine 1 gösterir).
+        """
+        for hucre in hucreler:
             hucre.number_format = "0"
 
     @staticmethod
