@@ -18,6 +18,9 @@ from src.core.formula_builder import (
     hizmet_grubu_formulu,
     kademe_formulu,
     prim_gunu_formulu,
+    tecrube_360_ay_formulu,
+    tecrube_360_gun_formulu,
+    tecrube_360_yil_formulu,
     tecrube_yili_formulu,
     toplam_alanda_prim_formulu,
     toplam_prim_formulu,
@@ -103,6 +106,40 @@ class TestTecrübeYiliFormulu:
 
     def test_360_ile_bolme(self):
         assert "/360" in tecrube_yili_formulu("L99")
+
+
+class TestTecrube360Formulleri:
+    """30/360 bazlı yıl/ay/gün formülü testleri."""
+
+    @staticmethod
+    def _toplam_ifadesi() -> str:
+        return (
+            'SUMPRODUCT(--(E13:E27<>""),--(F13:F27<>""),--(J13:J27="E"),'
+            "DAYS360(E13:E27,F13:F27,0))"
+        )
+
+    def test_yil_formulu_varsayilan(self):
+        toplam = self._toplam_ifadesi()
+        sonuc = tecrube_360_yil_formulu()
+        assert sonuc == f'=IF({toplam}=0,"",INT({toplam}/360))'
+
+    def test_ay_formulu_varsayilan(self):
+        toplam = self._toplam_ifadesi()
+        sonuc = tecrube_360_ay_formulu()
+        assert sonuc == f'=IF({toplam}=0,"",INT(MOD({toplam},360)/30))'
+
+    def test_gun_formulu_varsayilan(self):
+        toplam = self._toplam_ifadesi()
+        sonuc = tecrube_360_gun_formulu()
+        assert sonuc == f'=IF({toplam}=0,"",MOD(MOD({toplam},360),30))'
+
+    def test_alanda_filtresi_icerir(self):
+        sonuc = tecrube_360_yil_formulu()
+        assert 'J13:J27="E"' in sonuc
+
+    def test_days360_kullanir(self):
+        sonuc = tecrube_360_yil_formulu()
+        assert "DAYS360(" in sonuc
 
 
 class TestEnYuksekOgrenimFormulu:
