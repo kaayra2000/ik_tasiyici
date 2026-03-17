@@ -256,8 +256,9 @@ def _boyut_ozelliklerini_kopyala(kaynak_boyut, hedef_boyut) -> None:
                 # Bazı alanlar read-only olabilir (örn. customHeight). Güvenle atla.
                 continue
 
-def _sayfa_icerigini_kopyala(kaynak_ws, hedef_ws) -> None:
-    """Harici workbook'taki şablon sayfasını hedef workbook'a klonlar."""
+
+def _kopyala_hucreler(kaynak_ws, hedef_ws) -> None:
+    """Hücre değerlerini, stillerini ve ek açıklamalarını kopyalar."""
     for (satir, sutun), kaynak_hucre in kaynak_ws._cells.items():
         hedef_hucre = hedef_ws.cell(row=satir, column=sutun)
         hedef_hucre._value = kaynak_hucre._value
@@ -277,20 +278,23 @@ def _sayfa_icerigini_kopyala(kaynak_ws, hedef_ws) -> None:
         if kaynak_hucre.comment:
             hedef_hucre.comment = copy(kaynak_hucre.comment)
 
+
+def _kopyala_satir_boyutlari(kaynak_ws, hedef_ws) -> None:
+    """Satır boyutlarını kopyalar."""
     for anahtar, boyut in kaynak_ws.row_dimensions.items():
         hedef_boyut = hedef_ws.row_dimensions[anahtar]
-        _boyut_ozelliklerini_kopyala(
-            boyut,
-            hedef_boyut
-        )
+        _boyut_ozelliklerini_kopyala(boyut, hedef_boyut)
 
+
+def _kopyala_sutun_boyutlari(kaynak_ws, hedef_ws) -> None:
+    """Sütun boyutlarını kopyalar."""
     for anahtar, boyut in kaynak_ws.column_dimensions.items():
         hedef_boyut = hedef_ws.column_dimensions[anahtar]
-        _boyut_ozelliklerini_kopyala(
-            boyut,
-            hedef_boyut
-        )
+        _boyut_ozelliklerini_kopyala(boyut, hedef_boyut)
 
+
+def _kopyala_sayfa_ozellikleri(kaynak_ws, hedef_ws) -> None:
+    """Sayfa düzeyi ayarları ve görünüm özelliklerini kopyalar."""
     hedef_ws.sheet_format = copy(kaynak_ws.sheet_format)
     hedef_ws.sheet_properties = copy(kaynak_ws.sheet_properties)
     hedef_ws.views = copy(kaynak_ws.views)
@@ -311,6 +315,14 @@ def _sayfa_icerigini_kopyala(kaynak_ws, hedef_ws) -> None:
     # Public setter kullanarak doğru formatta yazdırma alanı oluşturulur.
     if kaynak_ws._print_area:
         hedef_ws.print_area = str(kaynak_ws._print_area)
+
+
+def _sayfa_icerigini_kopyala(kaynak_ws, hedef_ws) -> None:
+    """Harici workbook'taki şablon sayfasını hedef workbook'a klonlar."""
+    _kopyala_hucreler(kaynak_ws, hedef_ws)
+    _kopyala_satir_boyutlari(kaynak_ws, hedef_ws)
+    _kopyala_sutun_boyutlari(kaynak_ws, hedef_ws)
+    _kopyala_sayfa_ozellikleri(kaynak_ws, hedef_ws)
 
 
 def _sayfa_adi_olustur(personel: Personel) -> str:
