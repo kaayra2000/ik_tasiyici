@@ -86,7 +86,6 @@ def olustur_dk_dosyasi_raporlu(
     )
 
 
-
 # ---------------------------------------------------------------------------
 # İç yardımcılar
 # ---------------------------------------------------------------------------
@@ -247,24 +246,57 @@ def _kopyala_sutun_boyutlari(kaynak_ws, hedef_ws) -> None:
 
 
 def _kopyala_sayfa_ozellikleri(kaynak_ws, hedef_ws) -> None:
-    """Sayfa düzeyi ayarları ve görünüm özelliklerini kopyalar."""
+    """Sayfa düzeyi ayarlarını küçük sorumluluklara bölerek kopyalar."""
+    _kopyala_sayfa_metin_ve_gorunum_ozellikleri(kaynak_ws, hedef_ws)
+    _kopyala_birlesik_hucre_araliklari(kaynak_ws, hedef_ws)
+    _kopyala_yazdirma_ve_koruma_ayarlari(kaynak_ws, hedef_ws)
+    _kopyala_veri_dogrulamalari(kaynak_ws, hedef_ws)
+    _kopyala_dondurulmus_bolme(kaynak_ws, hedef_ws)
+    _kopyala_yazdirma_alani(kaynak_ws, hedef_ws)
+
+
+def _kopyala_sayfa_metin_ve_gorunum_ozellikleri(kaynak_ws, hedef_ws) -> None:
+    """Sayfanın biçim, özellik ve görünüm verilerini kopyalar."""
     hedef_ws.sheet_format = copy(kaynak_ws.sheet_format)
     hedef_ws.sheet_properties = copy(kaynak_ws.sheet_properties)
     hedef_ws.views = copy(kaynak_ws.views)
-    hedef_ws.merged_cells = copy(kaynak_ws.merged_cells)
+
+
+def _kopyala_birlesik_hucre_araliklari(kaynak_ws, hedef_ws) -> None:
+    """Birleşik hücre aralıklarını güvenli biçimde yeniden oluşturur."""
+    # Birleşik hücre aralıklarını doğrudan nesne kopyasıyla taşımak,
+    # bazı Excel istemcilerinde kenarlık/hizalama bozulmalarına yol açabilir.
+    # Aralıkları tek tek merge ederek güvenli şekilde yeniden oluşturuyoruz.
+    for birlesik_aralik in list(hedef_ws.merged_cells.ranges):
+        hedef_ws.unmerge_cells(str(birlesik_aralik))
+    for birlesik_aralik in kaynak_ws.merged_cells.ranges:
+        hedef_ws.merge_cells(str(birlesik_aralik))
+
+
+def _kopyala_yazdirma_ve_koruma_ayarlari(kaynak_ws, hedef_ws) -> None:
+    """Yazdırma, sayfa düzeni ve koruma ayarlarını kopyalar."""
     hedef_ws.page_margins = copy(kaynak_ws.page_margins)
     hedef_ws.page_setup = copy(kaynak_ws.page_setup)
     hedef_ws.print_options = copy(kaynak_ws.print_options)
     hedef_ws.protection = copy(kaynak_ws.protection)
     hedef_ws.conditional_formatting = copy(kaynak_ws.conditional_formatting)
 
+
+def _kopyala_veri_dogrulamalari(kaynak_ws, hedef_ws) -> None:
+    """Varsa veri doğrulama tanımlarını kopyalar."""
     if hasattr(kaynak_ws, "data_validations"):
         hedef_ws.data_validations = copy(kaynak_ws.data_validations)
 
+
+def _kopyala_dondurulmus_bolme(kaynak_ws, hedef_ws) -> None:
+    """Freeze panes ayarını kopyalar."""
     hedef_ws.freeze_panes = kaynak_ws.freeze_panes
 
+
+def _kopyala_yazdirma_alani(kaynak_ws, hedef_ws) -> None:
+    """Yazdırma alanını güvenli biçimde kopyalar."""
     # NOT: copy(PrintArea) nesnesi MultiCellRange'e dönüşür ve sayfa
-    # nitelendirmesini kaybeder → Excel bozuk Named Range hatası verir.
+    # nitelendirmesini kaybeder -> Excel bozuk Named Range hatası verir.
     # Public setter kullanarak doğru formatta yazdırma alanı oluşturulur.
     if kaynak_ws._print_area:
         hedef_ws.print_area = str(kaynak_ws._print_area)

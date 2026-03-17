@@ -181,11 +181,15 @@ class ExcelWriteStrategyV1(ExcelWriteStrategy):
 
         # K30: Kademe Başlangıcı
         k30_hucre = ws["K30"]
-        k30_hucre.value = kademe_baslangic_formulu(_TECRUBE_YILI_HUCRE, _EN_YUKSEK_OGRENIM_HUCRE)
+        k30_hucre.value = kademe_baslangic_formulu(
+            _TECRUBE_YILI_HUCRE, _EN_YUKSEK_OGRENIM_HUCRE
+        )
 
         # L30: Kademe Bitişi
         l30_hucre = ws["L30"]
-        l30_hucre.value = kademe_bitis_formulu(_TECRUBE_YILI_HUCRE, _EN_YUKSEK_OGRENIM_HUCRE)
+        l30_hucre.value = kademe_bitis_formulu(
+            _TECRUBE_YILI_HUCRE, _EN_YUKSEK_OGRENIM_HUCRE
+        )
 
         # K30 ve L30'a tam sayı formatı uygula
         ExcelWriteStrategyV1._uygula_tam_sayi_formati(k30_hucre, l30_hucre)
@@ -204,7 +208,7 @@ class ExcelWriteStrategyV1(ExcelWriteStrategy):
     @staticmethod
     def _uygula_tam_sayi_formati(*hucreler) -> None:
         """Verilen hücrelere tam sayı formatı (0) uygular.
-        
+
         Virgülden sonraki kısımları göstermez (1.00 yerine 1 gösterir).
         """
         for hucre in hucreler:

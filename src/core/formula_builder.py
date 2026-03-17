@@ -46,12 +46,10 @@ def _days360_toplam_ifadesi(
     bitis_aralik = (
         f"{COL_BITIS_TARIHI}{baslangic_satir}:{COL_BITIS_TARIHI}{bitis_satir}"
     )
-    alaninda_aralik = (
-        f"{COL_ALANINDA}{baslangic_satir}:{COL_ALANINDA}{bitis_satir}"
-    )
+    alaninda_aralik = f"{COL_ALANINDA}{baslangic_satir}:{COL_ALANINDA}{bitis_satir}"
     return (
-        f"SUMPRODUCT(--({baslangic_aralik}<>\"\"),--({bitis_aralik}<>\"\"),"
-        f"--({alaninda_aralik}=\"E\"),"
+        f'SUMPRODUCT(--({baslangic_aralik}<>""),--({bitis_aralik}<>""),'
+        f'--({alaninda_aralik}="E"),'
         f"DAYS360({baslangic_aralik},{bitis_aralik},0))"
     )
 
@@ -90,6 +88,7 @@ def tecrube_360_gun_formulu(
         baslangic_satir=baslangic_satir,
     )
     return f'=IF({toplam}=0,"",MOD(MOD({toplam},{GUN_PER_YIL}),30))'
+
 
 # ---------------------------------------------------------------------------
 # Prim günü formülleri (satır bazlı)
