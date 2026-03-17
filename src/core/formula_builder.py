@@ -350,3 +350,126 @@ def kademe_formulu(
         f"IF({t}>=8,{ag4},"
         f"IF({t}>=3,{ag5},{ag6}))))"
     )
+
+
+def kademe_baslangic_formulu(
+    tecrube_yili_hucre: str,
+    ogrenim_hucre: str,
+) -> str:
+    """
+    Tecrübe yılı ve öğrenim durumuna göre kademe başlangıcını belirleyen formülü üretir.
+    Kıdem tablosuna göre kademe başlangıcı değerleri tecrübe yılı ve eğitim seviyesine göre değişir.
+    NOT: Kademe AZALDIKÇA yükselme olur (6'dan 5'e, 5'ten 4'e).
+
+    :param tecrube_yili_hucre: Tecrübe yılı hücresi (ör. ``"Z1"``).
+    :param ogrenim_hucre: Öğrenim durumu hücresi (ör. ``"Z4"``).
+    :returns: Kademe başlangıcı formülü string'i.
+    """
+    t = tecrube_yili_hucre
+    o = ogrenim_hucre
+
+    def branch(lisans: str, tezsiz: str, tezli: str, doktora: str) -> str:
+        return (
+            f'IF({o}="Lisans",{lisans},'
+            f'IF({o}="Tezsiz Yüksek Lisans",{tezsiz},'
+            f'IF({o}="Tezli Yüksek Lisans",{tezli},{doktora})))'
+        )
+
+    # 16+ yıl
+    ag2 = branch("6", "6", "5", "4")
+
+    # 15-16 yıl
+    ag3_15_16 = branch("4", "4", "3", "4")
+
+    # 12-15 yıl
+    ag3_12_15 = branch("6", "6", "5", "4")
+
+    # 10-12 yıl
+    ag4_10_12 = branch("4", "4", "3", "4")
+
+    # 8-10 yıl
+    ag4_8_10 = branch("6", "6", "5", "4")
+
+    # 6-8 yıl
+    ag5_6_8 = branch("4", "4", "3", "4")
+
+    # 3-6 yıl
+    ag5_3_6 = branch("6", "6", "5", "4")
+
+    # 2-3 yıl
+    ag6_2_3 = branch("4", "4", "2", "2")
+
+    # 0-2 yıl
+    ag6_0_2 = branch("6", "5", "4", "4")
+
+    return (
+        f"=IF({t}>=16,{ag2},"
+        f"IF({t}>=15,{ag3_15_16},"
+        f"IF({t}>=12,{ag3_12_15},"
+        f"IF({t}>=10,{ag4_10_12},"
+        f"IF({t}>=8,{ag4_8_10},"
+        f"IF({t}>=6,{ag5_6_8},"
+        f"IF({t}>=3,{ag5_3_6},"
+        f"IF({t}>=2,{ag6_2_3},{ag6_0_2}))))))))"
+    )
+
+
+def kademe_bitis_formulu(
+    tecrube_yili_hucre: str,
+    ogrenim_hucre: str,
+) -> str:
+    """
+    Tecrübe yılı ve öğrenim durumuna göre kademe bitişini belirleyen formülü üretir.
+    Kıdem tablosundaki değerlere göre oluşturulmuştur.
+
+    :param tecrube_yili_hucre: Tecrübe yılı hücresi (ör. ``"Z1"``).
+    :param ogrenim_hucre: Öğrenim durumu hücresi (ör. ``"Z4"``).
+    :returns: İç içe IF formülü string'i.
+    """
+    t = tecrube_yili_hucre
+    o = ogrenim_hucre
+
+    def branch(lisans: str, tezsiz: str, tezli: str, doktora: str) -> str:
+        return (
+            f'IF({o}="Lisans",{lisans},'
+            f'IF({o}="Tezsiz Yüksek Lisans",{tezsiz},'
+            f'IF({o}="Tezli Yüksek Lisans",{tezli},{doktora})))'
+        )
+
+    # 16+ yıl
+    ag2 = branch("3", "3", "2", "2")
+
+    # 15-16 yıl
+    ag3_15_16 = branch("3", "3", "2", "2")
+
+    # 12-15 yıl
+    ag3_12_15 = branch("5", "5", "4", "2")
+
+    # 10-12 yıl
+    ag4_10_12 = branch("3", "3", "2", "2")
+
+    # 8-10 yıl
+    ag4_8_10 = branch("5", "5", "4", "2")
+
+    # 6-8 yıl
+    ag5_6_8 = branch("3", "3", "2", "2")
+
+    # 3-6 yıl
+    ag5_3_6 = branch("5", "5", "4", "2")
+
+    # 2-3 yıl
+    ag6_2_3 = branch("3", "3", "2", "2")
+
+    # 0-2 yıl
+    ag6_0_2 = branch("5", "4", "3", "3")
+
+    return (
+        f"=IF({t}>=16,{ag2},"
+        f"IF({t}>=15,{ag3_15_16},"
+        f"IF({t}>=12,{ag3_12_15},"
+        f"IF({t}>=10,{ag4_10_12},"
+        f"IF({t}>=8,{ag4_8_10},"
+        f"IF({t}>=6,{ag5_6_8},"
+        f"IF({t}>=3,{ag5_3_6},"
+        f"IF({t}>=2,{ag6_2_3},{ag6_0_2}))))))))"
+    )

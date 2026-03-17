@@ -21,6 +21,8 @@ from src.core.formula_builder import (
     en_yuksek_ogrenim_formulu,
     hizmet_grubu_formulu,
     kademe_formulu,
+    kademe_baslangic_formulu,
+    kademe_bitis_formulu,
     prim_gunu_formulu,
     tecrube_360_ay_formulu,
     tecrube_360_gun_formulu,
@@ -176,6 +178,12 @@ class ExcelWriteStrategyV1(ExcelWriteStrategy):
 
         # F3: Derece/Kademe
         ws[_HUCRE_KADEME] = '=IF(Z3="", Z2, Z2 & "/" & Z3)'
+
+        # K30: Kademe Başlangıcı
+        ws["K30"] = kademe_baslangic_formulu(_TECRUBE_YILI_HUCRE, _EN_YUKSEK_OGRENIM_HUCRE)
+
+        # L30: Kademe Bitişi
+        ws["L30"] = kademe_bitis_formulu(_TECRUBE_YILI_HUCRE, _EN_YUKSEK_OGRENIM_HUCRE)
 
     @staticmethod
     def _yaz_360_yil_ay_gun(ws) -> None:
