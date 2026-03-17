@@ -13,7 +13,14 @@ import re
 from typing import Any
 
 from PyQt6.QtCore import QStandardPaths
-from PyQt6.QtWidgets import QHBoxLayout, QLabel, QPushButton, QTextEdit, QVBoxLayout, QWidget
+from PyQt6.QtWidgets import (
+    QHBoxLayout,
+    QLabel,
+    QPushButton,
+    QTextEdit,
+    QVBoxLayout,
+    QWidget,
+)
 
 from src.config.constants import APP_NAME, LOG_DIR_NAME
 
@@ -34,10 +41,12 @@ class LogWidget(QWidget):
         super().__init__(parent)
         self._markdown_blocks: list[str] = []
         self._log_file_path = self._resolve_log_file_path(log_name or title)
-        
+
         if self._log_file_path:
-            self._append_to_file(f"---\n**[Yeni Oturum - {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}]**")
-            
+            self._append_to_file(
+                f"---\n**[Yeni Oturum - {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}]**"
+            )
+
         self._init_ui(title)
 
     def _init_ui(self, title: str) -> None:
@@ -48,14 +57,18 @@ class LogWidget(QWidget):
         top_layout.setContentsMargins(0, 0, 0, 0)
 
         self._label = QLabel(title)
-        
+
         path_str = str(self._log_file_path.parent) if self._log_file_path else ""
-        self._path_label = QLabel(f'<a href="file://{path_str}" style="color: gray; text-decoration: none;">[Klasör: {path_str}]</a>' if path_str else "")
+        self._path_label = QLabel(
+            f'<a href="file://{path_str}" style="color: gray; text-decoration: none;">[Klasör: {path_str}]</a>'
+            if path_str
+            else ""
+        )
         self._path_label.setOpenExternalLinks(True)
-        
+
         self._clear_button = QPushButton("Kayıtları Temizle")
         self._clear_button.clicked.connect(self.clear)
-        
+
         top_layout.addWidget(self._label)
         top_layout.addSpacing(10)
         top_layout.addWidget(self._path_label)
@@ -94,7 +107,9 @@ class LogWidget(QWidget):
 
     def log_detail_block(self, title: str, messages: Iterable[str]) -> None:
         """Detay mesajlarını başlık altında blok halinde yazar."""
-        lines = [message for message in messages if isinstance(message, str) and message]
+        lines = [
+            message for message in messages if isinstance(message, str) and message
+        ]
         if not lines:
             return
 
@@ -141,7 +156,7 @@ class LogWidget(QWidget):
         markdown_document = "\n\n".join(self._markdown_blocks)
         self._text_edit.setMarkdown(markdown_document)
         self._append_to_file(stripped)
-        
+
         scrollbar = self._text_edit.verticalScrollBar()
         scrollbar.setValue(scrollbar.maximum())
 
@@ -206,7 +221,22 @@ class LogWidget(QWidget):
     def _escape_markdown(text: str) -> str:
         """Serbest metni güvenli markdown metnine çevirir."""
         escaped = str(text).replace("\\", "\\\\")
-        for char in ("`", "*", "_", "{", "}", "[", "]", "(", ")", "#", "+", "!", "|", ">"):
+        for char in (
+            "`",
+            "*",
+            "_",
+            "{",
+            "}",
+            "[",
+            "]",
+            "(",
+            ")",
+            "#",
+            "+",
+            "!",
+            "|",
+            ">",
+        ):
             escaped = escaped.replace(char, f"\\{char}")
         return escaped.replace("\n", "  \n")
 

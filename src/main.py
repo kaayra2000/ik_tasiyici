@@ -17,9 +17,7 @@ def _get_project_root(entry_file: str | Path) -> Path:
     return Path(entry_file).resolve().parent.parent
 
 
-def _prepend_import_path(
-    import_path: MutableSequence[str], project_root: Path
-) -> None:
+def _prepend_import_path(import_path: MutableSequence[str], project_root: Path) -> None:
     """Proje kokunu import arama yolunun basina ekler."""
     project_root_str = str(project_root)
     if project_root_str not in import_path:

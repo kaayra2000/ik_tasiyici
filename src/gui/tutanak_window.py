@@ -31,7 +31,6 @@ from src.gui.log_widget import LogWidget
 from src.gui.settings_manager import SettingsManager
 from src.gui.tutanak_service import TutanakService
 
-
 # ---------------------------------------------------------------------------
 # Arka-plan iş parçacıkları (QThread tabanlı worker'lar)
 # ---------------------------------------------------------------------------
@@ -40,7 +39,7 @@ from src.gui.tutanak_service import TutanakService
 class _PersonelOkuWorker(QThread):
     """Personel okuma işlemini arka planda yürütür."""
 
-    finished = pyqtSignal(list)   # List[Personel]
+    finished = pyqtSignal(list)  # List[Personel]
     error = pyqtSignal(str)
 
     def __init__(self, service: TutanakService, input_path: str) -> None:
@@ -59,7 +58,7 @@ class _PersonelOkuWorker(QThread):
 class _TutanakOlusturWorker(QThread):
     """Tutanak oluşturma işlemini arka planda yürütür."""
 
-    finished = pyqtSignal(object)   # Path
+    finished = pyqtSignal(object)  # Path
     error = pyqtSignal(str)
 
     def __init__(
@@ -93,6 +92,7 @@ class _TutanakOlusturWorker(QThread):
 @dataclass
 class TutanakProcessState:
     """Tutanak oluşturma sürecinin geçici durum verilerini tutar."""
+
     valid_personnel_count: int = 0
     selected_version: str | None = None
     personeller: list = field(default_factory=list)
@@ -212,9 +212,7 @@ class TutanakWindow(QMainWindow):
             dialog_type=DialogType.OPEN,
             file_filter="Excel Files (*.xlsx *.xls)",
         )
-        self._template_selector.file_selected.connect(
-            self._on_template_selected
-        )
+        self._template_selector.file_selected.connect(self._on_template_selected)
         main_layout.addWidget(self._template_selector)
 
         # -- Çıktı Kayıt Yeri Seçimi --
@@ -234,7 +232,7 @@ class TutanakWindow(QMainWindow):
 
         # -- İlerleme Çubuğu --
         self._progress_bar = QProgressBar()
-        self._progress_bar.setRange(0, 0)   # belirsiz mod (pulse)
+        self._progress_bar.setRange(0, 0)  # belirsiz mod (pulse)
         self._progress_bar.setTextVisible(False)
         self._progress_bar.setFixedHeight(16)
         self._progress_bar.setVisible(False)
@@ -244,9 +242,7 @@ class TutanakWindow(QMainWindow):
         self._start_button = QPushButton("Tutanakları Oluştur")
         self._start_button.setObjectName("startButton")
         self._start_button.setMinimumHeight(40)
-        self._start_button.setStyleSheet(
-            "font-weight: bold; font-size: 14px;"
-        )
+        self._start_button.setStyleSheet("font-weight: bold; font-size: 14px;")
         self._start_button.clicked.connect(self._start_processing)
         main_layout.addWidget(self._start_button)
 
@@ -320,7 +316,9 @@ class TutanakWindow(QMainWindow):
         version = action.data()
         if version:
             self._settings.set(SettingsManager.KEY_OUTPUT_VERSION, version)
-            self.log(f"Çıktı versiyonu değiştirildi: {SUPPORTED_VERSIONS.get(version, version)}")
+            self.log(
+                f"Çıktı versiyonu değiştirildi: {SUPPORTED_VERSIONS.get(version, version)}"
+            )
 
     # ------------------------------------------------------------------
     # Log delegasyonu
@@ -420,9 +418,7 @@ class TutanakWindow(QMainWindow):
 
         output_path = self._output_selector.get_path()
         if not output_path:
-            QMessageBox.warning(
-                self, "Uyarı", "Lütfen bir çıktı kayıt yeri seçin."
-            )
+            QMessageBox.warning(self, "Uyarı", "Lütfen bir çıktı kayıt yeri seçin.")
             return
 
         self.log("-" * 40)
@@ -473,7 +469,9 @@ class TutanakWindow(QMainWindow):
 
         self._process_state.personeller = personeller
         self._process_state.selected_version = self._get_selected_version()
-        self.log(f"DK tutanakları oluşturuluyor (versiyon: {self._process_state.selected_version})...")
+        self.log(
+            f"DK tutanakları oluşturuluyor (versiyon: {self._process_state.selected_version})..."
+        )
 
         self._olusturma_worker = _TutanakOlusturWorker(
             self._service,

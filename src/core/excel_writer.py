@@ -30,7 +30,6 @@ from src.core.excel_reader import Personel
 from src.core.excel_write_strategy import ExcelWriteStrategy
 from src.core.excel_writer_factory import ExcelWriterFactory
 
-
 # ---------------------------------------------------------------------------
 # Ana yazma fonksiyonları
 # ---------------------------------------------------------------------------
@@ -163,7 +162,11 @@ def _workbook_olustur(
     # sağlar (uyarıyı ortadan kaldırır) ve önceki davranışı taklit eder.
     if not wb.sheetnames:
         wb.create_sheet("_bos")
-    elif added_sheet_count == 0 and len(wb.sheetnames) == 1 and wb.sheetnames[0] == "Sheet":
+    elif (
+        added_sheet_count == 0
+        and len(wb.sheetnames) == 1
+        and wb.sheetnames[0] == "Sheet"
+    ):
         wb.active.title = "_bos"
 
     return wb, added_sheet_count, skipped_existing_count, warning_messages
@@ -191,7 +194,9 @@ def _personelleri_workbooka_ekle(
                 continue
 
             if template_ws is None:
-                template_wb = openpyxl.load_workbook(_template_yolunu_coz(template_path))
+                template_wb = openpyxl.load_workbook(
+                    _template_yolunu_coz(template_path)
+                )
                 if not template_wb.sheetnames:
                     raise ValueError("Şablon workbook içinde hiç sayfa yok.")
                 template_ws = template_wb.active
@@ -234,20 +239,20 @@ def _template_yolunu_coz(template_path: str | Path | None = None) -> Path:
 def _boyut_ozelliklerini_kopyala(kaynak_boyut, hedef_boyut) -> None:
     """Boyutla alakalı özellikleri kopyalar"""
     alanlar = (
-                "width",
-                "hidden",
-                "bestFit",
-                "outlineLevel",
-                "outline_level",
-                "collapsed",
-                "customWidth",
-                "auto_size",
-                "style",
-                "min",
-                "max",
-                "height",
-                "customHeight",
-            )
+        "width",
+        "hidden",
+        "bestFit",
+        "outlineLevel",
+        "outline_level",
+        "collapsed",
+        "customWidth",
+        "auto_size",
+        "style",
+        "min",
+        "max",
+        "height",
+        "customHeight",
+    )
     for alan in alanlar:
         if hasattr(kaynak_boyut, alan):
             try:

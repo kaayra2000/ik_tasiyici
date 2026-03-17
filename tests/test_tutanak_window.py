@@ -90,9 +90,7 @@ class TestTutanakWindow:
 
         window._start_processing()
 
-        service.personel_oku.assert_called_once_with(
-            str(tmp_path / "girdi.xlsx")
-        )
+        service.personel_oku.assert_called_once_with(str(tmp_path / "girdi.xlsx"))
         service.tutanak_olustur.assert_called_once_with(
             personeller=service.personel_oku.return_value,
             template_path=str(template_path),
@@ -102,7 +100,8 @@ class TestTutanakWindow:
         mock_open_generated_output.assert_called_once_with(result_path)
         log_lines = window._log_widget._text_edit.toPlainText().splitlines()
         detail_index = next(
-            i for i, line in enumerate(log_lines)
+            i
+            for i, line in enumerate(log_lines)
             if "hedef dosyada zaten mevcut" in line
         )
         summary_index = log_lines.index("Özet:")
@@ -137,7 +136,8 @@ class TestTutanakWindow:
 
         log_lines = window._log_widget._text_edit.toPlainText().splitlines()
         detail_index = next(
-            i for i, line in enumerate(log_lines)
+            i
+            for i, line in enumerate(log_lines)
             if "Geçersiz TCKN: 35519215090" in line
         )
         summary_index = log_lines.index("Özet:")

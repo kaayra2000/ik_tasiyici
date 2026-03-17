@@ -102,7 +102,8 @@ class TestEducationImportWindow:
         )
         log_lines = window._log_widget._text_edit.toPlainText().splitlines()
         detail_index = next(
-            i for i, line in enumerate(log_lines)
+            i
+            for i, line in enumerate(log_lines)
             if "Geçersiz TCKN: 35519215090" in line
         )
         summary_index = log_lines.index("Özet:")
@@ -125,7 +126,9 @@ class TestEducationImportWindow:
         target_path.touch()
         source_path.touch()
 
-        service.import_education.side_effect = ValueError("Kaynak dosyada işlenecek geçerli mezuniyet kaydı bulunamadı.")
+        service.import_education.side_effect = ValueError(
+            "Kaynak dosyada işlenecek geçerli mezuniyet kaydı bulunamadı."
+        )
 
         window._target_selector.set_path(str(target_path))
         window._source_selector.set_path(str(source_path))
@@ -134,13 +137,17 @@ class TestEducationImportWindow:
 
         log_lines = window._log_widget._text_edit.toPlainText().splitlines()
         detail_index = next(
-            i for i, line in enumerate(log_lines)
+            i
+            for i, line in enumerate(log_lines)
             if "Geçersiz TCKN: 35519215090" in line
         )
         summary_index = log_lines.index("Özet:")
         assert detail_index < summary_index
         assert "işlenecek geçerli mezuniyet kaydı bulunamadı" in "\n".join(log_lines)
-        assert log_lines[-1] == "Hata: Kaynak dosyada işlenecek geçerli mezuniyet kaydı bulunamadı."
+        assert (
+            log_lines[-1]
+            == "Hata: Kaynak dosyada işlenecek geçerli mezuniyet kaydı bulunamadı."
+        )
         mock_critical.assert_called_once()
 
     @patch("src.gui.education_import_window.QMessageBox.warning")

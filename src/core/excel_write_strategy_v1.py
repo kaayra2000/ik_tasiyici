@@ -28,7 +28,6 @@ from src.core.formula_builder import (
     unvan_formulu,
 )
 
-
 # ---------------------------------------------------------------------------
 # V1 şablonuna ait sabitler – hücre adresleri
 # ---------------------------------------------------------------------------
@@ -52,8 +51,8 @@ _HUCRE_EKSIK_GUN_BASLIK_METNI = "Eksik Gün Sayısı"
 _EKSIK_GUN_SUTUNU = "M"
 
 # Toplam / hesap satırları
-_SATIR_TOPLAM_PRIM = TECRUBE_BITIS_SATIR + 1        # 28
-_SATIR_ALANDA_PRIM = TECRUBE_BITIS_SATIR + 1        # 28
+_SATIR_TOPLAM_PRIM = TECRUBE_BITIS_SATIR + 1  # 28
+_SATIR_ALANDA_PRIM = TECRUBE_BITIS_SATIR + 1  # 28
 
 # M3 görünür seçim hücresidir:
 # M3 = Hizmet Grubu Türü (A / AG)
@@ -199,7 +198,9 @@ class ExcelWriteStrategyV1(ExcelWriteStrategy):
         from src.config.constants import OGRENIM_SEVIYELERI
 
         # Şablondan M3 için gelen eski doğrulamayı temizleyip yeni A/AG listesini ekleriz.
-        if hasattr(ws, "data_validations") and hasattr(ws.data_validations, "dataValidation"):
+        if hasattr(ws, "data_validations") and hasattr(
+            ws.data_validations, "dataValidation"
+        ):
             ws.data_validations.dataValidation = [
                 dv
                 for dv in ws.data_validations.dataValidation

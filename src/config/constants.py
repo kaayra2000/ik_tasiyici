@@ -20,6 +20,7 @@ def make_tubitak_title(subtitle: str) -> str:
     """'TÜBİTAK – <subtitle>' formatinda pencere başligi doner."""
     return f"TÜBİTAK – {subtitle}"
 
+
 # ---------------------------------------------------------------------------
 # Kaynak Excel sütun adları
 # ---------------------------------------------------------------------------

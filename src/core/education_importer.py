@@ -18,7 +18,6 @@ from src.config.constants import (
 )
 from src.core.validators import normalize_tckn, validate_tckn
 
-
 _SOURCE_COL_TCKN = "TC KIMLIK NO"
 _SOURCE_COL_AD = "AD"
 _SOURCE_COL_MEZUNIYET_TARIHI = "MEZUNIYET TARIHI"
@@ -105,9 +104,11 @@ class EducationImporter:
                 matched_tckns.add(tckn)
                 result.matched_sheet_count += 1
 
-                appended_count, skipped_count, warning_messages = self._apply_records_to_sheet(
-                    worksheet,
-                    records_by_tckn[tckn],
+                appended_count, skipped_count, warning_messages = (
+                    self._apply_records_to_sheet(
+                        worksheet,
+                        records_by_tckn[tckn],
+                    )
                 )
                 result.appended_record_count += appended_count
                 result.skipped_record_count += skipped_count
@@ -140,7 +141,9 @@ class EducationImporter:
     ) -> dict[str, list[EducationRecord]]:
         """Kaynak Excel'i okuyup TCKN bazlı sözlüğe dönüştürür."""
         if not source_path.is_file():
-            raise FileNotFoundError(f"Kaynak mezuniyet dosyası bulunamadı: {source_path}")
+            raise FileNotFoundError(
+                f"Kaynak mezuniyet dosyası bulunamadı: {source_path}"
+            )
 
         dataframe = pd.read_excel(source_path, dtype=str)
         self._validate_source_columns(dataframe)
@@ -192,7 +195,9 @@ class EducationImporter:
         program = self._clean_text(row.get(_SOURCE_COL_PROGRAM))
         raw_graduation_date = self._clean_text(row.get(_SOURCE_COL_MEZUNIYET_TARIHI))
 
-        if not any([raw_tckn, raw_name, university, faculty, program, raw_graduation_date]):
+        if not any(
+            [raw_tckn, raw_name, university, faculty, program, raw_graduation_date]
+        ):
             return None, None
 
         if not raw_tckn:
@@ -288,7 +293,6 @@ class EducationImporter:
             return text
         return parsed.strftime("%d.%m.%Y")
 
-
     @staticmethod
     def _build_department_text(program: str) -> str:
         """Bölüm hücresine yazılacak metni üretir.
@@ -300,7 +304,7 @@ class EducationImporter:
         text = program
         if " - " in text:
             text = text.split(" - ")[0].strip()
-        
+
         text = text.replace("(YL)", "").replace("(DR)", "").strip()
         return text
 
@@ -308,11 +312,23 @@ class EducationImporter:
     def _infer_level(program: str, faculty: str) -> str:
         """Program metninden şablondaki öğrenim seviyesini tahmin eder."""
         search_text = f"{program} {faculty}".upper()
-        if "DOKTORA" in search_text or "SANATTA YETERLİK" in search_text or "(DR)" in search_text:
+        if (
+            "DOKTORA" in search_text
+            or "SANATTA YETERLİK" in search_text
+            or "(DR)" in search_text
+        ):
             return OGRENIM_DOKTORA
-        if "TEZSİZ YÜKSEK LİSANS" in search_text or "TEZSIZ YUKSEK LISANS" in search_text:
+        if (
+            "TEZSİZ YÜKSEK LİSANS" in search_text
+            or "TEZSIZ YUKSEK LISANS" in search_text
+        ):
             return OGRENIM_TEZSIZ_YL
-        if "YÜKSEK LİSANS" in search_text or "YUKSEK LISANS" in search_text or "MASTER" in search_text or "(YL)" in search_text:
+        if (
+            "YÜKSEK LİSANS" in search_text
+            or "YUKSEK LISANS" in search_text
+            or "MASTER" in search_text
+            or "(YL)" in search_text
+        ):
             return OGRENIM_TEZLI_YL
         return OGRENIM_LISANS
 

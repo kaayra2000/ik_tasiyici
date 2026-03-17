@@ -22,7 +22,6 @@ from src.gui.log_widget import LogWidget
 from src.gui.settings_manager import SettingsManager
 from src.config.constants import make_tubitak_title
 
-
 # ---------------------------------------------------------------------------
 # Arka-plan iş parçacığı (QThread tabanlı worker)
 # ---------------------------------------------------------------------------
@@ -31,8 +30,8 @@ from src.config.constants import make_tubitak_title
 class _ImportWorker(QThread):
     """Mezuniyet içe aktarmayı arka planda yürütür."""
 
-    finished = pyqtSignal(object)   # EducationImportResult
-    error = pyqtSignal(str, bool)   # (mesaj, izin_hatası_mı)
+    finished = pyqtSignal(object)  # EducationImportResult
+    error = pyqtSignal(str, bool)  # (mesaj, izin_hatası_mı)
 
     def __init__(
         self,
@@ -109,7 +108,7 @@ class EducationImportWindow(QMainWindow):
 
         # -- İlerleme Çubuğu --
         self._progress_bar = QProgressBar()
-        self._progress_bar.setRange(0, 0)   # belirsiz mod (pulse)
+        self._progress_bar.setRange(0, 0)  # belirsiz mod (pulse)
         self._progress_bar.setTextVisible(False)
         self._progress_bar.setFixedHeight(16)
         self._progress_bar.setVisible(False)

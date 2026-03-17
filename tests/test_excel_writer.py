@@ -31,13 +31,17 @@ _HUCRE_UNVAN = ExcelWriteStrategyV1.HUCRE_UNVAN
 
 @pytest.fixture()
 def tek_personel() -> list[Personel]:
-    return [Personel(tckn="10000000146", ad_soyad="Fatma KARACA", birim="Marmara Enstitüsü")]
+    return [
+        Personel(tckn="10000000146", ad_soyad="Fatma KARACA", birim="Marmara Enstitüsü")
+    ]
 
 
 @pytest.fixture()
 def uc_personel() -> list[Personel]:
     return [
-        Personel(tckn="10000000146", ad_soyad="Fatma KARACA", birim="Marmara Enstitüsü"),
+        Personel(
+            tckn="10000000146", ad_soyad="Fatma KARACA", birim="Marmara Enstitüsü"
+        ),
         Personel(tckn="10000000078", ad_soyad="Ali YILMAZ", birim="Gebze Enstitüsü"),
         Personel(tckn="10000050028", ad_soyad="Ayşe DEMİR", birim="Kocaeli Enstitüsü"),
     ]
@@ -178,10 +182,7 @@ class TestOlusturDkBytes:
         data = olustur_dk_bytes([])
         wb = _workbook_from_bytes(data)
         # Sayfa adlarında hiçbir geçerli TCKN olmamalı
-        personel_sayfalari = [
-            s for s in wb.sheetnames
-            if s != "_bos"
-        ]
+        personel_sayfalari = [s for s in wb.sheetnames if s != "_bos"]
         assert len(personel_sayfalari) == 0
 
     def test_unvan_formul_yazildi(self, tek_personel):

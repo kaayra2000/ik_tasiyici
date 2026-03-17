@@ -124,7 +124,12 @@ class TestEnYuksekOgrenimFormulu:
         sonuc = en_yuksek_ogrenim_formulu(6, 8, "B", "C", "K")
         for hucre in ["C8", "K8", "B8", "C7", "K7", "B7", "C6", "K6", "B6"]:
             assert hucre in sonuc
-        for seviye in ["Doktora", "Tezli Yüksek Lisans", "Tezsiz Yüksek Lisans", "Lisans"]:
+        for seviye in [
+            "Doktora",
+            "Tezli Yüksek Lisans",
+            "Tezsiz Yüksek Lisans",
+            "Lisans",
+        ]:
             assert f'"{seviye}"' in sonuc
 
 

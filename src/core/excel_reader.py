@@ -15,12 +15,7 @@ from typing import List
 import pandas as pd
 
 from src.config.constants import COL_TCKN, COL_AD_SOYAD, COL_BIRIM
-from src.core.validators import (
-    normalize_tckn,
-    validate_tckn,
-    validate_ad_soyad
-)
-
+from src.core.validators import normalize_tckn, validate_tckn, validate_ad_soyad
 
 # ---------------------------------------------------------------------------
 # Veri sınıfı
@@ -59,9 +54,8 @@ class SatirReddi:
             f"AD SOYAD='{self.ad_soyad or '-'}'",
             f"BİRİMİ='{self.birim or '-'}'",
         ]
-        return (
-            f"Satır {self.excel_satir_no} atlandı: {self.sebep}. "
-            + ", ".join(alanlar)
+        return f"Satır {self.excel_satir_no} atlandı: {self.sebep}. " + ", ".join(
+            alanlar
         )
 
 

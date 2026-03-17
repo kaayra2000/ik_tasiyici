@@ -26,7 +26,6 @@ from src.config.constants import (
     TECRUBE_BITIS_SATIR,
 )
 
-
 # ---------------------------------------------------------------------------
 # Prim günü formülleri (satır bazlı)
 # ---------------------------------------------------------------------------
@@ -155,15 +154,14 @@ def en_yuksek_ogrenim_formulu(
     :param alaninda_sutun: Alanında olup olmadığını ("E"/"H") belirten sütun harfi (ör. ``"K"``).
     :returns: İç içe IF formülü string'i.
     """
+
     def seviye_var_mi(seviye: str) -> str:
         kosullar = []
         for satir in range(baslangic_satir, bitis_satir + 1):
             okul = f"{okul_sutun}{satir}"
             alaninda = f"{alaninda_sutun}{satir}"
             ad = f"{ad_sutun}{satir}"
-            kosullar.append(
-                f'AND({ad}="{seviye}",{okul}<>"",{alaninda}="E")'
-            )
+            kosullar.append(f'AND({ad}="{seviye}",{okul}<>"",{alaninda}="E")')
         if not kosullar:
             return "FALSE"
         return f'OR({",".join(kosullar)})'
@@ -230,7 +228,7 @@ def hizmet_grubu_formulu(
         f'IF({t}>=8,{g}&"-4",'
         f'IF({t}>=3,{g}&"-5",{g}&"-6")))),'
         f'""'
-        f')'
+        f")"
     )
 
 
@@ -264,26 +262,26 @@ def kademe_formulu(
     # A/AG-3 (12-16)
     ag3_low = branch("5", "5", "4", "2")
     ag3_high = branch("3", "3", "2", "2")
-    ag3 = f'IF({t}<15,{ag3_low},{ag3_high})'
+    ag3 = f"IF({t}<15,{ag3_low},{ag3_high})"
 
     # A/AG-4 (8-12)
     ag4_low = branch("5", "5", "4", "2")
     ag4_high = branch("3", "3", "2", "2")
-    ag4 = f'IF({t}<10,{ag4_low},{ag4_high})'
+    ag4 = f"IF({t}<10,{ag4_low},{ag4_high})"
 
     # A/AG-5 (3-8)
     ag5_low = branch("5", "5", "4", "2")
     ag5_high = branch("3", "3", "2", "2")
-    ag5 = f'IF({t}<6,{ag5_low},{ag5_high})'
+    ag5 = f"IF({t}<6,{ag5_low},{ag5_high})"
 
     # A/AG-6 (0-3)
     ag6_low = branch("5", "4", "3", "2")
     ag6_high = branch("3", "3", "2", "2")
-    ag6 = f'IF({t}<2,{ag6_low},{ag6_high})'
+    ag6 = f"IF({t}<2,{ag6_low},{ag6_high})"
 
     return (
-        f'=IF({t}>=16,{ag2},'
-        f'IF({t}>=12,{ag3},'
-        f'IF({t}>=8,{ag4},'
-        f'IF({t}>=3,{ag5},{ag6}))))'
+        f"=IF({t}>=16,{ag2},"
+        f"IF({t}>=12,{ag3},"
+        f"IF({t}>=8,{ag4},"
+        f"IF({t}>=3,{ag5},{ag6}))))"
     )

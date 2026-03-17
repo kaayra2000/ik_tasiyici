@@ -27,9 +27,11 @@ BASLANGIC = "baslangic"
 BITIS = "bitis"
 KADEMELER = "kademeler"
 
+
 @dataclass
 class DKSonuc:
     """D-K hesaplama sonucunu tutan veri sınıfı."""
+
     unvan: str
     """Belirlenen ünvan (ör. 'Uzman Yardımcısı')."""
 
@@ -43,6 +45,7 @@ class DKSonuc:
 @dataclass
 class SeviyeKurali:
     """Bir kıdem seviyesinin tüm kurallarını tek bir yapıda tutar."""
+
     seviye: str
     unvan: str
     min_tecrube_yili: float
@@ -195,6 +198,7 @@ _SEVIYELER: dict[str, SeviyeKurali] = {
 # Yardımcı fonksiyonlar
 # ---------------------------------------------------------------------------
 
+
 def hesapla_tecrube_yili(alanda_prim_gunu: float) -> float:
     """
     Alanda prim gününü tecrübe yılına çevirir.
@@ -212,7 +216,9 @@ def belirle_seviye(tecrube_yili: float) -> str:
     :param tecrube_yili: Hesaplanmış tecrübe yılı.
     :returns: Seviye kodu (ör. '5').
     """
-    siralı_seviyeler = sorted(_SEVIYELER.values(), key=lambda s: s.min_tecrube_yili, reverse=True)
+    siralı_seviyeler = sorted(
+        _SEVIYELER.values(), key=lambda s: s.min_tecrube_yili, reverse=True
+    )
     for kural in siralı_seviyeler:
         if tecrube_yili >= kural.min_tecrube_yili:
             return kural.seviye

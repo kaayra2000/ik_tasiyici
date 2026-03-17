@@ -36,7 +36,7 @@ class MainMenuWindow(QMainWindow):
         self.setCentralWidget(central_widget)
 
         outer_layout = QVBoxLayout(central_widget)
-        
+
         # Üst barda sağa yaslı info butonu
         top_bar_layout = QHBoxLayout()
         top_bar_layout.addStretch()
@@ -45,9 +45,9 @@ class MainMenuWindow(QMainWindow):
         self._info_button.setFixedSize(32, 32)
         self._info_button.setToolTip("Hakkında ve Sürüm Notları")
         self._info_button.clicked.connect(self._show_info_dialog)
-        
+
         top_bar_layout.addWidget(self._info_button)
-        
+
         outer_layout.addLayout(top_bar_layout)
         outer_layout.addStretch()
 
@@ -67,9 +67,7 @@ class MainMenuWindow(QMainWindow):
         title_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         card_layout.addWidget(title_label)
 
-        subtitle_label = QLabel(
-            "İş akışını seçin ve ilgili modülle devam edin."
-        )
+        subtitle_label = QLabel("İş akışını seçin ve ilgili modülle devam edin.")
         subtitle_label.setObjectName("menuSubtitle")
         subtitle_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         card_layout.addWidget(subtitle_label)
@@ -128,17 +126,17 @@ class MainMenuWindow(QMainWindow):
         try:
             from pathlib import Path
             import sys
-            
+
             # PyInstaller ile derlenmişse _MEIPASS kullan
-            meipass = getattr(sys, '_MEIPASS', None)
+            meipass = getattr(sys, "_MEIPASS", None)
             if meipass is not None:
                 base_path = Path(meipass)
             else:
                 base_path = Path(__file__).parent.parent.parent
-                
-            version_file = base_path / 'version.txt'
+
+            version_file = base_path / "version.txt"
             if version_file.exists():
-                return version_file.read_text(encoding='utf-8').strip()
+                return version_file.read_text(encoding="utf-8").strip()
         except Exception:
             pass
         return "develop"
@@ -149,16 +147,16 @@ class MainMenuWindow(QMainWindow):
         try:
             from pathlib import Path
             import sys
-            
-            meipass = getattr(sys, '_MEIPASS', None)
+
+            meipass = getattr(sys, "_MEIPASS", None)
             if meipass is not None:
                 base_path = Path(meipass)
             else:
                 base_path = Path(__file__).parent.parent.parent
-                
-            notes_file = base_path / 'release_notes.txt'
+
+            notes_file = base_path / "release_notes.txt"
             if notes_file.exists():
-                return notes_file.read_text(encoding='utf-8').strip()
+                return notes_file.read_text(encoding="utf-8").strip()
         except Exception:
             pass
         return "Şu an geliştirme aşamasındadır (develop)."
@@ -167,14 +165,14 @@ class MainMenuWindow(QMainWindow):
         """Hakkında ve Sürüm Notları penceresini gösterir."""
         version = self._get_app_version()
         notes = self._get_release_notes()
-        
+
         # Sürüm notlarındaki satır sonlarını HTML <br> etiketine çeviriyoruz
-        notes_html = notes.replace('\n', '<br>')
-        
+        notes_html = notes.replace("\n", "<br>")
+
         msg_box = QMessageBox(self)
         msg_box.setWindowTitle("Hakkında ve Sürüm Notları")
         msg_box.setTextFormat(Qt.TextFormat.RichText)
-        
+
         about_text = f"""
         <h3>Personel Asistan</h3>
         <p><b>Versiyon:</b> {version}</p>
@@ -182,7 +180,7 @@ class MainMenuWindow(QMainWindow):
         <h4>Sürüm Notları:</h4>
         <p>{notes_html}</p>
         """
-        
+
         msg_box.setText(about_text)
         msg_box.setIcon(QMessageBox.Icon.Information)
         msg_box.exec()

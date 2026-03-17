@@ -36,7 +36,7 @@ def validate_tckn(tckn: str) -> bool:
     digits = [int(d) for d in tckn]
 
     # 10. hane kontrolü: (tek pozisyonlar toplamı * 7 - çift pozisyonlar toplamı) mod 10
-    odd_sum = sum(digits[0:9:2])   # 1., 3., 5., 7., 9. haneler (0-indexed: 0,2,4,6,8)
+    odd_sum = sum(digits[0:9:2])  # 1., 3., 5., 7., 9. haneler (0-indexed: 0,2,4,6,8)
     even_sum = sum(digits[1:8:2])  # 2., 4., 6., 8. haneler (0-indexed: 1,3,5,7)
     if (odd_sum * 7 - even_sum) % 10 != digits[9]:
         return False

@@ -50,4 +50,3 @@ class TestMainMenuWindow:
 
         mock_open.assert_called_once()
         window.close()
-

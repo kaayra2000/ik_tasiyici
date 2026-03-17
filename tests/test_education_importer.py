@@ -216,7 +216,9 @@ class TestEducationImporter:
 
         warnings = importer.last_warning_messages()
         assert any("Geçersiz TCKN: 35519215090" in message for message in warnings)
-        assert any("mezun kaydı bulunamadı ibaresi var" in message for message in warnings)
+        assert any(
+            "mezun kaydı bulunamadı ibaresi var" in message for message in warnings
+        )
 
     def test_import_education_raises_for_empty_valid_source(
         self,

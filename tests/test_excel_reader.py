@@ -20,7 +20,6 @@ from src.core.excel_reader import (
     oku_personel_listesi_raporlu,
 )
 
-
 # ---------------------------------------------------------------------------
 # Yardımcı: hafızada test xlsx oluşturucu
 # ---------------------------------------------------------------------------
@@ -96,8 +95,16 @@ class TestOkuPersonelListesi:
         dosya = tmp_path / "test_gecersiz.xlsx"
         _xlsx_yaz(
             [
-                {"TCKN": "00000000000", "AD SOYAD": "Geçersiz Kişi", "BİRİMİ": "Birim A"},
-                {"TCKN": "10000000146", "AD SOYAD": "Geçerli Kişi", "BİRİMİ": "Birim B"},
+                {
+                    "TCKN": "00000000000",
+                    "AD SOYAD": "Geçersiz Kişi",
+                    "BİRİMİ": "Birim A",
+                },
+                {
+                    "TCKN": "10000000146",
+                    "AD SOYAD": "Geçerli Kişi",
+                    "BİRİMİ": "Birim B",
+                },
             ],
             dosya,
         )

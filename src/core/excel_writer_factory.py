@@ -11,7 +11,6 @@ from __future__ import annotations
 from src.core.excel_write_strategy import ExcelWriteStrategy
 from src.core.excel_write_strategy_v1 import ExcelWriteStrategyV1
 
-
 # Desteklenen strateji sınıfları
 _STRATEGIES: dict[str, type[ExcelWriteStrategy]] = {
     "v1": ExcelWriteStrategyV1,
