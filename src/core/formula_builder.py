@@ -27,6 +27,71 @@ from src.config.constants import (
 )
 
 # ---------------------------------------------------------------------------
+# 30/360 (DAYS360) bazlı tecrübe süreleri
+# ---------------------------------------------------------------------------
+
+
+def _days360_toplam_ifadesi(
+    bitis_satir: int = TECRUBE_BITIS_SATIR,
+    baslangic_satir: int = TECRUBE_BASLANGIC_SATIR,
+) -> str:
+    """
+    Belirtilen satır aralığındaki DAYS360 toplamı için formül ifadesi üretir.
+
+    Boş tarih hücrelerini hesaba katmamak için SUMPRODUCT ile filtre uygular.
+    """
+    baslangic_aralik = (
+        f"{COL_BASLANGIC_TARIHI}{baslangic_satir}:{COL_BASLANGIC_TARIHI}{bitis_satir}"
+    )
+    bitis_aralik = (
+        f"{COL_BITIS_TARIHI}{baslangic_satir}:{COL_BITIS_TARIHI}{bitis_satir}"
+    )
+    alaninda_aralik = (
+        f"{COL_ALANINDA}{baslangic_satir}:{COL_ALANINDA}{bitis_satir}"
+    )
+    return (
+        f"SUMPRODUCT(--({baslangic_aralik}<>\"\"),--({bitis_aralik}<>\"\"),"
+        f"--({alaninda_aralik}=\"E\"),"
+        f"DAYS360({baslangic_aralik},{bitis_aralik},0))"
+    )
+
+
+def tecrube_360_yil_formulu(
+    bitis_satir: int = TECRUBE_BITIS_SATIR,
+    baslangic_satir: int = TECRUBE_BASLANGIC_SATIR,
+) -> str:
+    """30/360 toplam gün üzerinden yıl değerini döndüren formülü üretir."""
+    toplam = _days360_toplam_ifadesi(
+        bitis_satir=bitis_satir,
+        baslangic_satir=baslangic_satir,
+    )
+    return f'=IF({toplam}=0,"",INT({toplam}/{GUN_PER_YIL}))'
+
+
+def tecrube_360_ay_formulu(
+    bitis_satir: int = TECRUBE_BITIS_SATIR,
+    baslangic_satir: int = TECRUBE_BASLANGIC_SATIR,
+) -> str:
+    """30/360 toplam gün üzerinden ay değerini döndüren formülü üretir."""
+    toplam = _days360_toplam_ifadesi(
+        bitis_satir=bitis_satir,
+        baslangic_satir=baslangic_satir,
+    )
+    return f'=IF({toplam}=0,"",INT(MOD({toplam},{GUN_PER_YIL})/30))'
+
+
+def tecrube_360_gun_formulu(
+    bitis_satir: int = TECRUBE_BITIS_SATIR,
+    baslangic_satir: int = TECRUBE_BASLANGIC_SATIR,
+) -> str:
+    """30/360 toplam gün üzerinden gün değerini döndüren formülü üretir."""
+    toplam = _days360_toplam_ifadesi(
+        bitis_satir=bitis_satir,
+        baslangic_satir=baslangic_satir,
+    )
+    return f'=IF({toplam}=0,"",MOD(MOD({toplam},{GUN_PER_YIL}),30))'
+
+# ---------------------------------------------------------------------------
 # Prim günü formülleri (satır bazlı)
 # ---------------------------------------------------------------------------
 

@@ -22,6 +22,9 @@ from src.core.formula_builder import (
     hizmet_grubu_formulu,
     kademe_formulu,
     prim_gunu_formulu,
+    tecrube_360_ay_formulu,
+    tecrube_360_gun_formulu,
+    tecrube_360_yil_formulu,
     tecrube_yili_formulu,
     toplam_alanda_prim_formulu,
     toplam_prim_formulu,
@@ -53,6 +56,7 @@ _EKSIK_GUN_SUTUNU = "M"
 # Toplam / hesap satırları
 _SATIR_TOPLAM_PRIM = TECRUBE_BITIS_SATIR + 1  # 28
 _SATIR_ALANDA_PRIM = TECRUBE_BITIS_SATIR + 1  # 28
+_SATIR_YIL_AY_GUN = TECRUBE_BITIS_SATIR + 2  # 29
 
 # M3 görünür seçim hücresidir:
 # M3 = Hizmet Grubu Türü (A / AG)
@@ -140,6 +144,8 @@ class ExcelWriteStrategyV1(ExcelWriteStrategy):
         ws.cell(row=_SATIR_TOPLAM_PRIM, column=11).value = toplam_prim_formulu()
         ws.cell(row=_SATIR_ALANDA_PRIM, column=12).value = toplam_alanda_prim_formulu()
 
+        ExcelWriteStrategyV1._yaz_360_yil_ay_gun(ws)
+
         # Z sütununa gizli formülleri yazalım:
         # Z1 = Tecrübe Yılı (alanda toplam prim / 360)
         ws["Z1"] = tecrube_yili_formulu(toplam_alanda_hucre)
@@ -170,6 +176,18 @@ class ExcelWriteStrategyV1(ExcelWriteStrategy):
 
         # F3: Derece/Kademe
         ws[_HUCRE_KADEME] = '=IF(Z3="", Z2, Z2 & "/" & Z3)'
+
+    @staticmethod
+    def _yaz_360_yil_ay_gun(ws) -> None:
+        """J29/K29/L29: 30/360 bazlı toplam yıl/ay/gün formüllerini yazar."""
+        yil_hucre = ws.cell(row=_SATIR_YIL_AY_GUN, column=10)
+        ay_hucre = ws.cell(row=_SATIR_YIL_AY_GUN, column=11)
+        gun_hucre = ws.cell(row=_SATIR_YIL_AY_GUN, column=12)
+        yil_hucre.value = tecrube_360_yil_formulu()
+        ay_hucre.value = tecrube_360_ay_formulu()
+        gun_hucre.value = tecrube_360_gun_formulu()
+        for hucre in (yil_hucre, ay_hucre, gun_hucre):
+            hucre.number_format = "0"
 
     @staticmethod
     def _kopyala_hucre_bicimi(ws, kaynak_hucre: str, hedef_hucre: str) -> None:
