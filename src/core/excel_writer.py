@@ -231,6 +231,31 @@ def _template_yolunu_coz(template_path: str | Path | None = None) -> Path:
     return t_path
 
 
+def _boyut_ozelliklerini_kopyala(kaynak_boyut, hedef_boyut) -> None:
+    """Boyutla alakalı özellikleri kopyalar"""
+    alanlar = (
+                "width",
+                "hidden",
+                "bestFit",
+                "outlineLevel",
+                "outline_level",
+                "collapsed",
+                "customWidth",
+                "auto_size",
+                "style",
+                "min",
+                "max",
+                "height",
+                "customHeight",
+            )
+    for alan in alanlar:
+        if hasattr(kaynak_boyut, alan):
+            try:
+                setattr(hedef_boyut, alan, getattr(kaynak_boyut, alan))
+            except AttributeError:
+                # Bazı alanlar read-only olabilir (örn. customHeight). Güvenle atla.
+                continue
+
 def _sayfa_icerigini_kopyala(kaynak_ws, hedef_ws) -> None:
     """Harici workbook'taki şablon sayfasını hedef workbook'a klonlar."""
     for (satir, sutun), kaynak_hucre in kaynak_ws._cells.items():
@@ -254,20 +279,17 @@ def _sayfa_icerigini_kopyala(kaynak_ws, hedef_ws) -> None:
 
     for anahtar, boyut in kaynak_ws.row_dimensions.items():
         hedef_boyut = hedef_ws.row_dimensions[anahtar]
-        hedef_boyut.height = boyut.height
-        hedef_boyut.hidden = boyut.hidden
-        hedef_boyut.outlineLevel = boyut.outlineLevel
-        hedef_boyut.outline_level = boyut.outline_level
-        hedef_boyut.collapsed = boyut.collapsed
+        _boyut_ozelliklerini_kopyala(
+            boyut,
+            hedef_boyut
+        )
 
     for anahtar, boyut in kaynak_ws.column_dimensions.items():
         hedef_boyut = hedef_ws.column_dimensions[anahtar]
-        hedef_boyut.width = boyut.width
-        hedef_boyut.hidden = boyut.hidden
-        hedef_boyut.bestFit = boyut.bestFit
-        hedef_boyut.outlineLevel = boyut.outlineLevel
-        hedef_boyut.outline_level = boyut.outline_level
-        hedef_boyut.collapsed = boyut.collapsed
+        _boyut_ozelliklerini_kopyala(
+            boyut,
+            hedef_boyut
+        )
 
     hedef_ws.sheet_format = copy(kaynak_ws.sheet_format)
     hedef_ws.sheet_properties = copy(kaynak_ws.sheet_properties)
