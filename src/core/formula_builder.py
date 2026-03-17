@@ -18,6 +18,10 @@ from src.config.constants import (
     COL_ALANDA_PRIM,
     COL_EKSIK_GUN,
     GUN_PER_YIL,
+    OGRENIM_DOKTORA,
+    OGRENIM_LISANS,
+    OGRENIM_TEZLI_YL,
+    OGRENIM_TEZSIZ_YL,
     TECRUBE_BASLANGIC_SATIR,
     TECRUBE_BITIS_SATIR,
 )
@@ -139,10 +143,10 @@ def en_yuksek_ogrenim_formulu(
     """
     Belirtilen aralıkta alanında okunan en yüksek öğrenim seviyesini (adını) döndüren Excel formülünü üretir.
 
-    Daha yüksek satır numarasının (örneğin 8 - Doktora), daha düşük satır numarasına (örneğin 6 - Lisans)
-    göre daha üst bir öğrenim seviyesini ifade ettiği varsayılır. Bu nedenle en yüksek satırdan aşağıya (öncelikli)
-    doğru kontrol eden bir formül oluşturulur.
+    Sıralama satır numarasına değil, öğrenim seviyesine göre yapılır.
+    Öncelik: Doktora > Tezli Yüksek Lisans > Tezsiz Yüksek Lisans > Lisans.
     Her öğrenim seviyesi için okul hücresi dolu olmalı ve "alanında" hücresi "E" olmalıdır.
+    Ayrıca ilgili satırın öğrenim adı hücresinin (B sütunu) hedef seviye ile eşleşmesi gerekir.
 
     :param baslangic_satir: Öğrenim bilgilerinin başladığı satır (ör. ``6``).
     :param bitis_satir: Öğrenim bilgilerinin bittiği satır (ör. ``8``).
@@ -151,14 +155,25 @@ def en_yuksek_ogrenim_formulu(
     :param alaninda_sutun: Alanında olup olmadığını ("E"/"H") belirten sütun harfi (ör. ``"K"``).
     :returns: İç içe IF formülü string'i.
     """
-    formul = '""'
-    for satir in range(baslangic_satir, bitis_satir + 1):
-        okul = f"{okul_sutun}{satir}"
-        alaninda = f"{alaninda_sutun}{satir}"
-        ad = f"{ad_sutun}{satir}"
-        formul = f'IF(AND({okul}<>"",{alaninda}="E"),{ad},{formul})'
+    def seviye_var_mi(seviye: str) -> str:
+        kosullar = []
+        for satir in range(baslangic_satir, bitis_satir + 1):
+            okul = f"{okul_sutun}{satir}"
+            alaninda = f"{alaninda_sutun}{satir}"
+            ad = f"{ad_sutun}{satir}"
+            kosullar.append(
+                f'AND({ad}="{seviye}",{okul}<>"",{alaninda}="E")'
+            )
+        if not kosullar:
+            return "FALSE"
+        return f'OR({",".join(kosullar)})'
 
-    return f"={formul}"
+    return (
+        f'=IF({seviye_var_mi(OGRENIM_DOKTORA)},"{OGRENIM_DOKTORA}",'
+        f'IF({seviye_var_mi(OGRENIM_TEZLI_YL)},"{OGRENIM_TEZLI_YL}",'
+        f'IF({seviye_var_mi(OGRENIM_TEZSIZ_YL)},"{OGRENIM_TEZSIZ_YL}",'
+        f'IF({seviye_var_mi(OGRENIM_LISANS)},"{OGRENIM_LISANS}",""))))'
+    )
 
 
 # ---------------------------------------------------------------------------
