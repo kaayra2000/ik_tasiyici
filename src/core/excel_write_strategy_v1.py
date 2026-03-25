@@ -202,13 +202,17 @@ class ExcelWriteStrategyV1(ExcelWriteStrategy):
         # K30: Kademe Başlangıcı
         k30_hucre = ws["K30"]
         k30_hucre.value = kademe_baslangic_formulu(
-            _TECRUBE_YILI_HUCRE, _EN_YUKSEK_OGRENIM_HUCRE
+            _TECRUBE_YILI_HUCRE,
+            _EN_YUKSEK_OGRENIM_HUCRE,
+            _HUCRE_KADEME,
         )
 
         # L30: Kademe Bitişi
         l30_hucre = ws["L30"]
         l30_hucre.value = kademe_bitis_formulu(
-            _TECRUBE_YILI_HUCRE, _EN_YUKSEK_OGRENIM_HUCRE
+            _TECRUBE_YILI_HUCRE,
+            _EN_YUKSEK_OGRENIM_HUCRE,
+            _HUCRE_KADEME,
         )
 
         # K30 ve L30'a tam sayı formatı uygula

@@ -444,6 +444,7 @@ def kademe_formulu(
 def kademe_baslangic_formulu(
     tecrube_yili_hucre: str,
     ogrenim_hucre: str,
+    derece_kademe_hucre: str | None = None,
 ) -> str:
     """
     Tecrübe yılı ve öğrenim durumuna göre kademe başlangıcını belirleyen formülü üretir.
@@ -452,6 +453,9 @@ def kademe_baslangic_formulu(
 
     :param tecrube_yili_hucre: Tecrübe yılı hücresi (ör. ``"Z1"``).
     :param ogrenim_hucre: Öğrenim durumu hücresi (ör. ``"Z4"``).
+    :param derece_kademe_hucre: Derece/kademe hücresi (ör. ``"F3"``).
+        Verilirse formül, ``AG-4/`` benzeri ön eki bu hücreden alır ve
+        sayısal kademeyle birleştirir.
     :returns: Kademe başlangıcı formülü string'i.
     """
     t = tecrube_yili_hucre
@@ -491,8 +495,8 @@ def kademe_baslangic_formulu(
     # 0-2 yıl
     ag6_0_2 = branch("6", "5", "4", "4")
 
-    return (
-        f"=IF({t}>=16,{ag2},"
+    kademe_ifadesi = (
+        f"IF({t}>=16,{ag2},"
         f"IF({t}>=15,{ag3_15_16},"
         f"IF({t}>=12,{ag3_12_15},"
         f"IF({t}>=10,{ag4_10_12},"
@@ -501,11 +505,18 @@ def kademe_baslangic_formulu(
         f"IF({t}>=3,{ag5_3_6},"
         f"IF({t}>=2,{ag6_2_3},{ag6_0_2}))))))))"
     )
+    if not derece_kademe_hucre:
+        return f"={kademe_ifadesi}"
+
+    dk = derece_kademe_hucre
+    on_ek = f'IFERROR(LEFT({dk},FIND("/",{dk})),"")'
+    return f"=IF({dk}=\"\",{kademe_ifadesi},{on_ek}&{kademe_ifadesi})"
 
 
 def kademe_bitis_formulu(
     tecrube_yili_hucre: str,
     ogrenim_hucre: str,
+    derece_kademe_hucre: str | None = None,
 ) -> str:
     """
     Tecrübe yılı ve öğrenim durumuna göre kademe bitişini belirleyen formülü üretir.
@@ -513,6 +524,9 @@ def kademe_bitis_formulu(
 
     :param tecrube_yili_hucre: Tecrübe yılı hücresi (ör. ``"Z1"``).
     :param ogrenim_hucre: Öğrenim durumu hücresi (ör. ``"Z4"``).
+    :param derece_kademe_hucre: Derece/kademe hücresi (ör. ``"F3"``).
+        Verilirse formül, ``AG-4/`` benzeri ön eki bu hücreden alır ve
+        sayısal kademeyle birleştirir.
     :returns: İç içe IF formülü string'i.
     """
     t = tecrube_yili_hucre
@@ -552,8 +566,8 @@ def kademe_bitis_formulu(
     # 0-2 yıl
     ag6_0_2 = branch("5", "4", "3", "3")
 
-    return (
-        f"=IF({t}>=16,{ag2},"
+    kademe_ifadesi = (
+        f"IF({t}>=16,{ag2},"
         f"IF({t}>=15,{ag3_15_16},"
         f"IF({t}>=12,{ag3_12_15},"
         f"IF({t}>=10,{ag4_10_12},"
@@ -562,3 +576,9 @@ def kademe_bitis_formulu(
         f"IF({t}>=3,{ag5_3_6},"
         f"IF({t}>=2,{ag6_2_3},{ag6_0_2}))))))))"
     )
+    if not derece_kademe_hucre:
+        return f"={kademe_ifadesi}"
+
+    dk = derece_kademe_hucre
+    on_ek = f'IFERROR(LEFT({dk},FIND("/",{dk})),"")'
+    return f"=IF({dk}=\"\",{kademe_ifadesi},{on_ek}&{kademe_ifadesi})"

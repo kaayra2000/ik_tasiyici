@@ -17,6 +17,8 @@ from src.core.formula_builder import (
     brut_ucret_formulu,
     en_yuksek_ogrenim_formulu,
     hizmet_grubu_formulu,
+    kademe_baslangic_formulu,
+    kademe_bitis_formulu,
     kademe_formulu,
     prim_gunu_formulu,
     tecrube_360_ay_formulu,
@@ -267,3 +269,31 @@ class TestBrutUcretFormulu:
     def test_vlookup_kullanir(self):
         sonuc = brut_ucret_formulu("F3", "$AA$1:$AB$72")
         assert sonuc == '=IFERROR(VLOOKUP(F3,$AA$1:$AB$72,2,FALSE),"")'
+
+
+class TestKademeBaslangicVeBitisFormulu:
+    """K30/L30 formullerinde derece on eki davranisini test eder."""
+
+    def test_baslangic_formulu_f3_ile_on_ek_ekler(self):
+        sonuc = kademe_baslangic_formulu("Z1", "Z4", "F3")
+        assert 'LEFT(F3,FIND("/",F3))' in sonuc
+        assert 'IF(F3=""' in sonuc
+        assert "Z1" in sonuc
+        assert "Z4" in sonuc
+
+    def test_bitis_formulu_f3_ile_on_ek_ekler(self):
+        sonuc = kademe_bitis_formulu("Z1", "Z4", "F3")
+        assert 'LEFT(F3,FIND("/",F3))' in sonuc
+        assert 'IF(F3=""' in sonuc
+        assert "Z1" in sonuc
+        assert "Z4" in sonuc
+
+    def test_baslangic_formulu_f3_yokken_sayisal_doner(self):
+        sonuc = kademe_baslangic_formulu("Z1", "Z4")
+        assert 'LEFT(' not in sonuc
+        assert 'FIND("/"' not in sonuc
+
+    def test_bitis_formulu_f3_yokken_sayisal_doner(self):
+        sonuc = kademe_bitis_formulu("Z1", "Z4")
+        assert 'LEFT(' not in sonuc
+        assert 'FIND("/"' not in sonuc

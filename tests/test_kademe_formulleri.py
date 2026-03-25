@@ -118,8 +118,8 @@ class TestKademeFormulleri:
 
         wb.close()
 
-    def test_k30_z1_ve_z4_referansi(self, tmp_path):
-        """K30 formülü Z1 ve Z4 hücrelerine referans vermeli."""
+    def test_k30_z1_z4_ve_f3_referansi(self, tmp_path):
+        """K30 formülü Z1, Z4 ve F3 hücrelerine referans vermeli."""
         personel = Personel(
             tckn="12345678901", ad_soyad="Test Kullanıcı", birim="Test Birimi"
         )
@@ -137,11 +137,12 @@ class TestKademeFormulleri:
 
         assert "Z1" in k30_formula, "K30 formülü Z1 hücresine referans vermeli"
         assert "Z4" in k30_formula, "K30 formülü Z4 hücresine referans vermeli"
+        assert "F3" in k30_formula, "K30 formülü F3 hücresine referans vermeli"
 
         wb.close()
 
-    def test_l30_z1_ve_z4_referansi(self, tmp_path):
-        """L30 formülü Z1 ve Z4 hücrelerine referans vermeli."""
+    def test_l30_z1_z4_ve_f3_referansi(self, tmp_path):
+        """L30 formülü Z1, Z4 ve F3 hücrelerine referans vermeli."""
         personel = Personel(
             tckn="12345678901", ad_soyad="Test Kullanıcı", birim="Test Birimi"
         )
@@ -159,6 +160,7 @@ class TestKademeFormulleri:
 
         assert "Z1" in l30_formula, "L30 formülü Z1 hücresine referans vermeli"
         assert "Z4" in l30_formula, "L30 formülü Z4 hücresine referans vermeli"
+        assert "F3" in l30_formula, "L30 formülü F3 hücresine referans vermeli"
 
         wb.close()
 
