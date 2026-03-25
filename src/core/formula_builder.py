@@ -27,7 +27,7 @@ from src.config.constants import (
 )
 
 # ---------------------------------------------------------------------------
-# 30/360 (DAYS360) bazlı tecrübe süreleri
+# L28 toplam gün bazlı tecrübe yıl/ay/gün formülleri
 # ---------------------------------------------------------------------------
 
 
@@ -58,36 +58,30 @@ def tecrube_360_yil_formulu(
     bitis_satir: int = TECRUBE_BITIS_SATIR,
     baslangic_satir: int = TECRUBE_BASLANGIC_SATIR,
 ) -> str:
-    """30/360 toplam gün üzerinden yıl değerini döndüren formülü üretir."""
-    toplam = _days360_toplam_ifadesi(
-        bitis_satir=bitis_satir,
-        baslangic_satir=baslangic_satir,
-    )
-    return f'=IF({toplam}=0,"",INT({toplam}/{GUN_PER_YIL}))'
+    """L28 toplam gün hücresini 360'a bölerek yıl değerini döndüren formülü üretir."""
+    _ = (bitis_satir, baslangic_satir)
+    toplam_hucre = "L28"
+    return f'=IF({toplam_hucre}=0,"",INT({toplam_hucre}/{GUN_PER_YIL}))'
 
 
 def tecrube_360_ay_formulu(
     bitis_satir: int = TECRUBE_BITIS_SATIR,
     baslangic_satir: int = TECRUBE_BASLANGIC_SATIR,
 ) -> str:
-    """30/360 toplam gün üzerinden ay değerini döndüren formülü üretir."""
-    toplam = _days360_toplam_ifadesi(
-        bitis_satir=bitis_satir,
-        baslangic_satir=baslangic_satir,
-    )
-    return f'=IF({toplam}=0,"",INT(MOD({toplam},{GUN_PER_YIL})/30))'
+    """L28 toplam gün hücresinin MOD 360 değerinden ay hesabı yapan formülü üretir."""
+    _ = (bitis_satir, baslangic_satir)
+    toplam_hucre = "L28"
+    return f'=IF({toplam_hucre}=0,"",INT(MOD({toplam_hucre},360)/30))'
 
 
 def tecrube_360_gun_formulu(
     bitis_satir: int = TECRUBE_BITIS_SATIR,
     baslangic_satir: int = TECRUBE_BASLANGIC_SATIR,
 ) -> str:
-    """30/360 toplam gün üzerinden gün değerini döndüren formülü üretir."""
-    toplam = _days360_toplam_ifadesi(
-        bitis_satir=bitis_satir,
-        baslangic_satir=baslangic_satir,
-    )
-    return f'=IF({toplam}=0,"",MOD(MOD({toplam},{GUN_PER_YIL}),30))'
+    """L28 toplam gün hücresinin MOD 30 değerinden gün hesabı yapan formülü üretir."""
+    _ = (bitis_satir, baslangic_satir)
+    toplam_hucre = "L28"
+    return f'=IF({toplam_hucre}=0,"",MOD({toplam_hucre},30))'
 
 
 # ---------------------------------------------------------------------------

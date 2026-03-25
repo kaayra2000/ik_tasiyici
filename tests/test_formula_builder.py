@@ -110,37 +110,24 @@ class TestTecrübeYiliFormulu:
 
 
 class TestTecrube360Formulleri:
-    """30/360 bazlı yıl/ay/gün formülü testleri."""
-
-    @staticmethod
-    def _toplam_ifadesi() -> str:
-        return (
-            'SUMPRODUCT(--(E13:E27<>""),--(F13:F27<>""),--(J13:J27="E"),'
-            "DAYS360(E13:E27,F13:F27,0))"
-        )
+    """L28 toplam gün hücresi bazlı yıl/ay/gün formülü testleri."""
 
     def test_yil_formulu_varsayilan(self):
-        toplam = self._toplam_ifadesi()
         sonuc = tecrube_360_yil_formulu()
-        assert sonuc == f'=IF({toplam}=0,"",INT({toplam}/360))'
+        assert sonuc == '=IF(L28=0,"",INT(L28/360))'
 
     def test_ay_formulu_varsayilan(self):
-        toplam = self._toplam_ifadesi()
         sonuc = tecrube_360_ay_formulu()
-        assert sonuc == f'=IF({toplam}=0,"",INT(MOD({toplam},360)/30))'
+        assert sonuc == '=IF(L28=0,"",INT(MOD(L28,360)/30))'
 
     def test_gun_formulu_varsayilan(self):
-        toplam = self._toplam_ifadesi()
         sonuc = tecrube_360_gun_formulu()
-        assert sonuc == f'=IF({toplam}=0,"",MOD(MOD({toplam},360),30))'
+        assert sonuc == '=IF(L28=0,"",MOD(L28,30))'
 
-    def test_alanda_filtresi_icerir(self):
-        sonuc = tecrube_360_yil_formulu()
-        assert 'J13:J27="E"' in sonuc
-
-    def test_days360_kullanir(self):
-        sonuc = tecrube_360_yil_formulu()
-        assert "DAYS360(" in sonuc
+    def test_l28_hucresine_baglidir(self):
+        assert "L28" in tecrube_360_yil_formulu()
+        assert "L28" in tecrube_360_ay_formulu()
+        assert "L28" in tecrube_360_gun_formulu()
 
 
 class TestEnYuksekOgrenimFormulu:

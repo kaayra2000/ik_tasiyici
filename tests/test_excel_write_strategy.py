@@ -168,7 +168,7 @@ class TestExcelWriteStrategyV1:
     def test_sayfa_doldur_360_yil_ay_gun_formulleri(
         self, strategy, personel, template_ws
     ):
-        """J29/K29/L29 30/360 bazlı formül içermeli ve tam sayı formatında olmalı."""
+        """J29/K29/L29 formülleri L28 bazlı olmalı ve tam sayı formatında olmalı."""
         strategy.sayfa_doldur(template_ws, personel)
         from src.config.constants import TECRUBE_BITIS_SATIR
 
@@ -180,7 +180,7 @@ class TestExcelWriteStrategyV1:
         for hucre in (yil, ay, gun):
             assert hucre.value is not None
             assert str(hucre.value).startswith("=")
-            assert "DAYS360(" in str(hucre.value)
+            assert "L28" in str(hucre.value)
             assert hucre.number_format == "0"
 
     def test_sayfa_doldur_hizmet_grubu_formulu_M3e_bagli(
