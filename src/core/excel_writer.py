@@ -56,6 +56,16 @@ class TutanakOlusturmaRaporu:
         return self.skipped_existing_file_count
 
 
+@dataclass(frozen=True)
+class _PersonelDosyaYazimSonucu:
+    """Tek personel için dosyaya yazım sonucunu taşır."""
+
+    output_path: Path
+    dosyaya_yazildi: bool
+    skipped_existing_count: int = 0
+    warning_messages: list[str] = field(default_factory=list)
+
+
 def olustur_dk_klasoru_raporlu(
     personeller: List[Personel],
     cikti_klasoru: str | Path,
@@ -68,8 +78,7 @@ def olustur_dk_klasoru_raporlu(
     ``{Ad Soyad} - {TCKN}.xlsx`` formatı uygulanır.
     """
     strategy = ExcelWriterFactory.create(version)
-    cikti_klasoru = Path(cikti_klasoru)
-    cikti_klasoru.mkdir(parents=True, exist_ok=True)
+    cikti_klasoru = _hazirla_cikti_klasoru(cikti_klasoru)
 
     added_file_count = 0
     skipped_existing_file_count = 0
@@ -77,45 +86,112 @@ def olustur_dk_klasoru_raporlu(
     generated_files: list[Path] = []
 
     for personel in personeller:
-        base_name = _sayfa_adi_olustur(personel)
-        cikti_yolu = cikti_klasoru / f"{base_name}.xlsx"
-
-        if cikti_yolu.exists():
-            wb = openpyxl.load_workbook(cikti_yolu)
-            added_count, skipped_count, personel_warnings = _personelleri_workbooka_ekle(
-                wb,
-                [personel],
-                strategy,
-                template_path,
-            )
-            wb.save(cikti_yolu)
-            wb.close()
-
-            if added_count:
-                added_file_count += 1
-                generated_files.append(cikti_yolu)
-            skipped_existing_file_count += skipped_count
-            warning_messages.extend(personel_warnings)
-            continue
-
-        wb, _, skipped_count, personel_warnings = _workbook_olustur(
-            [personel],
-            strategy,
-            template_path,
+        personel_sonucu = _personel_dosyasina_yaz(
+            personel=personel,
+            cikti_klasoru=cikti_klasoru,
+            strategy=strategy,
+            template_path=template_path,
         )
-        wb.save(cikti_yolu)
-        wb.close()
-
-        added_file_count += 1
-        generated_files.append(cikti_yolu)
-        skipped_existing_file_count += skipped_count
-        warning_messages.extend(personel_warnings)
+        if personel_sonucu.dosyaya_yazildi:
+            added_file_count += 1
+            generated_files.append(personel_sonucu.output_path)
+        skipped_existing_file_count += personel_sonucu.skipped_existing_count
+        warning_messages.extend(personel_sonucu.warning_messages)
 
     return TutanakOlusturmaRaporu(
         output_path=cikti_klasoru,
         added_file_count=added_file_count,
         skipped_existing_file_count=skipped_existing_file_count,
         generated_files=generated_files,
+        warning_messages=warning_messages,
+    )
+
+
+def _hazirla_cikti_klasoru(cikti_klasoru: str | Path) -> Path:
+    """Klasörü Path'e çevirir ve yoksa oluşturur."""
+    klasor = Path(cikti_klasoru)
+    klasor.mkdir(parents=True, exist_ok=True)
+    return klasor
+
+
+def _personel_dosyasina_yaz(
+    *,
+    personel: Personel,
+    cikti_klasoru: Path,
+    strategy: ExcelWriteStrategy,
+    template_path: str | Path | None,
+) -> _PersonelDosyaYazimSonucu:
+    """Tek personel için hedef dosyaya yazım akışını yürütür."""
+    cikti_yolu = _personel_cikti_dosya_yolu(personel, cikti_klasoru)
+
+    if cikti_yolu.exists():
+        return _mevcut_dosyaya_personel_yaz(
+            cikti_yolu=cikti_yolu,
+            personel=personel,
+            strategy=strategy,
+            template_path=template_path,
+        )
+
+    return _yeni_personel_dosyasi_olustur(
+        cikti_yolu=cikti_yolu,
+        personel=personel,
+        strategy=strategy,
+        template_path=template_path,
+    )
+
+
+def _personel_cikti_dosya_yolu(personel: Personel, cikti_klasoru: Path) -> Path:
+    """Personel için çıktı dosyasının tam yolunu üretir."""
+    base_name = _sayfa_adi_olustur(personel)
+    return cikti_klasoru / f"{base_name}.xlsx"
+
+
+def _mevcut_dosyaya_personel_yaz(
+    *,
+    cikti_yolu: Path,
+    personel: Personel,
+    strategy: ExcelWriteStrategy,
+    template_path: str | Path | None,
+) -> _PersonelDosyaYazimSonucu:
+    """Mevcut workbook'a personel sayfası ekler."""
+    wb = openpyxl.load_workbook(cikti_yolu)
+    added_count, skipped_count, warning_messages = _personelleri_workbooka_ekle(
+        wb,
+        [personel],
+        strategy,
+        template_path,
+    )
+    wb.save(cikti_yolu)
+    wb.close()
+
+    return _PersonelDosyaYazimSonucu(
+        output_path=cikti_yolu,
+        dosyaya_yazildi=bool(added_count),
+        skipped_existing_count=skipped_count,
+        warning_messages=warning_messages,
+    )
+
+
+def _yeni_personel_dosyasi_olustur(
+    *,
+    cikti_yolu: Path,
+    personel: Personel,
+    strategy: ExcelWriteStrategy,
+    template_path: str | Path | None,
+) -> _PersonelDosyaYazimSonucu:
+    """Yeni workbook oluşturur ve personel sayfasını kaydeder."""
+    wb, added_count, skipped_count, warning_messages = _workbook_olustur(
+        [personel],
+        strategy,
+        template_path,
+    )
+    wb.save(cikti_yolu)
+    wb.close()
+
+    return _PersonelDosyaYazimSonucu(
+        output_path=cikti_yolu,
+        dosyaya_yazildi=bool(added_count),
+        skipped_existing_count=skipped_count,
         warning_messages=warning_messages,
     )
 

@@ -79,6 +79,18 @@ class EducationImportResult:
         return self.backup_paths[0]
 
 
+@dataclass(frozen=True)
+class _TargetFileProcessResult:
+    """Tek bir hedef workbook işleme sonucunu taşır."""
+
+    matched_tckns: set[str]
+    matched_sheet_count: int
+    updated_sheet_count: int
+    appended_record_count: int
+    skipped_record_count: int
+    backup_path: Path | None = None
+
+
 class EducationImporter:
     """Kaynak Excel'deki mezuniyet kayıtlarını tutanak dosyasına işler."""
 
@@ -95,61 +107,108 @@ class EducationImporter:
         target_dir = Path(target_dir)
         self._last_warning_messages = []
 
-        records_by_tckn = self._read_source_records(source_path)
-        if not records_by_tckn:
-            raise ValueError(
-                "Kaynak dosyada işlenecek geçerli mezuniyet kaydı bulunamadı."
-            )
-
+        records_by_tckn = self._load_records_or_raise(source_path)
         target_files = self._resolve_target_files(target_dir)
 
         result = EducationImportResult()
         matched_tckns: set[str] = set()
 
         for target_path in target_files:
-            workbook = openpyxl.load_workbook(target_path)
-            file_matched_tckns: set[str] = set()
-            file_updated_sheet_count = 0
-            file_appended_record_count = 0
-            file_skipped_record_count = 0
+            file_result = self._process_target_file(target_path, records_by_tckn)
+            self._merge_target_result(result, matched_tckns, file_result)
 
-            try:
-                for worksheet in workbook.worksheets:
-                    tckn = self._match_tckn(worksheet.title, records_by_tckn)
-                    if tckn is None:
-                        continue
+        self._finalize_result(result, records_by_tckn, matched_tckns)
 
-                    file_matched_tckns.add(tckn)
-                    result.matched_sheet_count += 1
+        return result
 
-                    appended_count, skipped_count, warning_messages = (
-                        self._apply_records_to_sheet(
-                            worksheet,
-                            records_by_tckn[tckn],
-                        )
+    def _load_records_or_raise(
+        self,
+        source_path: Path,
+    ) -> dict[str, list[EducationRecord]]:
+        """Kaynak kayıtları yükler; boşsa kullanıcıya anlamlı hata döner."""
+        records_by_tckn = self._read_source_records(source_path)
+        if records_by_tckn:
+            return records_by_tckn
+
+        raise ValueError("Kaynak dosyada işlenecek geçerli mezuniyet kaydı bulunamadı.")
+
+    def _process_target_file(
+        self,
+        target_path: Path,
+        records_by_tckn: dict[str, list[EducationRecord]],
+    ) -> _TargetFileProcessResult:
+        """Tek bir hedef workbook'u işler ve sayısal özet döndürür."""
+        workbook = openpyxl.load_workbook(target_path)
+        matched_tckns: set[str] = set()
+        matched_sheet_count = 0
+        updated_sheet_count = 0
+        appended_record_count = 0
+        skipped_record_count = 0
+
+        try:
+            for worksheet in workbook.worksheets:
+                tckn = self._match_tckn(worksheet.title, records_by_tckn)
+                if tckn is None:
+                    continue
+
+                matched_tckns.add(tckn)
+                matched_sheet_count += 1
+
+                appended_count, skipped_count, warning_messages = (
+                    self._apply_records_to_sheet(
+                        worksheet,
+                        records_by_tckn[tckn],
                     )
-                    file_appended_record_count += appended_count
-                    file_skipped_record_count += skipped_count
-                    self._last_warning_messages.extend(warning_messages)
-                    if appended_count:
-                        file_updated_sheet_count += 1
+                )
+                appended_record_count += appended_count
+                skipped_record_count += skipped_count
+                self._last_warning_messages.extend(warning_messages)
+                if appended_count:
+                    updated_sheet_count += 1
 
-                if file_matched_tckns:
-                    result.processed_file_count += 1
-                    matched_tckns.update(file_matched_tckns)
+            backup_path = None
+            if appended_record_count:
+                backup_path = self._create_backup(target_path)
+                self._save_workbook(workbook, target_path)
+        finally:
+            workbook.close()
 
-                if file_appended_record_count:
-                    backup_path = self._create_backup(target_path)
-                    result.backup_paths.append(backup_path)
-                    result.updated_file_count += 1
-                    self._save_workbook(workbook, target_path)
-            finally:
-                workbook.close()
+        return _TargetFileProcessResult(
+            matched_tckns=matched_tckns,
+            matched_sheet_count=matched_sheet_count,
+            updated_sheet_count=updated_sheet_count,
+            appended_record_count=appended_record_count,
+            skipped_record_count=skipped_record_count,
+            backup_path=backup_path,
+        )
 
-            result.updated_sheet_count += file_updated_sheet_count
-            result.appended_record_count += file_appended_record_count
-            result.skipped_record_count += file_skipped_record_count
+    @staticmethod
+    def _merge_target_result(
+        result: EducationImportResult,
+        matched_tckns: set[str],
+        file_result: _TargetFileProcessResult,
+    ) -> None:
+        """Tek dosya işleme özetini toplam sonuca ekler."""
+        if file_result.matched_tckns:
+            result.processed_file_count += 1
+            matched_tckns.update(file_result.matched_tckns)
 
+        result.matched_sheet_count += file_result.matched_sheet_count
+        result.updated_sheet_count += file_result.updated_sheet_count
+        result.appended_record_count += file_result.appended_record_count
+        result.skipped_record_count += file_result.skipped_record_count
+
+        if file_result.backup_path is not None:
+            result.backup_paths.append(file_result.backup_path)
+            result.updated_file_count += 1
+
+    def _finalize_result(
+        self,
+        result: EducationImportResult,
+        records_by_tckn: dict[str, list[EducationRecord]],
+        matched_tckns: set[str],
+    ) -> None:
+        """Toplam sonucu eşleşmeyen TCKN ve uyarılarla tamamlar."""
         result.unmatched_tckns = sorted(
             tckn for tckn in records_by_tckn if tckn not in matched_tckns
         )
@@ -157,8 +216,6 @@ class EducationImporter:
             self._build_unmatched_messages(records_by_tckn, result.unmatched_tckns)
         )
         result.warning_messages = list(self._last_warning_messages)
-
-        return result
 
     @staticmethod
     def _resolve_target_files(target_dir: Path) -> list[Path]:
