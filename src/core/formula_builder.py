@@ -321,7 +321,7 @@ BRUT_UCRET_HARITASI: dict[str, float] = {
 }
 
 
-def brut_ucret_formulu(kademe_hucre: str) -> str:
+def brut_ucret_formulu(kademe_hucre: str, tablo_araligi: str | None = None) -> str:
     """
     F3 benzeri derece/kademe anahtarına göre G3 brüt ücret formülünü üretir.
 
@@ -331,10 +331,11 @@ def brut_ucret_formulu(kademe_hucre: str) -> str:
     if not BRUT_UCRET_HARITASI:
         return '=""'
 
-    zincir = '""'
-    for anahtar, ucret in reversed(list(BRUT_UCRET_HARITASI.items())):
-        zincir = f'IF({kademe_hucre}="{anahtar}",{ucret:.2f},{zincir})'
-    return f"={zincir}"
+    if not tablo_araligi:
+        raise ValueError("tablo_araligi zorunludur")
+
+    # SWITCH eski ofis surumlerinde #NAME? verebildigi icin VLOOKUP kullanilir.
+    return f'=IFERROR(VLOOKUP({kademe_hucre},{tablo_araligi},2,FALSE),"")'
 
 
 def unvan_formulu(

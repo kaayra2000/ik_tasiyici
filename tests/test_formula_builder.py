@@ -263,15 +263,14 @@ class TestBrutUcretFormulu:
     """brut_ucret_formulu fonksiyonu için testler."""
 
     def test_f3_referansi_icerir(self):
-        sonuc = brut_ucret_formulu("F3")
+        sonuc = brut_ucret_formulu("F3", "$AA$1:$AB$72")
         assert "F3" in sonuc
 
     def test_ag_ve_a_anahtarlari_icerir(self):
-        sonuc = brut_ucret_formulu("F3")
-        assert 'F3="AG-1/6"' in sonuc
-        assert 'F3="A-6/1"' in sonuc
+        sonuc = brut_ucret_formulu("F3", "$AA$1:$AB$72")
+        assert "$AA$1:$AB$72" in sonuc
+        assert "VLOOKUP" in sonuc
 
-    def test_ucret_degerleri_icerir(self):
-        sonuc = brut_ucret_formulu("F3")
-        assert "347991.73" in sonuc
-        assert "135666.93" in sonuc
+    def test_vlookup_kullanir(self):
+        sonuc = brut_ucret_formulu("F3", "$AA$1:$AB$72")
+        assert sonuc == '=IFERROR(VLOOKUP(F3,$AA$1:$AB$72,2,FALSE),"")'

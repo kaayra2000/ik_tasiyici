@@ -144,7 +144,17 @@ class TestExcelWriteStrategyV1:
         brut_ucret = template_ws["G3"].value
         assert brut_ucret is not None
         assert str(brut_ucret).startswith("=")
-        assert 'F3="AG-1/6"' in str(brut_ucret)
+        assert "VLOOKUP(F3," in str(brut_ucret)
+
+    def test_sayfa_doldur_brut_ucret_tablosu_gizli_sutunlara_yazilir(
+        self, strategy, personel, template_ws
+    ):
+        """Ucret esleme tablosu AA/AB sutunlarina yazilmali ve gizli olmali."""
+        strategy.sayfa_doldur(template_ws, personel)
+        assert template_ws["AA1"].value == "AG-1/6"
+        assert template_ws["AB1"].value == 347991.73
+        assert template_ws.column_dimensions["AA"].hidden is True
+        assert template_ws.column_dimensions["AB"].hidden is True
 
     def test_sayfa_doldur_tecrube_formulleri(self, strategy, personel, template_ws):
         """Tecrübe satırlarında formül olmalı."""

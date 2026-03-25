@@ -20,6 +20,7 @@ from src.config.constants import (
 from src.core.excel_reader import Personel
 from src.core.excel_write_strategy import ExcelWriteStrategy
 from src.core.formula_builder import (
+    BRUT_UCRET_HARITASI,
     alanda_prim_formulu,
     brut_ucret_formulu,
     en_yuksek_ogrenim_formulu,
@@ -48,6 +49,9 @@ _HUCRE_BIRIM = "D3"
 _HUCRE_UNVAN = "E3"
 _HUCRE_KADEME = "F3"
 _HUCRE_BRUT_UCRET = "G3"
+_UCRET_TABLO_ANAHTAR_SUTUNU = "AA"
+_UCRET_TABLO_DEGER_SUTUNU = "AB"
+_UCRET_TABLO_BASLANGIC_SATIR = 1
 _HUCRE_HIZMET_GRUBU_BASLIK = "M2"
 _HUCRE_HIZMET_GRUBU_TURU = "M3"
 _HUCRE_HIZMET_GRUBU_BASLIK_STIL_KAYNAGI = "H2"
@@ -184,8 +188,16 @@ class ExcelWriteStrategyV1(ExcelWriteStrategy):
         # F3: Derece/Kademe
         ws[_HUCRE_KADEME] = '=IF(Z3="", Z2, Z2 & "/" & Z3)'
 
+        ExcelWriteStrategyV1._yaz_brut_ucret_tablosu(ws)
+
         # G3: Brüt Ücret (F3 değeri -> ücret tablosu)
-        ws[_HUCRE_BRUT_UCRET] = brut_ucret_formulu(_HUCRE_KADEME)
+        ilk_satir = _UCRET_TABLO_BASLANGIC_SATIR
+        son_satir = _UCRET_TABLO_BASLANGIC_SATIR + len(BRUT_UCRET_HARITASI) - 1
+        tablo_araligi = (
+            f"${_UCRET_TABLO_ANAHTAR_SUTUNU}${ilk_satir}:"
+            f"${_UCRET_TABLO_DEGER_SUTUNU}${son_satir}"
+        )
+        ws[_HUCRE_BRUT_UCRET] = brut_ucret_formulu(_HUCRE_KADEME, tablo_araligi)
 
         # K30: Kademe Başlangıcı
         k30_hucre = ws["K30"]
@@ -241,6 +253,18 @@ class ExcelWriteStrategyV1(ExcelWriteStrategy):
         hedef = ws.column_dimensions[_EKSIK_GUN_SUTUNU]
         if kaynak.width and (hedef.width is None or hedef.width < kaynak.width):
             hedef.width = kaynak.width
+
+    @staticmethod
+    def _yaz_brut_ucret_tablosu(ws: openpyxl.worksheet.worksheet.Worksheet) -> None:
+        """Brut ucret esleme tablosunu gizli yardimci sutunlara yazar."""
+        satir = _UCRET_TABLO_BASLANGIC_SATIR
+        for anahtar, deger in BRUT_UCRET_HARITASI.items():
+            ws[f"{_UCRET_TABLO_ANAHTAR_SUTUNU}{satir}"] = anahtar
+            ws[f"{_UCRET_TABLO_DEGER_SUTUNU}{satir}"] = deger
+            satir += 1
+
+        ws.column_dimensions[_UCRET_TABLO_ANAHTAR_SUTUNU].hidden = True
+        ws.column_dimensions[_UCRET_TABLO_DEGER_SUTUNU].hidden = True
 
     @staticmethod
     def _ekle_veri_dogrulama(ws: openpyxl.worksheet.worksheet.Worksheet) -> None:
