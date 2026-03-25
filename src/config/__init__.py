@@ -1,0 +1,1 @@
+"""Yapılandırma ve sabit değerler."""
