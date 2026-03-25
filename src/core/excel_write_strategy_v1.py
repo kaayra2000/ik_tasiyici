@@ -21,6 +21,7 @@ from src.core.excel_reader import Personel
 from src.core.excel_write_strategy import ExcelWriteStrategy
 from src.core.formula_builder import (
     alanda_prim_formulu,
+    brut_ucret_formulu,
     en_yuksek_ogrenim_formulu,
     hizmet_grubu_formulu,
     kademe_formulu,
@@ -46,6 +47,7 @@ _HUCRE_TCKN = "C3"
 _HUCRE_BIRIM = "D3"
 _HUCRE_UNVAN = "E3"
 _HUCRE_KADEME = "F3"
+_HUCRE_BRUT_UCRET = "G3"
 _HUCRE_HIZMET_GRUBU_BASLIK = "M2"
 _HUCRE_HIZMET_GRUBU_TURU = "M3"
 _HUCRE_HIZMET_GRUBU_BASLIK_STIL_KAYNAGI = "H2"
@@ -181,6 +183,9 @@ class ExcelWriteStrategyV1(ExcelWriteStrategy):
 
         # F3: Derece/Kademe
         ws[_HUCRE_KADEME] = '=IF(Z3="", Z2, Z2 & "/" & Z3)'
+
+        # G3: Brüt Ücret (F3 değeri -> ücret tablosu)
+        ws[_HUCRE_BRUT_UCRET] = brut_ucret_formulu(_HUCRE_KADEME)
 
         # K30: Kademe Başlangıcı
         k30_hucre = ws["K30"]

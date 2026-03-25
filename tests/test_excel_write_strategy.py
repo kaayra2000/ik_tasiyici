@@ -138,6 +138,14 @@ class TestExcelWriteStrategyV1:
         assert kademe is not None
         assert str(kademe).startswith("=")
 
+    def test_sayfa_doldur_brut_ucret_formul(self, strategy, personel, template_ws):
+        """G3 hücresi F3'e bağlı brüt ücret formülü içermeli."""
+        strategy.sayfa_doldur(template_ws, personel)
+        brut_ucret = template_ws["G3"].value
+        assert brut_ucret is not None
+        assert str(brut_ucret).startswith("=")
+        assert 'F3="AG-1/6"' in str(brut_ucret)
+
     def test_sayfa_doldur_tecrube_formulleri(self, strategy, personel, template_ws):
         """Tecrübe satırlarında formül olmalı."""
         strategy.sayfa_doldur(template_ws, personel)
