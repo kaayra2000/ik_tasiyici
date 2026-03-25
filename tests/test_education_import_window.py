@@ -27,8 +27,10 @@ def qapp():
 def settings(tmp_path: Path):
     """EducationImportWindow için yalın ayar yöneticisi taklidi döndürür."""
     manager = MagicMock()
+    manager.get_existing_dir.side_effect = lambda key: {
+        SettingsManager.KEY_EDUCATION_TARGET_PATH: str(tmp_path),
+    }.get(key, "")
     manager.get_existing_file.side_effect = lambda key: {
-        SettingsManager.KEY_EDUCATION_TARGET_PATH: str(tmp_path / "hedef.xlsx"),
         SettingsManager.KEY_EDUCATION_SOURCE_PATH: "",
     }.get(key, "")
     manager.get_parent_dir.side_effect = lambda key: {
@@ -42,7 +44,9 @@ def service(tmp_path: Path):
     """EducationImportWindow için servis taklidi döndürür."""
     mock_service = MagicMock()
     mock_service.import_education.return_value = EducationImportResult(
-        backup_path=tmp_path / "hedef_eski_20260309_1200.xlsx",
+        backup_paths=[tmp_path / "eski" / "hedef_eski_20260309_1200.xlsx"],
+        processed_file_count=1,
+        updated_file_count=1,
         matched_sheet_count=1,
         updated_sheet_count=1,
         appended_record_count=2,
@@ -73,7 +77,7 @@ class TestEducationImportWindow:
         tmp_path: Path,
     ):
         """Var olan dosya ve son klasör seçicilere yüklenmeli."""
-        assert window._target_selector.get_path() == str(tmp_path / "hedef.xlsx")
+        assert window._target_selector.get_path() == str(tmp_path)
         assert window._source_selector.get_path() == ""
         assert window._source_selector._dialog_path == str(tmp_path)
 
@@ -86,9 +90,8 @@ class TestEducationImportWindow:
         tmp_path: Path,
     ):
         """Başarılı işlemde servis çağrılmalı ve kullanıcı bilgilendirilmeli."""
-        target_path = tmp_path / "hedef.xlsx"
+        target_path = tmp_path
         source_path = tmp_path / "mezuniyet.xlsx"
-        target_path.touch()
         source_path.touch()
 
         window._target_selector.set_path(str(target_path))
@@ -98,7 +101,7 @@ class TestEducationImportWindow:
 
         service.import_education.assert_called_once_with(
             source_path=str(source_path),
-            target_path=str(target_path),
+            target_dir=str(target_path),
         )
         log_lines = window._log_widget._text_edit.toPlainText().splitlines()
         detail_index = next(
@@ -121,9 +124,8 @@ class TestEducationImportWindow:
         tmp_path: Path,
     ):
         """Hata durumunda da servis uyarıları log'a yazılmalı."""
-        target_path = tmp_path / "hedef.xlsx"
+        target_path = tmp_path
         source_path = tmp_path / "mezuniyet.xlsx"
-        target_path.touch()
         source_path.touch()
 
         service.import_education.side_effect = ValueError(
@@ -156,7 +158,7 @@ class TestEducationImportWindow:
         mock_warning,
         window: EducationImportWindow,
     ):
-        """Hedef dosya seçilmeden işlem başlamamalı."""
+        """Hedef klasör seçilmeden işlem başlamamalı."""
         window._target_selector.set_path("")
         window._source_selector.set_path("/tmp/kaynak.xlsx")
 

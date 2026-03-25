@@ -25,6 +25,7 @@ class DialogType(Enum):
 
     OPEN = auto()
     SAVE = auto()
+    DIRECTORY = auto()
 
 
 class FileSelectionWidget(QWidget):
@@ -33,7 +34,8 @@ class FileSelectionWidget(QWidget):
     :param label_text: Sol taraftaki etiket metni.
     :param button_text: Buton üzerindeki metin.
     :param dialog_title: Dosya diyaloğu başlığı.
-    :param dialog_type: ``DialogType.OPEN`` veya ``DialogType.SAVE``.
+        :param dialog_type: ``DialogType.OPEN``, ``DialogType.SAVE`` veya
+            ``DialogType.DIRECTORY``.
     :param file_filter: Dosya filtresi (ör. ``"Excel Files (*.xlsx)"``).
     :param parent: Üst widget.
 
@@ -84,11 +86,11 @@ class FileSelectionWidget(QWidget):
     # ------------------------------------------------------------------
 
     def get_path(self) -> str:
-        """Seçilen dosya yolunu döner."""
+        """Seçilen dosya/klasör yolunu döner."""
         return self._line_edit.text().strip()
 
     def set_path(self, path: str) -> None:
-        """Dosya yolunu programatik olarak ayarlar.
+        """Dosya/klasör yolunu programatik olarak ayarlar.
 
         :param path: Gösterilecek dosya yolu.
         """
@@ -136,10 +138,14 @@ class FileSelectionWidget(QWidget):
         _MODE_MAP = {
             DialogType.OPEN: QFileDialog.AcceptMode.AcceptOpen,
             DialogType.SAVE: QFileDialog.AcceptMode.AcceptSave,
+            DialogType.DIRECTORY: QFileDialog.AcceptMode.AcceptOpen,
         }
         dialog.setAcceptMode(_MODE_MAP[self._dialog_type])
         if self._dialog_type == DialogType.SAVE:
             dialog.setDefaultSuffix("xlsx")
+        if self._dialog_type == DialogType.DIRECTORY:
+            dialog.setFileMode(QFileDialog.FileMode.Directory)
+            dialog.setOption(QFileDialog.Option.ShowDirsOnly, True)
 
     def _center_dialog(self, dialog: QFileDialog) -> None:
         """Diyaloğu mevcut ekranın tam merkezine konumlandırır.

@@ -92,10 +92,14 @@ class TestEducationImporter:
         )
         _create_target_workbook(target_path)
 
-        result = importer.import_education(source_path, target_path)
+        result = importer.import_education(source_path, tmp_path)
 
-        assert result.backup_path.exists()
-        assert "_eski_" in result.backup_path.name
+        assert len(result.backup_paths) == 1
+        assert result.backup_paths[0].exists()
+        assert result.backup_paths[0].parent == tmp_path / "eski"
+        assert "_eski_" in result.backup_paths[0].name
+        assert result.processed_file_count == 1
+        assert result.updated_file_count == 1
         assert result.matched_sheet_count == 1
         assert result.updated_sheet_count == 1
         assert result.appended_record_count == 2
@@ -159,7 +163,7 @@ class TestEducationImporter:
         workbook.save(target_path)
         workbook.close()
 
-        result = importer.import_education(source_path, target_path)
+        result = importer.import_education(source_path, tmp_path)
 
         assert result.appended_record_count == 1
         assert result.skipped_record_count == 1
@@ -212,7 +216,7 @@ class TestEducationImporter:
             ValueError,
             match="işlenecek geçerli mezuniyet kaydı",
         ):
-            importer.import_education(source_path, target_path)
+            importer.import_education(source_path, tmp_path)
 
         warnings = importer.last_warning_messages()
         assert any("Geçersiz TCKN: 35519215090" in message for message in warnings)
@@ -258,6 +262,6 @@ class TestEducationImporter:
             ValueError,
             match="işlenecek geçerli mezuniyet kaydı",
         ):
-            importer.import_education(source_path, target_path)
+            importer.import_education(source_path, tmp_path)
 
-        assert not list(tmp_path.glob("*_eski_*.xlsx"))
+        assert not list((tmp_path / "eski").glob("*_eski_*.xlsx"))

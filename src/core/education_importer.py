@@ -26,6 +26,7 @@ _SOURCE_COL_UNIVERSITE = "UNIVERSITE"
 _SOURCE_COL_FAKULTE = "ENSMYOFAK"
 _SOURCE_COL_PROGRAM = "PROGRAM"
 _MISSING_RECORD_MARKER = "MEZUN KAYDI BULUNAMADI"
+_BACKUP_DIR_NAME = "eski"
 
 _DEFAULT_EDUCATION_ROWS = [6, 7, 8, 9, 10]
 _EDUCATION_LEVEL_PRIORITY = {
@@ -60,13 +61,22 @@ class EducationRecord:
 class EducationImportResult:
     """İçe aktarma işleminin özetini taşır."""
 
-    backup_path: Path
+    backup_paths: list[Path] = field(default_factory=list)
+    processed_file_count: int = 0
+    updated_file_count: int = 0
     matched_sheet_count: int = 0
     updated_sheet_count: int = 0
     appended_record_count: int = 0
     skipped_record_count: int = 0
     unmatched_tckns: list[str] = field(default_factory=list)
     warning_messages: list[str] = field(default_factory=list)
+
+    @property
+    def backup_path(self) -> Path | None:
+        """Geriye dönük uyumluluk için ilk yedek yolunu döndürür."""
+        if not self.backup_paths:
+            return None
+        return self.backup_paths[0]
 
 
 class EducationImporter:
@@ -78,11 +88,11 @@ class EducationImporter:
     def import_education(
         self,
         source_path: str | Path,
-        target_path: str | Path,
+        target_dir: str | Path,
     ) -> EducationImportResult:
-        """Kaynak mezuniyet dosyasını hedef tutanak workbook'una aktarır."""
+        """Kaynak mezuniyet dosyasını hedef tutanak klasöründeki dosyalara aktarır."""
         source_path = Path(source_path)
-        target_path = Path(target_path)
+        target_dir = Path(target_dir)
         self._last_warning_messages = []
 
         records_by_tckn = self._read_source_records(source_path)
@@ -91,46 +101,83 @@ class EducationImporter:
                 "Kaynak dosyada işlenecek geçerli mezuniyet kaydı bulunamadı."
             )
 
-        backup_path = self._create_backup(target_path)
-        workbook = openpyxl.load_workbook(target_path)
-        result = EducationImportResult(backup_path=backup_path)
+        target_files = self._resolve_target_files(target_dir)
+
+        result = EducationImportResult()
         matched_tckns: set[str] = set()
 
-        try:
-            for worksheet in workbook.worksheets:
-                tckn = self._match_tckn(worksheet.title, records_by_tckn)
-                if tckn is None:
-                    continue
+        for target_path in target_files:
+            workbook = openpyxl.load_workbook(target_path)
+            file_matched_tckns: set[str] = set()
+            file_updated_sheet_count = 0
+            file_appended_record_count = 0
+            file_skipped_record_count = 0
 
-                matched_tckns.add(tckn)
-                result.matched_sheet_count += 1
+            try:
+                for worksheet in workbook.worksheets:
+                    tckn = self._match_tckn(worksheet.title, records_by_tckn)
+                    if tckn is None:
+                        continue
 
-                appended_count, skipped_count, warning_messages = (
-                    self._apply_records_to_sheet(
-                        worksheet,
-                        records_by_tckn[tckn],
+                    file_matched_tckns.add(tckn)
+                    result.matched_sheet_count += 1
+
+                    appended_count, skipped_count, warning_messages = (
+                        self._apply_records_to_sheet(
+                            worksheet,
+                            records_by_tckn[tckn],
+                        )
                     )
-                )
-                result.appended_record_count += appended_count
-                result.skipped_record_count += skipped_count
-                self._last_warning_messages.extend(warning_messages)
-                if appended_count:
-                    result.updated_sheet_count += 1
+                    file_appended_record_count += appended_count
+                    file_skipped_record_count += skipped_count
+                    self._last_warning_messages.extend(warning_messages)
+                    if appended_count:
+                        file_updated_sheet_count += 1
 
-            result.unmatched_tckns = sorted(
-                tckn for tckn in records_by_tckn if tckn not in matched_tckns
-            )
-            self._last_warning_messages.extend(
-                self._build_unmatched_messages(records_by_tckn, result.unmatched_tckns)
-            )
-            result.warning_messages = list(self._last_warning_messages)
+                if file_matched_tckns:
+                    result.processed_file_count += 1
+                    matched_tckns.update(file_matched_tckns)
 
-            if result.appended_record_count:
-                self._save_workbook(workbook, target_path)
-        finally:
-            workbook.close()
+                if file_appended_record_count:
+                    backup_path = self._create_backup(target_path)
+                    result.backup_paths.append(backup_path)
+                    result.updated_file_count += 1
+                    self._save_workbook(workbook, target_path)
+            finally:
+                workbook.close()
+
+            result.updated_sheet_count += file_updated_sheet_count
+            result.appended_record_count += file_appended_record_count
+            result.skipped_record_count += file_skipped_record_count
+
+        result.unmatched_tckns = sorted(
+            tckn for tckn in records_by_tckn if tckn not in matched_tckns
+        )
+        self._last_warning_messages.extend(
+            self._build_unmatched_messages(records_by_tckn, result.unmatched_tckns)
+        )
+        result.warning_messages = list(self._last_warning_messages)
 
         return result
+
+    @staticmethod
+    def _resolve_target_files(target_dir: Path) -> list[Path]:
+        """Hedef klasörde işlenecek tutanak dosyalarını döndürür."""
+        if not target_dir.is_dir():
+            raise FileNotFoundError(f"Hedef tutanak klasörü bulunamadı: {target_dir}")
+
+        target_files = sorted(
+            path
+            for path in target_dir.iterdir()
+            if path.is_file()
+            and path.suffix.lower() == ".xlsx"
+            and "_eski_" not in path.stem
+        )
+        if not target_files:
+            raise ValueError(
+                "Hedef tutanak klasöründe işlenecek .xlsx dosyası bulunamadı."
+            )
+        return target_files
 
     def last_warning_messages(self) -> list[str]:
         """Son içe aktarma denemesindeki uyarıları döndürür."""
@@ -341,7 +388,9 @@ class EducationImporter:
 
         timestamp = datetime.now().strftime("%Y%m%d_%H%M")
         backup_name = f"{target_path.stem}_eski_{timestamp}{target_path.suffix}"
-        backup_path = target_path.with_name(backup_name)
+        backup_dir = target_path.parent / _BACKUP_DIR_NAME
+        backup_dir.mkdir(parents=True, exist_ok=True)
+        backup_path = backup_dir / backup_name
         copy2(target_path, backup_path)
         return backup_path
 

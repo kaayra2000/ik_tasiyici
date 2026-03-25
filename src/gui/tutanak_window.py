@@ -66,14 +66,14 @@ class _TutanakOlusturWorker(QThread):
         service: TutanakService,
         personeller: list,
         template_path: str,
-        output_path: str,
+        output_dir: str,
         version: str,
     ) -> None:
         super().__init__()
         self._service = service
         self._personeller = personeller
         self._template_path = template_path
-        self._output_path = output_path
+        self._output_dir = output_dir
         self._version = version
 
     def run(self) -> None:  # noqa: D102
@@ -81,7 +81,7 @@ class _TutanakOlusturWorker(QThread):
             result_path = self._service.tutanak_olustur(
                 personeller=self._personeller,
                 template_path=self._template_path,
-                output_path=self._output_path,
+                output_dir=self._output_dir,
                 version=self._version,
             )
             self.finished.emit(result_path)
@@ -98,7 +98,7 @@ class TutanakProcessState:
     personeller: list = field(default_factory=list)
     personel_details_logged: bool = False
     pending_template_file: str = ""
-    pending_output_path: str = ""
+    pending_output_dir: str = ""
 
 
 class TutanakWindow(QMainWindow):
@@ -219,9 +219,9 @@ class TutanakWindow(QMainWindow):
         self._output_selector = FileSelectionWidget(
             label_text="Kayıt Yeri:",
             button_text="Kayıt Yeri Seç",
-            dialog_title="Çıktı Dosyasını Kaydet",
-            dialog_type=DialogType.SAVE,
-            file_filter="Excel Files (*.xlsx)",
+            dialog_title="Çıktıların kaydedileceği boş klasörü seç",
+            dialog_type=DialogType.DIRECTORY,
+            file_filter="",
         )
         self._output_selector.file_selected.connect(self._on_output_selected)
         main_layout.addWidget(self._output_selector)
@@ -265,10 +265,15 @@ class TutanakWindow(QMainWindow):
             "Son kullanılan taslak klasörü yüklendi.",
         )
 
-        output_path = self._settings.get(SettingsManager.KEY_OUTPUT_PATH)
-        if output_path:
-            self._output_selector.set_path(output_path)
+        output_dir = self._settings.get_existing_dir(SettingsManager.KEY_OUTPUT_PATH)
+        if output_dir:
+            self._output_selector.set_path(output_dir)
             self.log("Son kullanılan kayıt yeri yüklendi.")
+        else:
+            output_parent = self._settings.get_parent_dir(SettingsManager.KEY_OUTPUT_PATH)
+            if output_parent:
+                self._output_selector.set_dialog_path(output_parent)
+                self.log("Son kullanılan kayıt klasörü yüklendi.")
 
         saved_version = self._settings.get(
             SettingsManager.KEY_OUTPUT_VERSION, DEFAULT_VERSION
@@ -308,9 +313,9 @@ class TutanakWindow(QMainWindow):
         self._settings.set(SettingsManager.KEY_TEMPLATE_PATH, path)
         self.log(f"Özel çıktı taslağı seçildi ve kaydedildi: {path}")
 
-    def _on_output_selected(self, path: str) -> None:
-        self._settings.set(SettingsManager.KEY_OUTPUT_PATH, path)
-        self.log(f"Çıktı kayıt yeri belirlendi: {path}")
+    def _on_output_selected(self, output_dir: str) -> None:
+        self._settings.set(SettingsManager.KEY_OUTPUT_PATH, output_dir)
+        self.log(f"Çıktı klasörü belirlendi: {output_dir}")
 
     def _on_version_changed(self, action: QAction) -> None:
         version = action.data()
@@ -363,10 +368,12 @@ class TutanakWindow(QMainWindow):
         tutanak_warnings = self._get_service_messages("son_tutanak_olusturma_uyarilari")
         tutanak_report = self._get_service_report("son_tutanak_olusturma_raporu")
 
-        added_sheet_count = getattr(tutanak_report, "added_sheet_count", None)
-        skipped_existing_count = getattr(tutanak_report, "skipped_existing_count", None)
-        if not isinstance(added_sheet_count, int):
-            added_sheet_count = None
+        added_file_count = getattr(tutanak_report, "added_file_count", None)
+        skipped_existing_count = getattr(
+            tutanak_report, "skipped_existing_file_count", None
+        )
+        if not isinstance(added_file_count, int):
+            added_file_count = None
         if not isinstance(skipped_existing_count, int):
             skipped_existing_count = len(tutanak_warnings)
 
@@ -376,9 +383,9 @@ class TutanakWindow(QMainWindow):
                 ("Geçerli personel", valid_personnel_count),
                 ("Geçersiz/atlanan kaynak satır", len(personel_warnings)),
                 ("Çıktı versiyonu", version),
-                ("Yeni eklenen sayfa", added_sheet_count),
+                ("Yeni oluşturulan dosya", added_file_count),
                 ("Mevcut olduğu için atlanan kayıt", skipped_existing_count),
-                ("Çıktı dosyası", result_path),
+                ("Çıktı klasörü", result_path),
                 ("Hata", error_message),
             ]
         )
@@ -416,9 +423,18 @@ class TutanakWindow(QMainWindow):
             )
             return
 
-        output_path = self._output_selector.get_path()
-        if not output_path:
+        output_dir = self._output_selector.get_path()
+        if not output_dir:
             QMessageBox.warning(self, "Uyarı", "Lütfen bir çıktı kayıt yeri seçin.")
+            return
+
+        output_dir_path = Path(output_dir)
+        if not output_dir_path.is_dir():
+            QMessageBox.warning(
+                self,
+                "Hata",
+                "Seçilen kayıt yeri geçerli bir klasör değil. Lütfen klasör seçin.",
+            )
             return
 
         self.log("-" * 40)
@@ -428,7 +444,7 @@ class TutanakWindow(QMainWindow):
         # Yeni işlem için durumu sıfırla
         self._process_state = TutanakProcessState(
             pending_template_file=template_file,
-            pending_output_path=output_path,
+            pending_output_dir=str(output_dir_path),
         )
 
         self._set_busy(True)
@@ -477,7 +493,7 @@ class TutanakWindow(QMainWindow):
             self._service,
             personeller,
             self._process_state.pending_template_file,
-            self._process_state.pending_output_path,
+            self._process_state.pending_output_dir,
             self._process_state.selected_version,
         )
         self._olusturma_worker.finished.connect(self._on_tutanak_olustur_finished)
@@ -558,12 +574,9 @@ class TutanakWindow(QMainWindow):
         )
 
     def _open_generated_output(self, result_path: str | Path) -> None:
-        """Oluşturulan dosyayı ve bulunduğu klasörü açar."""
-        output_file = Path(result_path).resolve()
-        output_dir = output_file.parent
-
+        """Oluşturulan tutanakların bulunduğu klasörü açar."""
+        output_dir = Path(result_path).resolve()
         self._open_local_path(output_dir, "çıktı klasörü")
-        self._open_local_path(output_file, "oluşturulan tutanak")
 
     def _open_local_path(self, path: Path, description: str) -> bool:
         """Yerel bir dosya ya da klasörü işletim sistemine devrederek açar."""

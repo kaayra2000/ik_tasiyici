@@ -37,18 +37,18 @@ class _ImportWorker(QThread):
         self,
         service: EducationImportService,
         source_path: str,
-        target_path: str,
+        target_dir: str,
     ) -> None:
         super().__init__()
         self._service = service
         self._source_path = source_path
-        self._target_path = target_path
+        self._target_dir = target_dir
 
     def run(self) -> None:  # noqa: D102
         try:
             result = self._service.import_education(
                 source_path=self._source_path,
-                target_path=self._target_path,
+                target_dir=self._target_dir,
             )
             self.finished.emit(result)
         except PermissionError as exc:  # noqa: BLE001
@@ -84,11 +84,11 @@ class EducationImportWindow(QMainWindow):
         main_layout = QVBoxLayout(central_widget)
 
         self._target_selector = FileSelectionWidget(
-            label_text="Hedef Tutanak:",
-            button_text="Tutanak Seç",
-            dialog_title="Veri yazılacak hedef tutanak dosyasını seçin",
-            dialog_type=DialogType.OPEN,
-            file_filter="Excel Files (*.xlsx *.xls)",
+            label_text="Hedef Tutanak Klasörü:",
+            button_text="Klasör Seç",
+            dialog_title="Veri yazılacak hedef tutanak klasörünü seçin",
+            dialog_type=DialogType.DIRECTORY,
+            file_filter="",
         )
         self._target_selector.file_selected.connect(self._on_target_selected)
         main_layout.addWidget(self._target_selector)
@@ -122,11 +122,11 @@ class EducationImportWindow(QMainWindow):
 
     def _load_settings(self) -> None:
         """Son seçilen dosya veya klasörleri geri yükler."""
-        self._restore_open_selector(
+        self._restore_directory_selector(
             self._target_selector,
             SettingsManager.KEY_EDUCATION_TARGET_PATH,
-            "Son kullanılan hedef tutanak dosyası yüklendi.",
             "Son kullanılan hedef tutanak klasörü yüklendi.",
+            "Son kullanılan hedef tutanak üst klasörü yüklendi.",
         )
         self._restore_open_selector(
             self._source_selector,
@@ -134,6 +134,25 @@ class EducationImportWindow(QMainWindow):
             "Son kullanılan kaynak mezuniyet dosyası yüklendi.",
             "Son kullanılan kaynak mezuniyet klasörü yüklendi.",
         )
+
+    def _restore_directory_selector(
+        self,
+        selector: FileSelectionWidget,
+        key: str,
+        success_message: str,
+        fallback_message: str,
+    ) -> None:
+        """Klasör tipi seçiciye daha önce kaydedilen yolu uygular."""
+        dir_path = self._settings.get_existing_dir(key)
+        if dir_path:
+            selector.set_path(dir_path)
+            self.log(success_message)
+            return
+
+        parent_dir = self._settings.get_parent_dir(key)
+        if parent_dir:
+            selector.set_dialog_path(parent_dir)
+            self.log(fallback_message)
 
     def _restore_open_selector(
         self,
@@ -156,7 +175,7 @@ class EducationImportWindow(QMainWindow):
 
     def _on_target_selected(self, path: str) -> None:
         self._settings.set(SettingsManager.KEY_EDUCATION_TARGET_PATH, path)
-        self.log(f"Hedef tutanak seçildi: {path}")
+        self.log(f"Hedef tutanak klasörü seçildi: {path}")
 
     def _on_source_selected(self, path: str) -> None:
         self._settings.set(SettingsManager.KEY_EDUCATION_SOURCE_PATH, path)
@@ -191,9 +210,16 @@ class EducationImportWindow(QMainWindow):
             ("Ayrıntı/uyarı kaydı", warning_count),
         ]
         if result is not None:
+            backup_summary = (
+                ", ".join(str(path) for path in result.backup_paths)
+                if result.backup_paths
+                else "-"
+            )
             rows.extend(
                 [
-                    ("Yedek oluşturuldu", result.backup_path),
+                    ("İşlenen hedef dosya", result.processed_file_count),
+                    ("Güncellenen hedef dosya", result.updated_file_count),
+                    ("Yedek dosyaları", backup_summary),
                     ("Eşleşen sayfa sayısı", result.matched_sheet_count),
                     ("Güncellenen sayfa sayısı", result.updated_sheet_count),
                     ("Eklenen eğitim kaydı", result.appended_record_count),
@@ -223,12 +249,12 @@ class EducationImportWindow(QMainWindow):
 
     def _start_import(self) -> None:
         """Doğrulama sonrası içe aktarma sürecini başlatır."""
-        target_path = self._target_selector.get_path()
-        if not target_path:
+        target_dir = self._target_selector.get_path()
+        if not target_dir:
             QMessageBox.warning(
                 self,
                 "Uyarı",
-                "Lütfen veri yazılacak hedef tutanak dosyasını seçin.",
+                "Lütfen veri yazılacak hedef tutanak klasörünü seçin.",
             )
             return
 
@@ -241,11 +267,12 @@ class EducationImportWindow(QMainWindow):
             )
             return
 
-        if not Path(target_path).is_file():
+        target_dir_path = Path(target_dir)
+        if not target_dir_path.is_dir():
             QMessageBox.warning(
                 self,
                 "Hata",
-                "Seçilen hedef tutanak dosyası bulunamıyor. Lütfen geçerli bir dosya seçin.",
+                "Seçilen hedef tutanak klasörü bulunamıyor. Lütfen geçerli bir klasör seçin.",
             )
             return
 
@@ -262,7 +289,11 @@ class EducationImportWindow(QMainWindow):
 
         self._set_busy(True)
 
-        self._import_worker = _ImportWorker(self._service, source_path, target_path)
+        self._import_worker = _ImportWorker(
+            self._service,
+            source_path,
+            str(target_dir_path),
+        )
         self._import_worker.finished.connect(self._on_import_finished)
         self._import_worker.error.connect(self._on_import_error)
         # In test runs (pytest) run the worker synchronously to allow
@@ -286,7 +317,7 @@ class EducationImportWindow(QMainWindow):
         QMessageBox.information(
             self,
             "Başarılı",
-            "Mezuniyet bilgileri hedef tutanağa işlendi.",
+            "Mezuniyet bilgileri hedef tutanak klasörüne işlendi.",
         )
 
     def _on_import_error(self, error_message: str, is_permission_error: bool) -> None:

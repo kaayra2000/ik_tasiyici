@@ -17,12 +17,12 @@ class EducationImportService:
     def import_education(
         self,
         source_path: str,
-        target_path: str,
+        target_dir: str,
     ) -> EducationImportResult:
-        """Kaynak mezuniyet dosyasını seçili tutanağa işler."""
+        """Kaynak mezuniyet dosyasını hedef tutanak klasörüne işler."""
         return self._importer.import_education(
             source_path=source_path,
-            target_path=target_path,
+            target_dir=target_dir,
         )
 
     def son_import_uyarilari(self) -> list[str]:

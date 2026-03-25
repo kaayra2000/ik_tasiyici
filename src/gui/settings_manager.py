@@ -71,6 +71,13 @@ class SettingsManager:
             return path
         return ""
 
+    def get_existing_dir(self, key: str) -> str:
+        """Kaydedilmiş yol geçerli bir klasörse döner, değilse boş string."""
+        path = self.get(key)
+        if path and Path(path).is_dir():
+            return path
+        return ""
+
     def get_parent_dir(self, key: str) -> str:
         """Kaydedilmiş yolun üst dizinini döner (dialog başlangıcı için).
 

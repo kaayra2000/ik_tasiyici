@@ -40,9 +40,84 @@ class TutanakOlusturmaRaporu:
     """Tutanak oluşturma işleminin özetini taşır."""
 
     output_path: Path
-    added_sheet_count: int = 0
-    skipped_existing_count: int = 0
+    added_file_count: int = 0
+    skipped_existing_file_count: int = 0
+    generated_files: list[Path] = field(default_factory=list)
     warning_messages: list[str] = field(default_factory=list)
+
+    @property
+    def added_sheet_count(self) -> int:
+        """Geriye dönük uyumluluk için dosya sayısını sayfa sayısı gibi sunar."""
+        return self.added_file_count
+
+    @property
+    def skipped_existing_count(self) -> int:
+        """Geriye dönük uyumluluk için atlanan dosya sayısını sunar."""
+        return self.skipped_existing_file_count
+
+
+def olustur_dk_klasoru_raporlu(
+    personeller: List[Personel],
+    cikti_klasoru: str | Path,
+    template_path: str | Path | None = None,
+    version: str = DEFAULT_VERSION,
+) -> TutanakOlusturmaRaporu:
+    """Her personel için ayrı bir tutanak dosyası üretir.
+
+    Dosya adı üretiminde sayfa adı kuralları kullanılır; yani
+    ``{Ad Soyad} - {TCKN}.xlsx`` formatı uygulanır.
+    """
+    strategy = ExcelWriterFactory.create(version)
+    cikti_klasoru = Path(cikti_klasoru)
+    cikti_klasoru.mkdir(parents=True, exist_ok=True)
+
+    added_file_count = 0
+    skipped_existing_file_count = 0
+    warning_messages: list[str] = []
+    generated_files: list[Path] = []
+
+    for personel in personeller:
+        base_name = _sayfa_adi_olustur(personel)
+        cikti_yolu = cikti_klasoru / f"{base_name}.xlsx"
+
+        if cikti_yolu.exists():
+            wb = openpyxl.load_workbook(cikti_yolu)
+            added_count, skipped_count, personel_warnings = _personelleri_workbooka_ekle(
+                wb,
+                [personel],
+                strategy,
+                template_path,
+            )
+            wb.save(cikti_yolu)
+            wb.close()
+
+            if added_count:
+                added_file_count += 1
+                generated_files.append(cikti_yolu)
+            skipped_existing_file_count += skipped_count
+            warning_messages.extend(personel_warnings)
+            continue
+
+        wb, _, skipped_count, personel_warnings = _workbook_olustur(
+            [personel],
+            strategy,
+            template_path,
+        )
+        wb.save(cikti_yolu)
+        wb.close()
+
+        added_file_count += 1
+        generated_files.append(cikti_yolu)
+        skipped_existing_file_count += skipped_count
+        warning_messages.extend(personel_warnings)
+
+    return TutanakOlusturmaRaporu(
+        output_path=cikti_klasoru,
+        added_file_count=added_file_count,
+        skipped_existing_file_count=skipped_existing_file_count,
+        generated_files=generated_files,
+        warning_messages=warning_messages,
+    )
 
 
 def olustur_dk_dosyasi_raporlu(
@@ -81,8 +156,9 @@ def olustur_dk_dosyasi_raporlu(
     wb.close()
     return TutanakOlusturmaRaporu(
         output_path=cikti_yolu,
-        added_sheet_count=added_sheet_count,
-        skipped_existing_count=skipped_existing_count,
+        added_file_count=added_sheet_count,
+        skipped_existing_file_count=skipped_existing_count,
+        generated_files=[cikti_yolu],
         warning_messages=warning_messages,
     )
 
@@ -338,3 +414,5 @@ def _build_skip_message(personel: Personel, sayfa_adi: str) -> str:
         f"AD SOYAD='{personel.ad_soyad}', "
         f"BİRİMİ='{personel.birim}'"
     )
+
+

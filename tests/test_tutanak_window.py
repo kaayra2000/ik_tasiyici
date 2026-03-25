@@ -25,6 +25,7 @@ def settings():
     """MainWindow için yalın ayar yöneticisi taklidi döndürür."""
     manager = MagicMock()
     manager.get_existing_file.return_value = ""
+    manager.get_existing_dir.return_value = ""
     manager.get.side_effect = lambda key, default="": default
     return manager
 
@@ -50,15 +51,15 @@ class TestTutanakWindow:
     def test_open_generated_output_opens_folder_and_file(
         self, mock_open_url, window, tmp_path
     ):
-        """Oluşan çıktı için klasör ve dosya ayrı ayrı açılmalı."""
-        result_path = (tmp_path / "DK_Tutanaklari.xlsx").resolve()
+        """Oluşan çıktı için sadece klasör açılmalı."""
+        result_path = tmp_path.resolve()
 
         window._open_generated_output(result_path)
 
         opened_paths = [
             call.args[0].toLocalFile() for call in mock_open_url.call_args_list
         ]
-        assert opened_paths == [str(result_path.parent), str(result_path)]
+        assert opened_paths == [str(result_path)]
 
     @patch.object(TutanakWindow, "_open_generated_output")
     @patch("src.gui.tutanak_window.QMessageBox.information")
@@ -73,8 +74,9 @@ class TestTutanakWindow:
         """Başarılı üretimden sonra çıktı otomatik açılmalı."""
         template_path = tmp_path / "taslak.xlsx"
         template_path.touch()
-        output_path = tmp_path / "cikti.xlsx"
-        result_path = tmp_path / "DK_Tutanaklari.xlsx"
+        output_dir = tmp_path / "cikti"
+        output_dir.mkdir()
+        result_path = output_dir
 
         service.personel_oku.return_value = [MagicMock()]
         service.tutanak_olustur.return_value = result_path
@@ -86,7 +88,7 @@ class TestTutanakWindow:
 
         window._input_selector.set_path(str(tmp_path / "girdi.xlsx"))
         window._template_selector.set_path(str(template_path))
-        window._output_selector.set_path(str(output_path))
+        window._output_selector.set_path(str(output_dir))
 
         window._start_processing()
 
@@ -94,7 +96,7 @@ class TestTutanakWindow:
         service.tutanak_olustur.assert_called_once_with(
             personeller=service.personel_oku.return_value,
             template_path=str(template_path),
-            output_path=str(output_path),
+            output_dir=str(output_dir),
             version="v1",
         )
         mock_open_generated_output.assert_called_once_with(result_path)
@@ -106,7 +108,7 @@ class TestTutanakWindow:
         )
         summary_index = log_lines.index("Özet:")
         assert detail_index < summary_index
-        assert log_lines[-1] == f"Çıktı dosyası: {result_path}"
+        assert log_lines[-1] == f"Çıktı klasörü: {result_path}"
         mock_information.assert_called_once()
 
     @patch("src.gui.tutanak_window.QMessageBox.information")
@@ -120,7 +122,8 @@ class TestTutanakWindow:
         """Geçersiz satır nedenleri log'a yazılmalı."""
         template_path = tmp_path / "taslak.xlsx"
         template_path.touch()
-        output_path = tmp_path / "cikti.xlsx"
+        output_dir = tmp_path / "cikti"
+        output_dir.mkdir()
 
         service.personel_oku.return_value = []
         service.son_personel_okuma_uyarilari.return_value = [
@@ -130,7 +133,7 @@ class TestTutanakWindow:
 
         window._input_selector.set_path(str(tmp_path / "girdi.xlsx"))
         window._template_selector.set_path(str(template_path))
-        window._output_selector.set_path(str(output_path))
+        window._output_selector.set_path(str(output_dir))
 
         window._start_processing()
 

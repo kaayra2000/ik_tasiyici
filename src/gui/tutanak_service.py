@@ -18,7 +18,7 @@ from src.core.excel_reader import (
 )
 from src.core.excel_writer import (
     TutanakOlusturmaRaporu,
-    olustur_dk_dosyasi_raporlu,
+    olustur_dk_klasoru_raporlu,
 )
 
 
@@ -61,22 +61,21 @@ class TutanakService:
         self,
         personeller: List[Personel],
         template_path: str,
-        output_path: str,
+        output_dir: str,
         version: str = DEFAULT_VERSION,
     ) -> Path:
-        """DK tutanak dosyasını oluşturur.
+        """Her personel için ayrı DK tutanak dosyası oluşturur.
 
         :param personeller: İşlenecek personel listesi.
         :param template_path: Çıktı taslağı dosya yolu.
-        :param output_path: Çıktı dosyasının tam yolu.
+        :param output_dir: Çıktı klasörü yolu.
         :param version: Çıktı versiyonu (ör. ``"v1"``).
-        :returns: Oluşturulan dosyanın tam yolu.
+        :returns: Çıktı klasörünün tam yolu.
         """
-        output_path_obj = Path(output_path)
-        self._son_tutanak_olusturma_raporu = olustur_dk_dosyasi_raporlu(
+        output_dir_obj = Path(output_dir)
+        self._son_tutanak_olusturma_raporu = olustur_dk_klasoru_raporlu(
             personeller=personeller,
-            cikti_dizini=output_path_obj.parent,
-            dosya_adi=output_path_obj.name,
+            cikti_klasoru=output_dir_obj,
             template_path=template_path,
             version=version,
         )

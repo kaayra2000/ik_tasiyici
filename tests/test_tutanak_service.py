@@ -57,14 +57,14 @@ class TestTutanakService:
         assert len(warnings) == 1
         assert "Geçersiz TCKN: 35519215090" in warnings[0]
 
-    @patch("src.gui.tutanak_service.olustur_dk_dosyasi_raporlu")
+    @patch("src.gui.tutanak_service.olustur_dk_klasoru_raporlu")
     def test_tutanak_olustur_basarili(self, mock_olustur, service):
         """Tutanak başarıyla oluşturulmalı."""
-        expected_path = Path("/cikti/DK_Tutanaklari.xlsx")
+        expected_path = Path("/cikti")
         mock_olustur.return_value = TutanakOlusturmaRaporu(
             output_path=expected_path,
-            added_sheet_count=2,
-            skipped_existing_count=0,
+            added_file_count=2,
+            skipped_existing_file_count=0,
             warning_messages=[],
         )
         personeller = [MagicMock(), MagicMock()]
@@ -72,19 +72,18 @@ class TestTutanakService:
         result = service.tutanak_olustur(
             personeller=personeller,
             template_path="/taslak/sablon.xlsx",
-            output_path="/cikti/DK_Tutanaklari.xlsx",
+            output_dir="/cikti",
         )
 
         mock_olustur.assert_called_once_with(
             personeller=personeller,
-            cikti_dizini=Path("/cikti"),
-            dosya_adi="DK_Tutanaklari.xlsx",
+            cikti_klasoru=Path("/cikti"),
             template_path="/taslak/sablon.xlsx",
             version="v1",
         )
         assert result == expected_path
 
-    @patch("src.gui.tutanak_service.olustur_dk_dosyasi_raporlu")
+    @patch("src.gui.tutanak_service.olustur_dk_klasoru_raporlu")
     def test_tutanak_olustur_hata(self, mock_olustur, service):
         """Core katmanıdaki hatalar yayılmalı."""
         mock_olustur.side_effect = ValueError("Şablon hatası")
@@ -92,16 +91,16 @@ class TestTutanakService:
             service.tutanak_olustur(
                 personeller=[MagicMock()],
                 template_path="/taslak.xlsx",
-                output_path="/cikti/dosya.xlsx",
+                output_dir="/cikti",
             )
 
-    @patch("src.gui.tutanak_service.olustur_dk_dosyasi_raporlu")
+    @patch("src.gui.tutanak_service.olustur_dk_klasoru_raporlu")
     def test_son_tutanak_olusturma_uyarilari_doner(self, mock_olustur, service):
         """Var olan kayıt nedeniyle atlanan sayfalar GUI'ye iletilmeli."""
         mock_olustur.return_value = TutanakOlusturmaRaporu(
-            output_path=Path("/cikti/DK_Tutanaklari.xlsx"),
-            added_sheet_count=1,
-            skipped_existing_count=2,
+            output_path=Path("/cikti"),
+            added_file_count=1,
+            skipped_existing_file_count=2,
             warning_messages=[
                 "Kayıt atlandı: hedef dosyada zaten mevcut. "
                 "SAYFA='Fatma KARACA - 10000000146', "
@@ -112,7 +111,7 @@ class TestTutanakService:
         service.tutanak_olustur(
             personeller=[MagicMock()],
             template_path="/taslak.xlsx",
-            output_path="/cikti/dosya.xlsx",
+            output_dir="/cikti",
         )
 
         warnings = service.son_tutanak_olusturma_uyarilari()
