@@ -349,7 +349,8 @@ def unvan_formulu(
 
     :param tecrube_yili_hucre: Tecrübe yılı değerinin bulunduğu hücre (ör. ``"Z1"``).
     :param hizmet_grubu_turu_hucre: Hizmet grubu türü seçiminin bulunduğu hücre
-        (ör. ``"M3"``). ``"AG"`` ise ünvanlara ``" Araştırmacı"`` eklenir.
+        (ör. ``"M3"``). ``"AG"`` ise 3+ yıl ünvanlarına ``" Araştırmacı"``
+        eklenir; 3 yıl altı için yalnızca ``"Araştırmacı"`` döner.
     :returns: İç içe IF formülü string'i.
     """
     t = tecrube_yili_hucre
@@ -362,7 +363,7 @@ def unvan_formulu(
         f'=IF({t}>=16,{varyant("Kıdemli Başuzman")},'
         f'IF({t}>=12,{varyant("Başuzman")},'
         f'IF({t}>=8,{varyant("Kıdemli Uzman")},'
-        f'IF({t}>=3,{varyant("Uzman")},{varyant("Uzman Yardımcısı")}))))'
+        f'IF({t}>=3,{varyant("Uzman")},IF({g}="AG","Araştırmacı","Uzman Yardımcısı")))))'
     )
 
 

@@ -202,6 +202,12 @@ class TestUnvanFormulu:
         ]:
             assert unvan in sonuc
 
+    def test_ag_uzman_yardimcisi_ozel_durumu(self):
+        """AG ve 3 yıl altı için yalnızca Araştırmacı dönmeli."""
+        sonuc = unvan_formulu("N28", "M3")
+        assert 'IF(M3="AG","Araştırmacı","Uzman Yardımcısı")' in sonuc
+        assert '"Uzman Yardımcısı Araştırmacı"' not in sonuc
+
 
 class TestHizmetGrubuFormulu:
     """hizmet_grubu_formulu fonksiyonu için testler."""
