@@ -71,7 +71,7 @@ _SATIR_YIL_AY_GUN = TECRUBE_BITIS_SATIR + 2  # 29
 # M3 görünür seçim hücresidir:
 # M3 = Hizmet Grubu Türü (A / AG)
 #
-# Gizli hesaplama için Z sütununu, tecrübe yılı için J29 hücresini kullanıyoruz:
+# Z sütununu gizli hesaplama için kullanıyoruz:
 # J29 = Tecrübe Yılı, Z2 = Hizmet Grubu, Z3 = Kademe, Z4 = En Yüksek Öğrenim
 _TECRUBE_YILI_HUCRE = "J29"
 _EN_YUKSEK_OGRENIM_HUCRE = "Z4"

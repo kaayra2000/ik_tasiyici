@@ -270,15 +270,19 @@ class TestKademeBaslangicVeBitisFormulu:
 
     def test_baslangic_formulu_f3_ile_on_ek_ekler(self):
         sonuc = kademe_baslangic_formulu("J29", "Z4", "F3")
+        sonuc = kademe_baslangic_formulu("J29", "Z4", "F3")
         assert 'LEFT(F3,FIND("/",F3))' in sonuc
         assert 'IF(F3=""' in sonuc
+        assert "J29" in sonuc
         assert "J29" in sonuc
         assert "Z4" in sonuc
 
     def test_bitis_formulu_f3_ile_on_ek_ekler(self):
         sonuc = kademe_bitis_formulu("J29", "Z4", "F3")
+        sonuc = kademe_bitis_formulu("J29", "Z4", "F3")
         assert 'LEFT(F3,FIND("/",F3))' in sonuc
         assert 'IF(F3=""' in sonuc
+        assert "J29" in sonuc
         assert "J29" in sonuc
         assert "Z4" in sonuc
 
