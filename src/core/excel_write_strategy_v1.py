@@ -156,7 +156,7 @@ class ExcelWriteStrategyV1(ExcelWriteStrategy):
         ws.cell(row=_SATIR_TOPLAM_PRIM, column=11).value = toplam_prim_formulu()
         ws.cell(row=_SATIR_ALANDA_PRIM, column=12).value = toplam_alanda_prim_formulu()
 
-        ExcelWriteStrategyV1._yaz_takvim_yil_ay_gun(ws)
+        ExcelWriteStrategyV1._yaz_360_yil_ay_gun(ws)
 
         # Z sütununa gizli formülleri yazalım.
 
@@ -218,8 +218,8 @@ class ExcelWriteStrategyV1(ExcelWriteStrategy):
         ExcelWriteStrategyV1._uygula_tam_sayi_formati(k30_hucre, l30_hucre)
 
     @staticmethod
-    def _yaz_takvim_yil_ay_gun(ws: openpyxl.worksheet.worksheet.Worksheet) -> None:
-        """J29/K29/L29: takvim bazlı toplam yıl/ay/gün formüllerini yazar."""
+    def _yaz_360_yil_ay_gun(ws: openpyxl.worksheet.worksheet.Worksheet) -> None:
+        """J29/K29/L29: 30/360 bazlı toplam yıl/ay/gün formüllerini yazar."""
         yil_hucre = ws.cell(row=_SATIR_YIL_AY_GUN, column=10)
         ay_hucre = ws.cell(row=_SATIR_YIL_AY_GUN, column=11)
         gun_hucre = ws.cell(row=_SATIR_YIL_AY_GUN, column=12)

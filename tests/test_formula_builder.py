@@ -110,15 +110,15 @@ class TestTecrube360Formulleri:
 
     def test_yil_formulu_varsayilan(self):
         sonuc = tecrube_360_yil_formulu()
-        assert sonuc == '=IF(L28=0,"",YEAR(DATE(2001,1,1)+L28)-2001)'
+        assert sonuc == '=IF(L28=0,"",INT(L28/360))'
 
     def test_ay_formulu_varsayilan(self):
         sonuc = tecrube_360_ay_formulu()
-        assert sonuc == '=IF(L28=0,"",MONTH(DATE(2001,1,1)+L28)-1)'
+        assert sonuc == '=IF(L28=0,"",INT(MOD(L28,360)/30))'
 
     def test_gun_formulu_varsayilan(self):
         sonuc = tecrube_360_gun_formulu()
-        assert sonuc == '=IF(L28=0,"",DAY(DATE(2001,1,1)+L28)-1)'
+        assert sonuc == '=IF(L28=0,"",MOD(L28,30))'
 
     def test_l28_hucresine_baglidir(self):
         assert "L28" in tecrube_360_yil_formulu()
@@ -270,19 +270,15 @@ class TestKademeBaslangicVeBitisFormulu:
 
     def test_baslangic_formulu_f3_ile_on_ek_ekler(self):
         sonuc = kademe_baslangic_formulu("J29", "Z4", "F3")
-        sonuc = kademe_baslangic_formulu("J29", "Z4", "F3")
         assert 'LEFT(F3,FIND("/",F3))' in sonuc
         assert 'IF(F3=""' in sonuc
-        assert "J29" in sonuc
         assert "J29" in sonuc
         assert "Z4" in sonuc
 
     def test_bitis_formulu_f3_ile_on_ek_ekler(self):
         sonuc = kademe_bitis_formulu("J29", "Z4", "F3")
-        sonuc = kademe_bitis_formulu("J29", "Z4", "F3")
         assert 'LEFT(F3,FIND("/",F3))' in sonuc
         assert 'IF(F3=""' in sonuc
-        assert "J29" in sonuc
         assert "J29" in sonuc
         assert "Z4" in sonuc
 

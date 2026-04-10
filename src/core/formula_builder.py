@@ -17,6 +17,7 @@ from src.config.constants import (
     COL_TOPLAM_PRIM,
     COL_ALANDA_PRIM,
     COL_EKSIK_GUN,
+    GUN_PER_YIL,
     OGRENIM_DOKTORA,
     OGRENIM_LISANS,
     OGRENIM_TEZLI_YL,
@@ -26,7 +27,7 @@ from src.config.constants import (
 )
 
 # ---------------------------------------------------------------------------
-# L28 toplam gün bazlı tecrübe yıl/ay/gün formülleri (takvim bazlı)
+# L28 toplam gün bazlı tecrübe yıl/ay/gün formülleri
 # ---------------------------------------------------------------------------
 
 
@@ -57,33 +58,30 @@ def tecrube_360_yil_formulu(
     bitis_satir: int = TECRUBE_BITIS_SATIR,
     baslangic_satir: int = TECRUBE_BASLANGIC_SATIR,
 ) -> str:
-    """L28 toplam gün hücresinden takvim bazlı yıl değerini döndüren formülü üretir."""
+    """L28 toplam gün hücresini 360'a bölerek yıl değerini döndüren formülü üretir."""
     _ = (bitis_satir, baslangic_satir)
     toplam_hucre = "L28"
-    baslangic_tarih = "DATE(2001,1,1)"
-    return f'=IF({toplam_hucre}=0,"",' f"YEAR({baslangic_tarih}+{toplam_hucre})-2001)"
+    return f'=IF({toplam_hucre}=0,"",INT({toplam_hucre}/{GUN_PER_YIL}))'
 
 
 def tecrube_360_ay_formulu(
     bitis_satir: int = TECRUBE_BITIS_SATIR,
     baslangic_satir: int = TECRUBE_BASLANGIC_SATIR,
 ) -> str:
-    """L28 toplam gün hücresinden takvim bazlı ay değerini döndüren formülü üretir."""
+    """L28 toplam gün hücresinin MOD 360 değerinden ay hesabı yapan formülü üretir."""
     _ = (bitis_satir, baslangic_satir)
     toplam_hucre = "L28"
-    baslangic_tarih = "DATE(2001,1,1)"
-    return f'=IF({toplam_hucre}=0,"",' f"MONTH({baslangic_tarih}+{toplam_hucre})-1)"
+    return f'=IF({toplam_hucre}=0,"",INT(MOD({toplam_hucre},360)/30))'
 
 
 def tecrube_360_gun_formulu(
     bitis_satir: int = TECRUBE_BITIS_SATIR,
     baslangic_satir: int = TECRUBE_BASLANGIC_SATIR,
 ) -> str:
-    """L28 toplam gün hücresinden takvim bazlı gün değerini döndüren formülü üretir."""
+    """L28 toplam gün hücresinin MOD 30 değerinden gün hesabı yapan formülü üretir."""
     _ = (bitis_satir, baslangic_satir)
     toplam_hucre = "L28"
-    baslangic_tarih = "DATE(2001,1,1)"
-    return f'=IF({toplam_hucre}=0,"",DAY({baslangic_tarih}+{toplam_hucre})-1)'
+    return f'=IF({toplam_hucre}=0,"",MOD({toplam_hucre},30))'
 
 
 # ---------------------------------------------------------------------------
