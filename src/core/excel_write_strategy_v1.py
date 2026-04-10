@@ -32,7 +32,6 @@ from src.core.formula_builder import (
     tecrube_360_ay_formulu,
     tecrube_360_gun_formulu,
     tecrube_360_yil_formulu,
-    tecrube_yili_formulu,
     toplam_alanda_prim_formulu,
     toplam_prim_formulu,
     unvan_formulu,
@@ -72,9 +71,9 @@ _SATIR_YIL_AY_GUN = TECRUBE_BITIS_SATIR + 2  # 29
 # M3 görünür seçim hücresidir:
 # M3 = Hizmet Grubu Türü (A / AG)
 #
-# Z sütununu gizli hesaplama için kullanıyoruz:
-# Z1 = Tecrübe Yılı, Z2 = Hizmet Grubu, Z3 = Kademe, Z4 = En Yüksek Öğrenim
-_TECRUBE_YILI_HUCRE = "Z1"
+# Gizli hesaplama için Z sütununu, tecrübe yılı için J29 hücresini kullanıyoruz:
+# J29 = Tecrübe Yılı, Z2 = Hizmet Grubu, Z3 = Kademe, Z4 = En Yüksek Öğrenim
+_TECRUBE_YILI_HUCRE = "J29"
 _EN_YUKSEK_OGRENIM_HUCRE = "Z4"
 
 # Şablondaki öğrenim satırları parametreleri (B=Ad, C=Okul, K=Alanında)
@@ -95,7 +94,9 @@ class ExcelWriteStrategyV1(ExcelWriteStrategy):
     # V1 sabitlerini dışarıya da açıyoruz (test vb. için)
     HUCRE_UNVAN = _HUCRE_UNVAN
 
-    def sayfa_doldur(self, ws: openpyxl.worksheet.worksheet.Worksheet, personel: Personel) -> None:
+    def sayfa_doldur(
+        self, ws: openpyxl.worksheet.worksheet.Worksheet, personel: Personel
+    ) -> None:
         """V1 şablonuna göre çalışma sayfasını doldurur."""
         self._doldur_otomatik(ws, personel)
         self._ekle_veri_dogrulama(ws)
@@ -107,7 +108,9 @@ class ExcelWriteStrategyV1(ExcelWriteStrategy):
     # ------------------------------------------------------------------
 
     @staticmethod
-    def _doldur_otomatik(ws: openpyxl.worksheet.worksheet.Worksheet, personel: Personel) -> None:
+    def _doldur_otomatik(
+        ws: openpyxl.worksheet.worksheet.Worksheet, personel: Personel
+    ) -> None:
         """Otomatik (o) alanları personel verisinden doldurur."""
         ws[_HUCRE_AD_SOYAD] = personel.ad_soyad
         ws[_HUCRE_TCKN] = personel.tckn
@@ -149,17 +152,13 @@ class ExcelWriteStrategyV1(ExcelWriteStrategy):
     @staticmethod
     def _yaz_hesap_satirlari(ws: openpyxl.worksheet.worksheet.Worksheet) -> None:
         """Toplam, tecrübe yılı, ünvan, hizmet grubu ve kademe satırlarını yazar."""
-        toplam_alanda_hucre = f"L{_SATIR_ALANDA_PRIM}"
-
         # Toplam Prim Günü (K19) ve Alanda Toplam Prim Günü (L19)
         ws.cell(row=_SATIR_TOPLAM_PRIM, column=11).value = toplam_prim_formulu()
         ws.cell(row=_SATIR_ALANDA_PRIM, column=12).value = toplam_alanda_prim_formulu()
 
-        ExcelWriteStrategyV1._yaz_360_yil_ay_gun(ws)
+        ExcelWriteStrategyV1._yaz_takvim_yil_ay_gun(ws)
 
-        # Z sütununa gizli formülleri yazalım:
-        # Z1 = Tecrübe Yılı (alanda toplam prim / 360)
-        ws["Z1"] = tecrube_yili_formulu(toplam_alanda_hucre)
+        # Z sütununa gizli formülleri yazalım.
 
         # Z4 = En yüksek alanında öğrenim
         ws[_EN_YUKSEK_OGRENIM_HUCRE] = en_yuksek_ogrenim_formulu(
@@ -219,8 +218,8 @@ class ExcelWriteStrategyV1(ExcelWriteStrategy):
         ExcelWriteStrategyV1._uygula_tam_sayi_formati(k30_hucre, l30_hucre)
 
     @staticmethod
-    def _yaz_360_yil_ay_gun(ws: openpyxl.worksheet.worksheet.Worksheet) -> None:
-        """J29/K29/L29: 30/360 bazlı toplam yıl/ay/gün formüllerini yazar."""
+    def _yaz_takvim_yil_ay_gun(ws: openpyxl.worksheet.worksheet.Worksheet) -> None:
+        """J29/K29/L29: takvim bazlı toplam yıl/ay/gün formüllerini yazar."""
         yil_hucre = ws.cell(row=_SATIR_YIL_AY_GUN, column=10)
         ay_hucre = ws.cell(row=_SATIR_YIL_AY_GUN, column=11)
         gun_hucre = ws.cell(row=_SATIR_YIL_AY_GUN, column=12)
@@ -239,19 +238,25 @@ class ExcelWriteStrategyV1(ExcelWriteStrategy):
             hucre.number_format = "0"
 
     @staticmethod
-    def _kopyala_hucre_bicimi(ws: openpyxl.worksheet.worksheet.Worksheet, kaynak_hucre: str, hedef_hucre: str) -> None:
+    def _kopyala_hucre_bicimi(
+        ws: openpyxl.worksheet.worksheet.Worksheet, kaynak_hucre: str, hedef_hucre: str
+    ) -> None:
         """Hedef hücreye kaynak hücrenin biçimini uygular."""
         ws[hedef_hucre]._style = copy(ws[kaynak_hucre]._style)
 
     @staticmethod
-    def _ayarla_hizmet_grubu_sutun_genisligi(ws: openpyxl.worksheet.worksheet.Worksheet) -> None:
+    def _ayarla_hizmet_grubu_sutun_genisligi(
+        ws: openpyxl.worksheet.worksheet.Worksheet,
+    ) -> None:
         """Başlık metninin görünmesi için hizmet grubu sütununu genişletir."""
         sutun = ws.column_dimensions[_HIZMET_GRUBU_SUTUNU]
         mevcut = sutun.width or 0
         sutun.width = max(mevcut, _HIZMET_GRUBU_MIN_SUTUN_GENISLIGI)
 
     @staticmethod
-    def _ayarla_eksik_gun_sutun_genisligi(ws: openpyxl.worksheet.worksheet.Worksheet) -> None:
+    def _ayarla_eksik_gun_sutun_genisligi(
+        ws: openpyxl.worksheet.worksheet.Worksheet,
+    ) -> None:
         """Eksik gün başlığının görünmesi için M sütununu genişletir."""
         kaynak = ws.column_dimensions["L"]
         hedef = ws.column_dimensions[_EKSIK_GUN_SUTUNU]

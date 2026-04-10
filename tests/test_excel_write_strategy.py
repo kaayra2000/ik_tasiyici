@@ -165,7 +165,7 @@ class TestExcelWriteStrategyV1:
         assert k_val is not None
         assert str(k_val).startswith("=")
 
-    def test_sayfa_doldur_360_yil_ay_gun_formulleri(
+    def test_sayfa_doldur_takvim_yil_ay_gun_formulleri(
         self, strategy, personel, template_ws
     ):
         """J29/K29/L29 formülleri L28 bazlı olmalı ve tam sayı formatında olmalı."""

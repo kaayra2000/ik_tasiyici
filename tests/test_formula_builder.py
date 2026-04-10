@@ -24,7 +24,6 @@ from src.core.formula_builder import (
     tecrube_360_ay_formulu,
     tecrube_360_gun_formulu,
     tecrube_360_yil_formulu,
-    tecrube_yili_formulu,
     toplam_alanda_prim_formulu,
     toplam_prim_formulu,
     unvan_formulu,
@@ -96,35 +95,20 @@ class TestToplamAlandaPrimFormulu:
         assert sonuc == "=SUM(L13:L20)-SUM(M13:M20)"
 
 
-class TestTecrübeYiliFormulu:
-    """tecrube_yili_formulu fonksiyonu için testler."""
-
-    def test_l27_hucresi(self):
-        sonuc = tecrube_yili_formulu("L27")
-        assert sonuc == "=L27/360"
-
-    def test_farkli_hucre(self):
-        sonuc = tecrube_yili_formulu("L30")
-        assert sonuc == "=L30/360"
-
-    def test_360_ile_bolme(self):
-        assert "/360" in tecrube_yili_formulu("L99")
-
-
 class TestTecrube360Formulleri:
     """L28 toplam gün hücresi bazlı yıl/ay/gün formülü testleri."""
 
     def test_yil_formulu_varsayilan(self):
         sonuc = tecrube_360_yil_formulu()
-        assert sonuc == '=IF(L28=0,"",INT(L28/360))'
+        assert sonuc == '=IF(L28=0,"",YEAR(DATE(2001,1,1)+L28)-2001)'
 
     def test_ay_formulu_varsayilan(self):
         sonuc = tecrube_360_ay_formulu()
-        assert sonuc == '=IF(L28=0,"",INT(MOD(L28,360)/30))'
+        assert sonuc == '=IF(L28=0,"",MONTH(DATE(2001,1,1)+L28)-1)'
 
     def test_gun_formulu_varsayilan(self):
         sonuc = tecrube_360_gun_formulu()
-        assert sonuc == '=IF(L28=0,"",MOD(L28,30))'
+        assert sonuc == '=IF(L28=0,"",DAY(DATE(2001,1,1)+L28)-1)'
 
     def test_l28_hucresine_baglidir(self):
         assert "L28" in tecrube_360_yil_formulu()
@@ -275,25 +259,25 @@ class TestKademeBaslangicVeBitisFormulu:
     """K30/L30 formullerinde derece on eki davranisini test eder."""
 
     def test_baslangic_formulu_f3_ile_on_ek_ekler(self):
-        sonuc = kademe_baslangic_formulu("Z1", "Z4", "F3")
+        sonuc = kademe_baslangic_formulu("J29", "Z4", "F3")
         assert 'LEFT(F3,FIND("/",F3))' in sonuc
         assert 'IF(F3=""' in sonuc
-        assert "Z1" in sonuc
+        assert "J29" in sonuc
         assert "Z4" in sonuc
 
     def test_bitis_formulu_f3_ile_on_ek_ekler(self):
-        sonuc = kademe_bitis_formulu("Z1", "Z4", "F3")
+        sonuc = kademe_bitis_formulu("J29", "Z4", "F3")
         assert 'LEFT(F3,FIND("/",F3))' in sonuc
         assert 'IF(F3=""' in sonuc
-        assert "Z1" in sonuc
+        assert "J29" in sonuc
         assert "Z4" in sonuc
 
     def test_baslangic_formulu_f3_yokken_sayisal_doner(self):
-        sonuc = kademe_baslangic_formulu("Z1", "Z4")
-        assert 'LEFT(' not in sonuc
+        sonuc = kademe_baslangic_formulu("J29", "Z4")
+        assert "LEFT(" not in sonuc
         assert 'FIND("/"' not in sonuc
 
     def test_bitis_formulu_f3_yokken_sayisal_doner(self):
-        sonuc = kademe_bitis_formulu("Z1", "Z4")
-        assert 'LEFT(' not in sonuc
+        sonuc = kademe_bitis_formulu("J29", "Z4")
+        assert "LEFT(" not in sonuc
         assert 'FIND("/"' not in sonuc

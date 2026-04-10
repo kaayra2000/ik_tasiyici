@@ -270,7 +270,9 @@ class TutanakWindow(QMainWindow):
             self._output_selector.set_path(output_dir)
             self.log("Son kullanılan kayıt yeri yüklendi.")
         else:
-            output_parent = self._settings.get_parent_dir(SettingsManager.KEY_OUTPUT_PATH)
+            output_parent = self._settings.get_parent_dir(
+                SettingsManager.KEY_OUTPUT_PATH
+            )
             if output_parent:
                 self._output_selector.set_dialog_path(output_parent)
                 self.log("Son kullanılan kayıt klasörü yüklendi.")

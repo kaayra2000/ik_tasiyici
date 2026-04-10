@@ -17,7 +17,6 @@ from src.config.constants import (
     COL_TOPLAM_PRIM,
     COL_ALANDA_PRIM,
     COL_EKSIK_GUN,
-    GUN_PER_YIL,
     OGRENIM_DOKTORA,
     OGRENIM_LISANS,
     OGRENIM_TEZLI_YL,
@@ -27,7 +26,7 @@ from src.config.constants import (
 )
 
 # ---------------------------------------------------------------------------
-# L28 toplam gün bazlı tecrübe yıl/ay/gün formülleri
+# L28 toplam gün bazlı tecrübe yıl/ay/gün formülleri (takvim bazlı)
 # ---------------------------------------------------------------------------
 
 
@@ -58,30 +57,33 @@ def tecrube_360_yil_formulu(
     bitis_satir: int = TECRUBE_BITIS_SATIR,
     baslangic_satir: int = TECRUBE_BASLANGIC_SATIR,
 ) -> str:
-    """L28 toplam gün hücresini 360'a bölerek yıl değerini döndüren formülü üretir."""
+    """L28 toplam gün hücresinden takvim bazlı yıl değerini döndüren formülü üretir."""
     _ = (bitis_satir, baslangic_satir)
     toplam_hucre = "L28"
-    return f'=IF({toplam_hucre}=0,"",INT({toplam_hucre}/{GUN_PER_YIL}))'
+    baslangic_tarih = "DATE(2001,1,1)"
+    return f'=IF({toplam_hucre}=0,"",' f"YEAR({baslangic_tarih}+{toplam_hucre})-2001)"
 
 
 def tecrube_360_ay_formulu(
     bitis_satir: int = TECRUBE_BITIS_SATIR,
     baslangic_satir: int = TECRUBE_BASLANGIC_SATIR,
 ) -> str:
-    """L28 toplam gün hücresinin MOD 360 değerinden ay hesabı yapan formülü üretir."""
+    """L28 toplam gün hücresinden takvim bazlı ay değerini döndüren formülü üretir."""
     _ = (bitis_satir, baslangic_satir)
     toplam_hucre = "L28"
-    return f'=IF({toplam_hucre}=0,"",INT(MOD({toplam_hucre},360)/30))'
+    baslangic_tarih = "DATE(2001,1,1)"
+    return f'=IF({toplam_hucre}=0,"",' f"MONTH({baslangic_tarih}+{toplam_hucre})-1)"
 
 
 def tecrube_360_gun_formulu(
     bitis_satir: int = TECRUBE_BITIS_SATIR,
     baslangic_satir: int = TECRUBE_BASLANGIC_SATIR,
 ) -> str:
-    """L28 toplam gün hücresinin MOD 30 değerinden gün hesabı yapan formülü üretir."""
+    """L28 toplam gün hücresinden takvim bazlı gün değerini döndüren formülü üretir."""
     _ = (bitis_satir, baslangic_satir)
     toplam_hucre = "L28"
-    return f'=IF({toplam_hucre}=0,"",MOD({toplam_hucre},30))'
+    baslangic_tarih = "DATE(2001,1,1)"
+    return f'=IF({toplam_hucre}=0,"",DAY({baslangic_tarih}+{toplam_hucre})-1)'
 
 
 # ---------------------------------------------------------------------------
@@ -160,29 +162,6 @@ def toplam_alanda_prim_formulu(
     alanda = f"{COL_ALANDA_PRIM}{baslangic_satir}:{COL_ALANDA_PRIM}{bitis_satir}"
     eksik = f"{COL_EKSIK_GUN}{baslangic_satir}:{COL_EKSIK_GUN}{bitis_satir}"
     return f"=SUM({alanda})-SUM({eksik})"
-
-
-# ---------------------------------------------------------------------------
-# Tecrübe yılı formülü
-# ---------------------------------------------------------------------------
-
-
-def tecrube_yili_formulu(alanda_toplam_hucre: str) -> str:
-    """
-    Tecrübe yılını hesaplayan formülü üretir.
-
-    Alanda toplam prim gününü ``GUN_PER_YIL`` (360) e böler.
-
-    :param alanda_toplam_hucre: Alanda toplam prim gününün bulunduğu hücre adresi
-        (ör. ``"L19"``).
-    :returns: Bölme formülü string'i.
-
-    Örnek::
-
-        tecrube_yili_formulu("L19")
-        # =L19/360
-    """
-    return f"={alanda_toplam_hucre}/{GUN_PER_YIL}"
 
 
 # ---------------------------------------------------------------------------
@@ -341,7 +320,7 @@ def unvan_formulu(
 
     Eşik değerleri AGENT.md §Ünvan/Derece/Kademe Hesaplama bölümünden alınmıştır.
 
-    :param tecrube_yili_hucre: Tecrübe yılı değerinin bulunduğu hücre (ör. ``"Z1"``).
+    :param tecrube_yili_hucre: Tecrübe yılı değerinin bulunduğu hücre (ör. ``"J29"``).
     :param hizmet_grubu_turu_hucre: Hizmet grubu türü seçiminin bulunduğu hücre
         (ör. ``"M3"``). ``"AG"`` ise 3+ yıl ünvanlarına ``" Araştırmacı"``
         eklenir; 3 yıl altı için yalnızca ``"Araştırmacı"`` döner.
@@ -396,7 +375,7 @@ def kademe_formulu(
     D-K Tablosundaki matrise göre oluşturulmuştur (AGENT.md §Kademe Belirleme Matrisi).
     Formül önce hizmet grubunu (tecrübe aralığı), ardından öğrenim durumunu kontrol eder.
 
-    :param tecrube_yili_hucre: Tecrübe yılı hücresi (ör. ``"Z1"``).
+    :param tecrube_yili_hucre: Tecrübe yılı hücresi (ör. ``"J29"``).
     :param ogrenim_hucre: Öğrenim durumu hücresi (ör. ``"C8"``).
     :returns: İç içe IF formülü string'i.
     """
@@ -451,7 +430,7 @@ def kademe_baslangic_formulu(
     Kıdem tablosuna göre kademe başlangıcı değerleri tecrübe yılı ve eğitim seviyesine göre değişir.
     NOT: Kademe AZALDIKÇA yükselme olur (6'dan 5'e, 5'ten 4'e).
 
-    :param tecrube_yili_hucre: Tecrübe yılı hücresi (ör. ``"Z1"``).
+    :param tecrube_yili_hucre: Tecrübe yılı hücresi (ör. ``"J29"``).
     :param ogrenim_hucre: Öğrenim durumu hücresi (ör. ``"Z4"``).
     :param derece_kademe_hucre: Derece/kademe hücresi (ör. ``"F3"``).
         Verilirse formül, ``AG-4/`` benzeri ön eki bu hücreden alır ve
@@ -510,7 +489,7 @@ def kademe_baslangic_formulu(
 
     dk = derece_kademe_hucre
     on_ek = f'IFERROR(LEFT({dk},FIND("/",{dk})),"")'
-    return f"=IF({dk}=\"\",{kademe_ifadesi},{on_ek}&{kademe_ifadesi})"
+    return f'=IF({dk}="",{kademe_ifadesi},{on_ek}&{kademe_ifadesi})'
 
 
 def kademe_bitis_formulu(
@@ -522,7 +501,7 @@ def kademe_bitis_formulu(
     Tecrübe yılı ve öğrenim durumuna göre kademe bitişini belirleyen formülü üretir.
     Kıdem tablosundaki değerlere göre oluşturulmuştur.
 
-    :param tecrube_yili_hucre: Tecrübe yılı hücresi (ör. ``"Z1"``).
+    :param tecrube_yili_hucre: Tecrübe yılı hücresi (ör. ``"J29"``).
     :param ogrenim_hucre: Öğrenim durumu hücresi (ör. ``"Z4"``).
     :param derece_kademe_hucre: Derece/kademe hücresi (ör. ``"F3"``).
         Verilirse formül, ``AG-4/`` benzeri ön eki bu hücreden alır ve
@@ -581,4 +560,4 @@ def kademe_bitis_formulu(
 
     dk = derece_kademe_hucre
     on_ek = f'IFERROR(LEFT({dk},FIND("/",{dk})),"")'
-    return f"=IF({dk}=\"\",{kademe_ifadesi},{on_ek}&{kademe_ifadesi})"
+    return f'=IF({dk}="",{kademe_ifadesi},{on_ek}&{kademe_ifadesi})'

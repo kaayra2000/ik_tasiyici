@@ -533,7 +533,9 @@ class EducationImporter:
 
         return appended_count, skipped_count, warning_messages
 
-    def _locate_education_rows(self, worksheet: openpyxl.worksheet.worksheet.Worksheet) -> list[int]:
+    def _locate_education_rows(
+        self, worksheet: openpyxl.worksheet.worksheet.Worksheet
+    ) -> list[int]:
         """Şablondaki eğitim satırlarını dinamik olarak bulur."""
         school_header_row = None
         experience_header_row = None
