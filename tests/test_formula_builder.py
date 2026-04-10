@@ -35,11 +35,21 @@ class TestPrimGunuFormulu:
 
     def test_satir_10(self):
         sonuc = prim_gunu_formulu(10)
-        assert sonuc == '=IF(AND(E10<>"",F10<>""),F10-E10,"")'
+        assert sonuc == (
+            '=IF(AND(E10<>"",F10<>""),'
+            '(YEAR(F10)-YEAR(E10))*360+'
+            '(MONTH(F10)-MONTH(E10))*30+'
+            '(DAY(F10)-DAY(E10))+1,"")'
+        )
 
     def test_satir_25(self):
         sonuc = prim_gunu_formulu(25)
-        assert sonuc == '=IF(AND(E25<>"",F25<>""),F25-E25,"")'
+        assert sonuc == (
+            '=IF(AND(E25<>"",F25<>""),'
+            '(YEAR(F25)-YEAR(E25))*360+'
+            '(MONTH(F25)-MONTH(E25))*30+'
+            '(DAY(F25)-DAY(E25))+1,"")'
+        )
 
     def test_egitim_iceriyor(self):
         """Formül IF ve AND anahtar kelimelerini içermeli (OOXML standardı)."""

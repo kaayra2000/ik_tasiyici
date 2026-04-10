@@ -95,7 +95,8 @@ def prim_gunu_formulu(satir: int) -> str:
     """
     Belirtilen satır için toplam prim günü formülünü üretir.
 
-    Başlangıç ve bitiş tarihi doluysa gün farkını hesaplar, aksi hâlde boş döner.
+    Başlangıç ve bitiş tarihi doluysa SGK 30/360 mantığıyla gün hesabı yapar,
+    aksi hâlde boş döner. Hesap başlangıç ve bitiş günlerini dahildir.
 
     :param satir: Hedef Excel satır numarası (1-indexed).
     :returns: OOXML uyumlu İngilizce Excel formülü string'i.
@@ -103,11 +104,16 @@ def prim_gunu_formulu(satir: int) -> str:
     Örnek::
 
         prim_gunu_formulu(11)
-        # =IF(AND(E11<>"",F11<>""),F11-E11,"")
+        # =IF(AND(E11<>"",F11<>""),(YEAR(F11)-YEAR(E11))*360+(MONTH(F11)-MONTH(E11))*30+(DAY(F11)-DAY(E11))+1,"")
     """
     d = f"{COL_BASLANGIC_TARIHI}{satir}"
     e = f"{COL_BITIS_TARIHI}{satir}"
-    return f'=IF(AND({d}<>"",{e}<>""),{e}-{d},"")'
+    return (
+        f'=IF(AND({d}<>"",{e}<>""),'
+        f'(YEAR({e})-YEAR({d}))*360+'
+        f'(MONTH({e})-MONTH({d}))*30+'
+        f'(DAY({e})-DAY({d}))+1,"")'
+    )
 
 
 def alanda_prim_formulu(satir: int) -> str:
