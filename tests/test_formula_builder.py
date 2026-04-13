@@ -33,29 +33,45 @@ from src.core.formula_builder import (
 class TestPrimGunuFormulu:
     """prim_gunu_formulu fonksiyonu için testler."""
 
-    def test_satir_10(self):
-        sonuc = prim_gunu_formulu(10)
-        assert sonuc == (
-            '=IF(AND(E10<>"",F10<>""),'
-            '(YEAR(F10)-YEAR(E10))*360+'
-            '(MONTH(F10)-MONTH(E10))*30+'
-            '(DAY(F10)-DAY(E10))+1,"")'
-        )
+    def test_bos_tarih_bos_doner(self):
+        """Tarih hücresi boşsa formül boş döner."""
+        sonuc = prim_gunu_formulu(13)
+        assert sonuc.startswith('=IF(AND(E13<>"",F13<>"")')
+        assert sonuc.endswith(',"")')
 
-    def test_satir_25(self):
-        sonuc = prim_gunu_formulu(25)
-        assert sonuc == (
-            '=IF(AND(E25<>"",F25<>""),'
-            '(YEAR(F25)-YEAR(E25))*360+'
-            '(MONTH(F25)-MONTH(E25))*30+'
-            '(DAY(F25)-DAY(E25))+1,"")'
-        )
-
-    def test_egitim_iceriyor(self):
+    def test_if_and_iceriyor(self):
         """Formül IF ve AND anahtar kelimelerini içermeli (OOXML standardı)."""
         sonuc = prim_gunu_formulu(15)
         assert "IF" in sonuc
         assert "AND" in sonuc
+
+    def test_eomonth_iceriyor(self):
+        """Ay sonu tespiti için EOMONTH kullanılmalı."""
+        sonuc = prim_gunu_formulu(13)
+        assert "EOMONTH" in sonuc
+
+    def test_ayni_ay_kolu_var(self):
+        """Aynı ay içi hesap kolu formülde bulunmalı."""
+        sonuc = prim_gunu_formulu(13)
+        # Aynı ay kontrolü: YEAR*12+MONTH karşılaştırması
+        assert "YEAR(E13)*12+MONTH(E13)=YEAR(F13)*12+MONTH(F13)" in sonuc
+
+    def test_bitis_son_gun_30_gun_alir(self):
+        """Bitiş ayın son günüyse 30 gün alınmalı (EOMONTH kontrolü)."""
+        sonuc = prim_gunu_formulu(13)
+        assert "DAY(F13)=DAY(EOMONTH(F13,0)),30" in sonuc
+
+    def test_baslangic_gun1_ise_30(self):
+        """Başlangıç günü 1 ise o ay için 30 gün alınmalı."""
+        sonuc = prim_gunu_formulu(13)
+        assert "DAY(E13)=1,30" in sonuc
+
+    def test_satir_numarasi_dogru_yansir(self):
+        """Farklı satır numaraları formüle doğru yansımalı."""
+        sonuc25 = prim_gunu_formulu(25)
+        assert "E25" in sonuc25
+        assert "F25" in sonuc25
+        assert "E13" not in sonuc25
 
 
 class TestAlandaPrimFormulu:

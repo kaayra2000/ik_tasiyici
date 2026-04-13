@@ -93,25 +93,41 @@ def prim_gunu_formulu(satir: int) -> str:
     """
     Belirtilen satır için toplam prim günü formülünü üretir.
 
-    Başlangıç ve bitiş tarihi doluysa SGK 30/360 mantığıyla gün hesabı yapar,
-    aksi hâlde boş döner. Hesap başlangıç ve bitiş günlerini dahildir.
+    Her iki uç noktayı (başlangıç ve bitiş) dahil ederek hesaplar:
+    - Başlangıç günü 1 ise o ay tam kapsanmış sayılır → 30 gün;
+      değilse ayın son gününe kadar kalan gerçek gün sayısı alınır.
+    - Bitiş günü ayın son günüyse (28 Şubat, 31 Ocak vb.) o ay tam
+      kapsanmış sayılır → 30 gün; değilse DAY(bitiş) gün alınır.
+    - Başlangıç ve bitiş aynı aydaysa tek parça hesap yapılır.
 
     :param satir: Hedef Excel satır numarası (1-indexed).
     :returns: OOXML uyumlu İngilizce Excel formülü string'i.
-
-    Örnek::
-
-        prim_gunu_formulu(11)
-        # =IF(AND(E11<>"",F11<>""),(YEAR(F11)-YEAR(E11))*360+(MONTH(F11)-MONTH(E11))*30+(DAY(F11)-DAY(E11))+1,"")
     """
-    d = f"{COL_BASLANGIC_TARIHI}{satir}"
-    e = f"{COL_BITIS_TARIHI}{satir}"
-    return (
-        f'=IF(AND({d}<>"",{e}<>""),'
-        f'(YEAR({e})-YEAR({d}))*360+'
-        f'(MONTH({e})-MONTH({d}))*30+'
-        f'(DAY({e})-DAY({d}))+1,"")'
+    d = f"{COL_BASLANGIC_TARIHI}{satir}"  # başlangıç
+    e = f"{COL_BITIS_TARIHI}{satir}"      # bitiş
+
+    # Başlangıç ayı katkısı: gün=1 ise 30, değilse ayın son gününe kadar
+    bas_katki = f"IF(DAY({d})=1,30,DAY(EOMONTH({d},0))-DAY({d})+1)"
+
+    # Bitiş ayı katkısı: son gün ise 30, değilse DAY(bitiş)
+    bit_katki = f"IF(DAY({e})=DAY(EOMONTH({e},0)),30,DAY({e}))"
+
+    # Aradaki tam ay sayısı (başlangıç ve bitiş ayları hariç)
+    ara_aylar = (
+        f"(YEAR({e})*12+MONTH({e}))-(YEAR({d})*12+MONTH({d}))-1"
     )
+
+    # Aynı ay içindeyse: bitiş son günse 30-DAY(d)+1, değilse DAY(e)-DAY(d)+1
+    ayni_ay = f"IF(DAY({e})=DAY(EOMONTH({e},0)),30-DAY({d})+1,DAY({e})-DAY({d})+1)"
+
+    farkli_ay = f"{bas_katki}+MAX(0,{ara_aylar})*30+{bit_katki}"
+
+    hesap = (
+        f"IF(YEAR({d})*12+MONTH({d})=YEAR({e})*12+MONTH({e}),"
+        f"{ayni_ay},{farkli_ay})"
+    )
+
+    return f'=IF(AND({d}<>"",{e}<>""),{hesap},"")'
 
 
 def alanda_prim_formulu(satir: int) -> str:
